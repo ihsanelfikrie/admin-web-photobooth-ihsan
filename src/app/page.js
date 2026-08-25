@@ -37,10 +37,10 @@ export default function HomePage() {
       </header>
 
       {/* Main Card */}
-      <div className="w-full max-w-xl bg-white border-2 border-black rounded-[2.5rem] p-8 md:p-10 shadow-xl my-auto text-center flex flex-col items-center gap-6 receipt-paper">
+      <div className="w-full max-w-xl bg-white border-2 border-black rounded-[2.5rem] p-8 md:p-10 shadow-xl my-auto text-center flex flex-col items-center gap-6">
         
         <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full text-xs font-extrabold tracking-widest uppercase bg-slate-900 text-white border border-black">
-          <span>🧾 JOBFAIR UPKK UIN ANTASARI 🧾</span>
+          <span>✳ EVENT PHOTOBOOTH • UIN ANTASARI ✳</span>
         </div>
 
         <div className="space-y-1">
