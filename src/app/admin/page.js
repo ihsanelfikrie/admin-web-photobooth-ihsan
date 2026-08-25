@@ -512,10 +512,11 @@ export default function OnlineAdminPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-black">
                     <tr>
+                      <th className="p-3.5 w-20">Preview Frame</th>
                       <th className="p-3.5">Session ID</th>
                       <th className="p-3.5">Waktu Sesi</th>
                       <th className="p-3.5">Status</th>
-                      <th className="p-3.5">File Foto 4R</th>
+                      <th className="p-3.5">Softfile Pengunjung</th>
                       <th className="p-3.5">Aksi</th>
                     </tr>
                   </thead>
@@ -524,8 +525,29 @@ export default function OnlineAdminPage() {
                       filteredSessions.map((s) => {
                         const age = now - (s.createdAt || 0);
                         const isExpired = age > TWENTY_FOUR_HOURS_MS;
+                        const photoUrl = getDisplayCdnUrl(s.cdnCompositeUrl || s.compositeUrl);
+
                         return (
                           <tr key={s.sessionId} className="hover:bg-slate-50 transition-colors">
+                            <td className="p-3.5">
+                              {photoUrl ? (
+                                <div
+                                  onClick={() => setSelectedSession(s)}
+                                  className="w-14 h-20 rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 shadow-xs cursor-pointer hover:scale-105 hover:border-[#120CD6] transition-all flex items-center justify-center p-0.5"
+                                  title="Klik untuk perbesar"
+                                >
+                                  <img
+                                    src={photoUrl}
+                                    alt={`Preview ${s.sessionId}`}
+                                    className="w-full h-full object-contain rounded-lg"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-14 h-20 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-[9px] font-bold text-slate-400 text-center p-1">
+                                  NO PHOTO
+                                </div>
+                              )}
+                            </td>
                             <td className="p-3.5 font-mono font-bold text-[#120CD6]">
                               {s.sessionId}
                             </td>
@@ -544,22 +566,22 @@ export default function OnlineAdminPage() {
                                 href={`/softfile/${s.sessionId}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#120CD6] hover:bg-[#120CD6] hover:text-white rounded-xl font-black text-[11px] transition-all border border-blue-200"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 text-[#120CD6] hover:bg-[#120CD6] hover:text-white rounded-xl font-black text-xs transition-all border border-blue-200 shadow-xs"
                               >
                                 <span>📱 Buka Softfile</span>
                                 <span>↗</span>
                               </a>
                             </td>
-                            <td className="p-3.5 flex items-center gap-2">
+                            <td className="p-3.5 flex items-center gap-2 pt-6">
                               <button
                                 onClick={() => setSelectedSession(s)}
-                                className="px-3 py-1.5 bg-[#120CD6] text-white rounded-xl text-[11px] font-black uppercase hover:bg-blue-800 transition-all cursor-pointer shadow-xs"
+                                className="px-3.5 py-2 bg-[#120CD6] text-white rounded-xl text-xs font-black uppercase hover:bg-blue-800 transition-all cursor-pointer shadow-xs"
                               >
                                 Detail
                               </button>
                               <button
                                 onClick={() => handleDeleteSession(s.sessionId)}
-                                className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-black uppercase hover:bg-rose-100 transition-all cursor-pointer"
+                                className="px-3.5 py-2 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-black uppercase hover:bg-rose-100 transition-all cursor-pointer"
                               >
                                 Hapus
                               </button>
@@ -569,7 +591,7 @@ export default function OnlineAdminPage() {
                       })
                     ) : (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-slate-400 font-bold">
+                        <td colSpan={6} className="p-8 text-center text-slate-400 font-bold">
                           Tidak ada sesi foto yang sesuai kriteria.
                         </td>
                       </tr>
