@@ -7,9 +7,9 @@ import confetti from 'canvas-confetti';
 export default function SoftfileGalleryPage() {
   const { sessionId } = useParams();
 
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState(null);
-  const [expired, setExpired] = useState(false);
+  const [loading, setLoading]           = useState(true);
+  const [data, setData]                 = useState(null);
+  const [expired, setExpired]           = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [remainingSec, setRemainingSec] = useState(0);
 
@@ -19,19 +19,20 @@ export default function SoftfileGalleryPage() {
     async function fetchSession() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/softfile/${sessionId}`);
+        const res  = await fetch(`/api/softfile/${sessionId}`);
         const json = await res.json();
 
         if (json.success) {
           setData(json);
           setRemainingSec(json.remainingSeconds || 0);
 
-          // Confetti celebration
+          // Confetti celebration on load
           try {
             confetti({
-              particleCount: 50,
-              spread: 60,
-              origin: { y: 0.6 },
+              particleCount: 45,
+              spread: 65,
+              origin: { y: 0.55 },
+              colors: ['#120CD6', '#E5FD5F', '#F908E0', '#111111'],
             });
           } catch (_) {}
         } else {
@@ -67,195 +68,206 @@ export default function SoftfileGalleryPage() {
   }, [remainingSec, expired]);
 
   const formatRemainingTime = (totalSeconds) => {
-    const hours = Math.floor(totalSeconds / 3600);
+    const hours   = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     return `${hours} Jam ${String(minutes).padStart(2, '0')} Menit ${String(seconds).padStart(2, '0')} Detik`;
   };
 
+  const handleDownload = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'komvigi-photo.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      window.open(url, '_blank');
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900 p-4 md:p-8 flex flex-col items-center font-sans selection:bg-black selection:text-white">
+    <main className="min-h-screen bg-[#120CD6] text-white p-4 md:p-8 flex flex-col items-center font-sans selection:bg-[#E5FD5F] selection:text-[#111111]">
       
       {/* Top Banner Header */}
-      <header className="w-full max-w-2xl flex flex-col items-center text-center py-5 border-b-2 border-slate-300 mb-6">
-        <span className="px-4 py-1 bg-black text-white text-xs font-black rounded-full uppercase tracking-wider mb-2 shadow-xs">
-          PHOTOBOOTH JOBFAIR UPKK UIN ANTASARI • OFFICIAL GALLERY
+      <header className="w-full max-w-3xl flex flex-col items-center text-center py-6 border-b border-white/20 mb-6">
+        <span className="px-4 py-1.5 bg-[#E5FD5F] text-[#111111] text-xs font-black rounded-full uppercase tracking-wider mb-3 shadow-md">
+          ✳ KEMENTERIAN KOMUNIKASI VISUAL DIGITAL • DEMA UIN ANTASARI
         </span>
-        <h1 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-tight">
-          SOFTFILE GALERI FOTO
+        <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
+          KomvigI BOOTH
         </h1>
-        <p className="text-xs text-slate-600 font-semibold mt-1">
-          26 - 27 Agustus 2026 • Session ID: <span className="font-mono text-black font-bold">{sessionId}</span>
+        <p className="text-xs md:text-sm text-white/80 font-bold mt-1 uppercase tracking-wider">
+          GALERI RESMI PENGUNDUHAN SOFTFILE DIGITAL
         </p>
 
         {/* 24-Hour Expiry Alert */}
         {!loading && !expired && remainingSec > 0 && (
-          <div className="mt-4 w-full px-5 py-3 bg-amber-50 border-2 border-amber-400 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold text-amber-950 shadow-sm">
+          <div className="mt-4 w-full max-w-xl px-5 py-3 bg-white text-[#111111] border-2 border-[#E5FD5F] rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-bold shadow-lg">
             <div className="flex items-center gap-2">
-              <span className="text-xl animate-bounce">⏱️</span>
-              <span>Foto otomatis terhapus dalam:</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#120CD6] animate-pulse" />
+              <span className="text-slate-700 font-bold">Masa Aktif Softfile Cloud:</span>
             </div>
-            <span className="font-mono text-sm font-black bg-amber-200/80 px-3 py-1 rounded-xl text-amber-950 border border-amber-400">
-              {formatRemainingTime(remainingSec)}
+            <span className="font-mono text-xs font-black bg-[#120CD6] text-[#E5FD5F] px-3.5 py-1 rounded-xl">
+              ⏱️ {formatRemainingTime(remainingSec)}
             </span>
           </div>
         )}
       </header>
 
-      {/* Loading state */}
-      {loading && (
-        <div className="flex flex-col items-center justify-center my-auto py-24 gap-4">
-          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-800 font-bold text-sm">Menyiapkan galeri foto HD kamu dari Cloud CDN...</p>
-        </div>
-      )}
-
-      {/* Expired / Error state */}
-      {!loading && (expired || errorMessage) && (
-        <div className="my-auto max-w-md w-full p-8 bg-white border-2 border-slate-400 rounded-[2.5rem] text-center space-y-4 shadow-lg">
-          <div className="text-6xl">⏱️</div>
-          <h2 className="text-2xl font-black text-rose-600">Softfile Kadaluarsa</h2>
-          <p className="text-sm text-slate-700 leading-relaxed font-medium">
-            {errorMessage || 'Foto sesi ini telah melewati batas simpan 24 jam dan telah dihapus otomatis dari server Supabase untuk menjaga privasi.'}
-          </p>
-          <div className="pt-4 border-t border-slate-200 text-xs text-slate-500 font-bold">
-            Photobooth JobFair UPKK UIN Antasari 26-27 Agustus 2026
+      {/* Main Content Area */}
+      <div className="w-full max-w-3xl flex flex-col items-center gap-8 mb-12">
+        
+        {/* Loading State */}
+        {loading && (
+          <div className="py-20 flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-[#E5FD5F] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-bold text-white uppercase tracking-wider">MENYIAPKAN FOTO DIGITAL KAMU...</p>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Gallery content */}
-      {!loading && !expired && data && (
-        <div className="w-full max-w-2xl space-y-8 pb-16">
-          
-          {/* 1. Main 4R Print Composite */}
-          <section className="bg-white border-2 border-black rounded-[2.5rem] p-6 flex flex-col items-center gap-4 shadow-md receipt-paper">
-            <div className="w-full flex justify-between items-center border-b-2 border-slate-200 pb-3">
-              <div>
-                <h2 className="font-black text-base md:text-lg text-slate-900 uppercase">🖼️ FOTO CETAK STRUK 4R (HD)</h2>
-                <p className="text-xs text-slate-500 font-medium">Format 4R Resolusi Tinggi Siap Cetak</p>
-              </div>
-              <span className="text-xs px-3 py-1 bg-slate-100 border border-slate-300 font-mono font-bold rounded-full">
-                HD Quality
-              </span>
-            </div>
+        {/* Expired State */}
+        {expired && (
+          <div className="w-full p-8 bg-white text-[#111111] border-2 border-rose-500 rounded-3xl text-center space-y-3 shadow-xl max-w-lg">
+            <div className="text-3xl font-black text-rose-600">MASA AKTIF BERAKHIR</div>
+            <p className="text-xs font-medium text-slate-600 leading-relaxed">
+              Sesuai kebijakan privasi kampus, file foto digital di server cloud otomatis dibersihkan setelah 24 jam.
+            </p>
+          </div>
+        )}
 
-            {data.compositeUrl ? (
-              <>
-                <img
-                  src={data.compositeUrl}
-                  alt="Hasil Foto Cetak 4R"
-                  className="max-h-[65vh] w-auto object-contain rounded-2xl border-2 border-slate-300 shadow-sm bg-white"
-                />
-                <a
-                  href={data.compositeUrl}
-                  download={`jobfair_photobooth_4r_${sessionId}.jpg`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-4 bg-black text-white hover:bg-slate-800 font-black text-center text-base rounded-full block uppercase tracking-wider shadow-md hover:scale-[1.02] active:scale-95 transition-all"
-                >
-                  ⬇️ UNDUH FOTO 4R (HD)
-                </a>
-              </>
-            ) : (
-              <div className="py-10 text-slate-400 text-sm font-semibold">Foto cetak tidak tersedia</div>
-            )}
-          </section>
+        {/* Error State */}
+        {!loading && !expired && errorMessage && (
+          <div className="w-full p-8 bg-white text-[#111111] border-2 border-rose-500 rounded-3xl text-center space-y-3 shadow-xl max-w-lg">
+            <div className="text-xl font-black text-rose-600">FOTO TIDAK DITEMUKAN</div>
+            <p className="text-xs font-medium text-slate-600">{errorMessage}</p>
+          </div>
+        )}
 
-          {/* 2. Animated Video MP4 or GIF */}
-          {(data.videoUrl || data.gifUrl) && (
-            <section className="bg-white border-2 border-black rounded-[2.5rem] p-6 flex flex-col items-center gap-4 shadow-md">
-              <div className="w-full flex justify-between items-center border-b-2 border-slate-200 pb-3">
-                <div>
-                  <h2 className="font-black text-base md:text-lg text-slate-900 uppercase">🎬 VIDEO ANIMASI (16:9 HD)</h2>
-                  <p className="text-xs text-slate-500 font-medium">Kompilasi Gerak Sesi Pemotretan</p>
+        {/* Success State — Clean Cards */}
+        {!loading && !expired && data && (
+          <>
+            {/* 1. Composed Final Frame Card */}
+            {data.printUrl && (
+              <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
+                <div className="w-full flex justify-between items-center border-b border-slate-200 pb-3">
+                  <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
+                    ① HASIL FOTO UTAMA (4R HD)
+                  </span>
+                  <span className="px-3 py-1 bg-[#E5FD5F] text-[#111111] text-[10px] font-black rounded-full uppercase">
+                    SIAP CETAK &amp; SHARE
+                  </span>
                 </div>
-                <span className="text-xs px-3 py-1 bg-slate-100 border border-slate-300 font-mono font-bold rounded-full">
-                  1080x720
-                </span>
-              </div>
 
-              {data.videoUrl ? (
-                <>
+                <div className="relative max-w-md w-full bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm p-1">
+                  <img
+                    src={data.printUrl}
+                    alt="Hasil Foto KomvigI BOOTH"
+                    className="w-full h-auto object-contain rounded-xl"
+                  />
+                </div>
+
+                <button
+                  onClick={() => handleDownload(data.printUrl, `komvigi-booth-${sessionId}.jpg`)}
+                  className="w-full max-w-md py-4 bg-[#E5FD5F] hover:bg-[#d6f046] active:bg-[#F908E0] active:text-white text-[#111111] font-black rounded-full transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-[#120CD6]"
+                >
+                  <span>⬇ UNDUH FOTO UTAMA HD</span>
+                </button>
+              </section>
+            )}
+
+            {/* 2. Video Reel MP4 Card */}
+            {data.videoUrl && (
+              <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
+                <div className="w-full flex justify-between items-center border-b border-slate-200 pb-3">
+                  <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
+                    ② VIDEO REEL ANIMASI (MP4)
+                  </span>
+                  <span className="px-3 py-1 bg-[#F908E0] text-white text-[10px] font-black rounded-full uppercase">
+                    INSTAGRAM REELS &amp; TIKTOK
+                  </span>
+                </div>
+
+                <div className="relative max-w-sm w-full bg-black rounded-2xl overflow-hidden shadow-sm aspect-[9/16] max-h-[440px] flex items-center justify-center">
                   <video
                     src={data.videoUrl}
+                    controls
                     autoPlay
                     loop
                     muted
                     playsInline
-                    controls
-                    className="w-full aspect-video object-cover rounded-2xl border-2 border-black shadow-sm bg-black"
+                    className="w-full h-full object-contain"
                   />
-                  <a
-                    href={data.videoUrl}
-                    download={`jobfair_photobooth_video_${sessionId}.mp4`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-4 bg-black text-white hover:bg-slate-800 font-black text-center text-base rounded-full block uppercase tracking-wider shadow-md hover:scale-[1.02] active:scale-95 transition-all"
-                  >
-                    ⬇️ UNDUH VIDEO ANIMASI MP4
-                  </a>
-                </>
-              ) : data.gifUrl ? (
-                <>
-                  <img
-                    src={data.gifUrl}
-                    alt="Animasi GIF Photobooth"
-                    className="w-full aspect-video object-cover rounded-2xl border-2 border-black shadow-sm bg-black"
-                  />
-                  <a
-                    href={data.gifUrl}
-                    download={`jobfair_photobooth_gif_${sessionId}.gif`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-4 bg-black text-white hover:bg-slate-800 font-black text-center text-base rounded-full block uppercase tracking-wider shadow-md hover:scale-[1.02] active:scale-95 transition-all"
-                  >
-                    ⬇️ UNDUH ANIMASI GIF
-                  </a>
-                </>
-              ) : null}
-            </section>
-          )}
+                </div>
 
-          {/* 3. Individual Photo Shots */}
-          {Array.isArray(data.singlePhotos) && data.singlePhotos.length > 0 && (
-            <section className="bg-white border-2 border-black rounded-[2.5rem] p-6 flex flex-col gap-4 shadow-md">
-              <div className="border-b-2 border-slate-200 pb-3">
-                <h2 className="font-black text-base md:text-lg text-slate-900 uppercase">📸 FOTO SATUAN (INDIVIDUAL SHOTS)</h2>
-                <p className="text-xs text-slate-500 font-medium">Unduh setiap foto pose asli secara terpisah ({data.singlePhotos.length} Foto)</p>
-              </div>
+                <button
+                  onClick={() => handleDownload(data.videoUrl, `komvigi-reel-${sessionId}.mp4`)}
+                  className="w-full max-w-md py-4 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black rounded-full transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-wider flex items-center justify-center gap-2"
+                >
+                  <span>⬇ UNDUH VIDEO REEL MP4</span>
+                </button>
+              </section>
+            )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {data.singlePhotos.map((photo, idx) => (
-                  <div key={idx} className="bg-slate-50 border-2 border-slate-300 rounded-2xl p-3 flex flex-col items-center gap-3">
-                    <img
-                      src={photo.publicUrl}
-                      alt={`Foto Pose ${idx + 1}`}
-                      className="w-full aspect-video object-cover rounded-xl border border-slate-300 bg-slate-200"
-                    />
-                    <a
-                      href={photo.publicUrl}
-                      download={`jobfair_shot_${idx + 1}_${sessionId}.jpg`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold text-center rounded-full transition-all block uppercase shadow-xs hover:scale-[1.02] active:scale-95"
+            {/* 3. Individual Poses Card */}
+            {data.individualPhotos && data.individualPhotos.length > 0 && (
+              <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
+                <div className="w-full flex justify-between items-center border-b border-slate-200 pb-3">
+                  <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
+                    ③ FOTO ASLI PER POSE ({data.individualPhotos.length} FOTO)
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                    RESOLUSI ASLI CANON EOS
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+                  {data.individualPhotos.map((photoUrl, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-slate-50 border border-slate-200 rounded-2xl p-2 flex flex-col items-center gap-2 shadow-xs"
                     >
-                      ⬇️ Unduh Foto Pose #{idx + 1}
-                    </a>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+                      <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200">
+                        <img
+                          src={photoUrl}
+                          alt={`Pose #${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className="absolute bottom-1 left-1 bg-black/85 text-white text-[9px] font-black px-2 py-0.5 rounded">
+                          #{idx + 1}
+                        </span>
+                      </div>
 
-          {/* Footer Copyright */}
-          <footer className="text-center text-xs text-slate-500 py-4 font-semibold">
-            © 2026 Photobooth JobFair UPKK UIN Antasari • Supabase Storage Auto-Delete 24h
-          </footer>
+                      <button
+                        onClick={() => handleDownload(photoUrl, `pose-${idx + 1}-${sessionId}.jpg`)}
+                        className="w-full py-2 bg-slate-100 hover:bg-[#E5FD5F] active:bg-[#F908E0] active:text-white text-[#111111] text-[10px] font-black rounded-xl transition-all cursor-pointer border border-slate-300"
+                      >
+                        UNDUH #{idx + 1}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
 
+      </div>
+
+      {/* Footer */}
+      <footer className="w-full max-w-3xl flex flex-col sm:flex-row justify-between items-center text-xs text-white/80 py-4 border-t border-white/20 gap-2 text-center">
+        <div className="font-semibold text-[11px]">
+          Kementerian Komunikasi Visual Digital (KomvigI) • DEMA UIN Antasari 2026-2027
         </div>
-      )}
-
+        <div className="text-[11px] font-bold text-[#E5FD5F]">
+          Banjarmasin, Kalimantan Selatan
+        </div>
+      </footer>
     </main>
   );
 }

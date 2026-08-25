@@ -3,14 +3,14 @@ import "./globals.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-poppins",
   display: "swap",
 });
 
 export const metadata = {
-  title: "Photobooth JobFair UPKK UIN Antasari 26-27 Agustus 2026",
-  description: "Web Gallery Softfile & Online Admin Panel Photobooth JobFair UPKK UIN Antasari 26-27 Agustus 2026",
+  title: "KomvigI BOOTH — Galeri Softfile & Panel Admin Cloud",
+  description: "Galeri Softfile Digital & Panel Admin Cloud Resmi Kementerian Komunikasi Visual Digital DEMA UIN Antasari 2026-2027",
 };
 
 export default function RootLayout({ children }) {
