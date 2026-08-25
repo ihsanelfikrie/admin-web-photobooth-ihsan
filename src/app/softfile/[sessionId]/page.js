@@ -225,14 +225,14 @@ export default function SoftfileGalleryPage() {
               <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
                 <div className="w-full flex justify-between items-center border-b border-slate-200 pb-3">
                   <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
-                    ③ 4 FOTO ASLI PER POSE ({singlePhotosList.length} FOTO)
+                    ③ {singlePhotosList.length} FOTO ASLI PER POSE
                   </span>
                   <span className="text-[11px] font-bold text-slate-500 uppercase">
                     RESOLUSI ASLI KAMERA
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 w-full">
                   {singlePhotosList.map((item, idx) => {
                     const photoUrl = typeof item === 'string' ? item : (item.publicUrl || item.url || item.filePath);
                     return (
