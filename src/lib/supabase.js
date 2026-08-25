@@ -13,6 +13,13 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 
 export const RETENTION_HOURS = parseInt(process.env.RETENTION_HOURS || '24', 10);
 
+export function resolvePublicCdnUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const filename = url.split('/').pop();
+  return filename ? `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filename}` : null;
+}
+
 /**
  * Helper to extract storage relative file path from public CDN URL
  * E.g. https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/print_123.jpg -> print_123.jpg
@@ -46,7 +53,25 @@ export async function getSessionMetadata(sessionId) {
     }
 
     const text = await data.text();
-    return JSON.parse(text);
+    const meta = JSON.parse(text);
+
+    // Normalize all media URLs to guaranteed public CDN URLs
+    if (meta) {
+      meta.cdnCompositeUrl = resolvePublicCdnUrl(meta.cdnCompositeUrl || meta.compositeUrl);
+      meta.compositeUrl = meta.cdnCompositeUrl || meta.compositeUrl;
+      meta.cdnVideoUrl = resolvePublicCdnUrl(meta.cdnVideoUrl || meta.videoUrl);
+      meta.videoUrl = meta.cdnVideoUrl || meta.videoUrl;
+      meta.cdnGifUrl = resolvePublicCdnUrl(meta.cdnGifUrl || meta.gifUrl);
+      meta.gifUrl = meta.cdnGifUrl || meta.gifUrl;
+      if (meta.singlePhotos && Array.isArray(meta.singlePhotos)) {
+        meta.singlePhotos = meta.singlePhotos.map((sp) => ({
+          ...sp,
+          publicUrl: resolvePublicCdnUrl(sp.cdnUrl || sp.publicUrl || sp.filePath),
+        }));
+      }
+    }
+
+    return meta;
   } catch (err) {
     console.error(`[Supabase] Error reading session ${sessionId}:`, err.message);
     return null;

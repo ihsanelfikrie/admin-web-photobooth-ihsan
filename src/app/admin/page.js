@@ -3,6 +3,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 
+const SUPABASE_CDN_BASE = 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets';
+
+function getDisplayCdnUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const filename = url.split('/').pop();
+  return filename ? `${SUPABASE_CDN_BASE}/${filename}` : null;
+}
+
 export default function OnlineAdminPage() {
   const [pinInput, setPinInput]               = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -531,29 +540,26 @@ export default function OnlineAdminPage() {
                               </span>
                             </td>
                             <td className="p-3.5">
-                              {s.compositeUrl ? (
-                                <a
-                                  href={s.compositeUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-[#120CD6] font-bold hover:underline"
-                                >
-                                  Lihat Foto 4R →
-                                </a>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
+                              <a
+                                href={`/softfile/${s.sessionId}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-[#120CD6] hover:bg-[#120CD6] hover:text-white rounded-xl font-black text-[11px] transition-all border border-blue-200"
+                              >
+                                <span>📱 Buka Softfile</span>
+                                <span>↗</span>
+                              </a>
                             </td>
                             <td className="p-3.5 flex items-center gap-2">
                               <button
                                 onClick={() => setSelectedSession(s)}
-                                className="px-3 py-1 bg-[#120CD6] text-white rounded-lg text-[11px] font-bold hover:bg-blue-800"
+                                className="px-3 py-1.5 bg-[#120CD6] text-white rounded-xl text-[11px] font-black uppercase hover:bg-blue-800 transition-all cursor-pointer shadow-xs"
                               >
                                 Detail
                               </button>
                               <button
                                 onClick={() => handleDeleteSession(s.sessionId)}
-                                className="px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold hover:bg-rose-100"
+                                className="px-3 py-1.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-black uppercase hover:bg-rose-100 transition-all cursor-pointer"
                               >
                                 Hapus
                               </button>
@@ -749,46 +755,70 @@ export default function OnlineAdminPage() {
       </main>
 
       {/* Session Preview Modal */}
-      {selectedSession && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 border-4 border-white shadow-2xl">
-            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-              <span className="font-mono font-black text-xs text-[#120CD6]">{selectedSession.sessionId}</span>
-              <button
-                onClick={() => setSelectedSession(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+      {selectedSession && (() => {
+        const photoUrl = getDisplayCdnUrl(selectedSession.cdnCompositeUrl || selectedSession.compositeUrl);
+        const videoUrl = getDisplayCdnUrl(selectedSession.cdnVideoUrl || selectedSession.videoUrl);
+        const gifUrl   = getDisplayCdnUrl(selectedSession.cdnGifUrl || selectedSession.gifUrl);
 
-            {selectedSession.compositeUrl && (
-              <div className="w-full aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-                <img src={selectedSession.compositeUrl} alt="Foto Sesi" className="w-full h-full object-contain" />
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              {selectedSession.compositeUrl && (
-                <a
-                  href={selectedSession.compositeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex-1 py-3 bg-[#120CD6] text-white text-center text-xs font-black rounded-xl uppercase"
+        return (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 border-4 border-white shadow-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                <div>
+                  <span className="font-mono font-black text-xs text-[#120CD6] block">{selectedSession.sessionId}</span>
+                  <span className="text-[11px] text-slate-500 font-semibold">
+                    {selectedSession.createdAt ? new Date(selectedSession.createdAt).toLocaleString('id-ID') : '-'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSelectedSession(null)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center cursor-pointer"
                 >
-                  Buka Foto Asli 4R ↗
-                </a>
+                  ✕
+                </button>
+              </div>
+
+              {/* 4R Photo Preview */}
+              {photoUrl && (
+                <div className="w-full aspect-[2/3] max-h-[50vh] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center p-1">
+                  <img src={photoUrl} alt="Foto Sesi 4R" className="w-full h-full object-contain rounded-xl" />
+                </div>
               )}
-              <button
-                onClick={() => handleDeleteSession(selectedSession.sessionId)}
-                className="py-3 px-4 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-100"
-              >
-                Hapus Sesi
-              </button>
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href={`/softfile/${selectedSession.sessionId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="py-3 px-3 bg-[#E5FD5F] hover:bg-[#d6f046] active:bg-[#F908E0] active:text-white text-[#111111] font-black text-xs rounded-xl uppercase text-center transition-all shadow-sm border border-[#120CD6]"
+                  >
+                    📱 Galeri Softfile ↗
+                  </a>
+                  {photoUrl && (
+                    <a
+                      href={photoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="py-3 px-3 bg-[#120CD6] hover:bg-blue-800 text-white font-black text-xs rounded-xl uppercase text-center transition-all shadow-sm"
+                    >
+                      🖼️ Buka Foto HD ↗
+                    </a>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleDeleteSession(selectedSession.sessionId)}
+                  className="w-full py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-black uppercase transition-all cursor-pointer"
+                >
+                  🗑️ Hapus Sesi Dari Cloud
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );
