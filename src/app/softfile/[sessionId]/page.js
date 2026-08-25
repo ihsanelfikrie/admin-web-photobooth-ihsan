@@ -91,6 +91,12 @@ export default function SoftfileGalleryPage() {
     }
   };
 
+  // Helper extracting all media URLs safely
+  const mainPhotoUrl = data?.compositeUrl || data?.printUrl || data?.publicUrl || null;
+  const videoMediaUrl = data?.videoUrl || data?.gifUrl || null;
+  const rawPhotos = data?.singlePhotos || data?.individualPhotos || [];
+  const singlePhotosList = Array.isArray(rawPhotos) ? rawPhotos : [];
+
   return (
     <main className="min-h-screen bg-[#120CD6] text-white p-4 md:p-8 flex flex-col items-center font-sans selection:bg-[#E5FD5F] selection:text-[#111111]">
       
@@ -153,11 +159,11 @@ export default function SoftfileGalleryPage() {
         {!loading && !expired && data && (
           <>
             {/* 1. Composed Final Frame Card */}
-            {data.printUrl && (
+            {mainPhotoUrl && (
               <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
                 <div className="w-full flex justify-between items-center border-b border-slate-200 pb-3">
                   <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
-                    ① HASIL FOTO UTAMA (4R HD)
+                    ① HASIL FOTO BINGKAI UTAMA (4R HD)
                   </span>
                   <span className="px-3 py-1 bg-[#E5FD5F] text-[#111111] text-[10px] font-black rounded-full uppercase">
                     SIAP CETAK &amp; SHARE
@@ -166,23 +172,23 @@ export default function SoftfileGalleryPage() {
 
                 <div className="relative max-w-md w-full bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm p-1">
                   <img
-                    src={data.printUrl}
+                    src={mainPhotoUrl}
                     alt="Hasil Foto KomvigI BOOTH"
                     className="w-full h-auto object-contain rounded-xl"
                   />
                 </div>
 
                 <button
-                  onClick={() => handleDownload(data.printUrl, `komvigi-booth-${sessionId}.jpg`)}
+                  onClick={() => handleDownload(mainPhotoUrl, `komvigi-booth-${sessionId}.jpg`)}
                   className="w-full max-w-md py-4 bg-[#E5FD5F] hover:bg-[#d6f046] active:bg-[#F908E0] active:text-white text-[#111111] font-black rounded-full transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-[#120CD6]"
                 >
-                  <span>⬇ UNDUH FOTO UTAMA HD</span>
+                  <span>⬇ UNDUH FOTO BINGKAI UTAMA HD</span>
                 </button>
               </section>
             )}
 
             {/* 2. Video Reel MP4 Card */}
-            {data.videoUrl && (
+            {videoMediaUrl && (
               <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
                 <div className="w-full flex justify-between items-center border-b border-slate-200 pb-3">
                   <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
@@ -195,7 +201,7 @@ export default function SoftfileGalleryPage() {
 
                 <div className="relative max-w-sm w-full bg-black rounded-2xl overflow-hidden shadow-sm aspect-[9/16] max-h-[440px] flex items-center justify-center">
                   <video
-                    src={data.videoUrl}
+                    src={videoMediaUrl}
                     controls
                     autoPlay
                     loop
@@ -206,7 +212,7 @@ export default function SoftfileGalleryPage() {
                 </div>
 
                 <button
-                  onClick={() => handleDownload(data.videoUrl, `komvigi-reel-${sessionId}.mp4`)}
+                  onClick={() => handleDownload(videoMediaUrl, `komvigi-reel-${sessionId}.mp4`)}
                   className="w-full max-w-md py-4 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black rounded-full transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-wider flex items-center justify-center gap-2"
                 >
                   <span>⬇ UNDUH VIDEO REEL MP4</span>
@@ -215,42 +221,45 @@ export default function SoftfileGalleryPage() {
             )}
 
             {/* 3. Individual Poses Card */}
-            {data.individualPhotos && data.individualPhotos.length > 0 && (
+            {singlePhotosList.length > 0 && (
               <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
                 <div className="w-full flex justify-between items-center border-b border-slate-200 pb-3">
                   <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
-                    ③ FOTO ASLI PER POSE ({data.individualPhotos.length} FOTO)
+                    ③ 4 FOTO ASLI PER POSE ({singlePhotosList.length} FOTO)
                   </span>
                   <span className="text-[11px] font-bold text-slate-500 uppercase">
-                    RESOLUSI ASLI CANON EOS
+                    RESOLUSI ASLI KAMERA
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
-                  {data.individualPhotos.map((photoUrl, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-slate-50 border border-slate-200 rounded-2xl p-2 flex flex-col items-center gap-2 shadow-xs"
-                    >
-                      <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200">
-                        <img
-                          src={photoUrl}
-                          alt={`Pose #${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <span className="absolute bottom-1 left-1 bg-black/85 text-white text-[9px] font-black px-2 py-0.5 rounded">
-                          #{idx + 1}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={() => handleDownload(photoUrl, `pose-${idx + 1}-${sessionId}.jpg`)}
-                        className="w-full py-2 bg-slate-100 hover:bg-[#E5FD5F] active:bg-[#F908E0] active:text-white text-[#111111] text-[10px] font-black rounded-xl transition-all cursor-pointer border border-slate-300"
+                  {singlePhotosList.map((item, idx) => {
+                    const photoUrl = typeof item === 'string' ? item : (item.publicUrl || item.url || item.filePath);
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-slate-50 border border-slate-200 rounded-2xl p-2 flex flex-col items-center gap-2 shadow-xs"
                       >
-                        UNDUH #{idx + 1}
-                      </button>
-                    </div>
-                  ))}
+                        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-slate-200">
+                          <img
+                            src={photoUrl}
+                            alt={`Pose #${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute bottom-1 left-1 bg-black/85 text-white text-[9px] font-black px-2 py-0.5 rounded">
+                            #{idx + 1}
+                          </span>
+                        </div>
+
+                        <button
+                          onClick={() => handleDownload(photoUrl, `pose-${idx + 1}-${sessionId}.jpg`)}
+                          className="w-full py-2 bg-slate-100 hover:bg-[#E5FD5F] active:bg-[#F908E0] active:text-white text-[#111111] text-[10px] font-black rounded-xl transition-all cursor-pointer border border-slate-300"
+                        >
+                          UNDUH #{idx + 1}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}

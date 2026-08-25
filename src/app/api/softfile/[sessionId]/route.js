@@ -38,16 +38,23 @@ export async function GET(req, { params }) {
       }, { status: 410 });
     }
 
+    const compUrl = session.cdnCompositeUrl || session.compositeUrl || session.printUrl || null;
+    const vidUrl  = session.cdnVideoUrl || session.videoUrl || null;
+    const gUrl    = session.cdnGifUrl || session.gifUrl || null;
+    const sPhotos = session.cdnSinglePhotos || session.singlePhotos || session.individualPhotos || [];
+
     return NextResponse.json({
       success: true,
       sessionId,
       createdAt,
       remainingSeconds,
       retentionHours: RETENTION_HOURS,
-      compositeUrl: session.cdnCompositeUrl || session.compositeUrl,
-      videoUrl: session.cdnVideoUrl || session.videoUrl || null,
-      gifUrl: session.cdnGifUrl || session.gifUrl || null,
-      singlePhotos: session.cdnSinglePhotos || session.singlePhotos || [],
+      compositeUrl: compUrl,
+      printUrl: compUrl,
+      videoUrl: vidUrl,
+      gifUrl: gUrl,
+      singlePhotos: sPhotos,
+      individualPhotos: sPhotos,
     });
   } catch (err) {
     console.error('[Softfile API] Error:', err);
