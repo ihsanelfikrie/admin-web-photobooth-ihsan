@@ -9,8 +9,8 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "KomvigI BOOTH — Galeri Softfile & Panel Admin Cloud",
-  description: "Galeri Softfile Digital & Panel Admin Cloud Resmi Kementerian Komunikasi Visual Digital DEMA UIN Antasari 2026-2027",
+  title: "TarasaBooth — Galeri Softfile & Panel Admin Cloud",
+  description: "Galeri Softfile Digital & Panel Admin Cloud Resmi TarasaBooth Photobooth Studio",
 };
 
 export default function RootLayout({ children }) {

@@ -103,10 +103,10 @@ export default function SoftfileGalleryPage() {
       {/* Top Banner Header */}
       <header className="w-full max-w-3xl flex flex-col items-center text-center py-6 border-b border-white/20 mb-6">
         <span className="px-4 py-1.5 bg-[#E5FD5F] text-[#111111] text-xs font-black rounded-full uppercase tracking-wider mb-3 shadow-md">
-          ✳ KEMENTERIAN KOMUNIKASI VISUAL DIGITAL • DEMA UIN ANTASARI
+          TARASABOOTH • SELF-SERVICE PHOTOBOOTH STUDIO
         </span>
         <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-          KomvigI BOOTH
+          TarasaBooth
         </h1>
         <p className="text-xs md:text-sm text-white/80 font-bold mt-1 uppercase tracking-wider">
           GALERI RESMI PENGUNDUHAN SOFTFILE DIGITAL
@@ -119,8 +119,8 @@ export default function SoftfileGalleryPage() {
               <span className="w-2.5 h-2.5 rounded-full bg-[#120CD6] animate-pulse" />
               <span className="text-slate-700 font-bold">Masa Aktif Softfile Cloud:</span>
             </div>
-            <span className="font-mono text-xs font-black bg-[#120CD6] text-[#E5FD5F] px-3.5 py-1 rounded-xl">
-              ⏱️ {formatRemainingTime(remainingSec)}
+            <span className="font-mono text-xs font-black bg-[#120CD6] text-[#E5FD5F] px-3.5 py-1 rounded-xl uppercase">
+              SISA: {formatRemainingTime(remainingSec)}
             </span>
           </div>
         )}
@@ -271,10 +271,10 @@ export default function SoftfileGalleryPage() {
       {/* Footer */}
       <footer className="w-full max-w-3xl flex flex-col sm:flex-row justify-between items-center text-xs text-white/80 py-4 border-t border-white/20 gap-2 text-center">
         <div className="font-semibold text-[11px]">
-          Kementerian Komunikasi Visual Digital (KomvigI) • DEMA UIN Antasari 2026-2027
+          TarasaBooth • Self-Service Photobooth Studio
         </div>
         <div className="text-[11px] font-bold text-[#E5FD5F]">
-          Banjarmasin, Kalimantan Selatan
+          Kiosk App
         </div>
       </footer>
     </main>

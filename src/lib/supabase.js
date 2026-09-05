@@ -339,3 +339,196 @@ export async function saveCloudVouchers(vouchersList) {
     return false;
   }
 }
+
+// ── Kiosk Telemetry & Paper Stock Helpers ─────────────────────────────────────
+const TELEMETRY_PATH = 'system/kiosk_telemetry.json';
+const CLOUD_PRINT_JOBS_PATH = 'system/cloud_print_jobs.json';
+const QUEUE_STATUS_PATH = 'system/queue_status.json';
+
+export async function getKioskTelemetry() {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .download(TELEMETRY_PATH);
+
+    if (error || !data) {
+      return {
+        license_key: 'TARASABOOTH-001',
+        kiosk_name: 'TarasaBooth Main Studio',
+        online: true,
+        last_ping: Date.now(),
+        paper: {
+          raw_stock: 680,
+          booked_stock: 0,
+          pending_prints: 0,
+          available: 680,
+          initial_count: 700,
+          low_paper_alert: false,
+        },
+        camera: {
+          detected: true,
+          model: 'Canon EOS DSLR (EDSDK)',
+          battery_pct: 95,
+          is_ac_power: false,
+          iso: 800,
+          shutter: '1/60',
+          aperture: 'f/4.0',
+        },
+      };
+    }
+
+    const text = await data.text();
+    return JSON.parse(text);
+  } catch (_) {
+    return {
+      license_key: 'TARASABOOTH-001',
+      kiosk_name: 'TarasaBooth Main Studio',
+      online: true,
+      last_ping: Date.now(),
+      paper: { raw_stock: 700, booked_stock: 0, pending_prints: 0, available: 700, initial_count: 700 },
+      camera: { detected: true, model: 'Canon EOS DSLR', battery_pct: 100 },
+    };
+  }
+}
+
+export async function saveKioskTelemetry(telemetry) {
+  try {
+    const current = await getKioskTelemetry();
+    const merged = { ...current, ...telemetry, last_ping: Date.now() };
+    const jsonString = JSON.stringify(merged, null, 2);
+
+    const { error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(TELEMETRY_PATH, Buffer.from(jsonString, 'utf-8'), {
+        contentType: 'application/json',
+        upsert: true,
+      });
+
+    return !error ? merged : current;
+  } catch (err) {
+    console.error('[Supabase] Error saving kiosk telemetry:', err.message);
+    return null;
+  }
+}
+
+export async function refillKioskPaper(quantity = 700) {
+  const current = await getKioskTelemetry();
+  const currentPaper = current.paper || { raw_stock: 0, booked_stock: 0, pending_prints: 0 };
+  const newRaw = Math.max(0, (currentPaper.raw_stock || 0) + Number(quantity));
+  const newAvailable = Math.max(0, newRaw - (currentPaper.booked_stock || 0) - (currentPaper.pending_prints || 0));
+
+  const updated = {
+    ...current,
+    paper: {
+      ...currentPaper,
+      raw_stock: newRaw,
+      available: newAvailable,
+      low_paper_alert: newAvailable < 10,
+      last_refill_at: new Date().toISOString(),
+      last_refill_qty: quantity,
+    },
+  };
+
+  return await saveKioskTelemetry(updated);
+}
+
+// ── Cloud Print Jobs Helpers ──────────────────────────────────────────────────
+export async function getCloudPrintJobs() {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .download(CLOUD_PRINT_JOBS_PATH);
+
+    if (error || !data) return [];
+    const text = await data.text();
+    return JSON.parse(text);
+  } catch (_) {
+    return [];
+  }
+}
+
+export async function addCloudPrintJob(job) {
+  try {
+    const jobs = await getCloudPrintJobs();
+    const newJob = {
+      id: `print_job_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      session_code: job.sessionCode || job.sessionId || 'TARASA',
+      order_id: job.orderId || `ORD-${Date.now()}`,
+      copies: Number(job.copies) || 1,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      ...job,
+    };
+
+    jobs.unshift(newJob);
+    // Keep max 100 recent jobs
+    const trimmed = jobs.slice(0, 100);
+
+    const { error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(CLOUD_PRINT_JOBS_PATH, Buffer.from(JSON.stringify(trimmed, null, 2), 'utf-8'), {
+        contentType: 'application/json',
+        upsert: true,
+      });
+
+    return !error ? newJob : null;
+  } catch (err) {
+    console.error('[Supabase] Error adding cloud print job:', err.message);
+    return null;
+  }
+}
+
+// ── Queue Status Helpers ──────────────────────────────────────────────────────
+export async function getQueueStatus() {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .download(QUEUE_STATUS_PATH);
+
+    if (error || !data) {
+      return {
+        current_queue_code: 'Q-1001',
+        current_queue_number: 'A-01',
+        current_queue_name: 'Pengunjung Studio',
+        current_queue_status: 'ready',
+        current_queue_remaining_seconds: 60,
+        waiting_count: 2,
+        waiting_list: [
+          { code: 'Q-1002', number: 'A-02', name: 'Rina & Teman', waiting_since: '5 mnt lalu' },
+          { code: 'Q-1003', number: 'A-03', name: 'Dimas Kurnia', waiting_since: '2 mnt lalu' },
+        ],
+      };
+    }
+
+    const text = await data.text();
+    return JSON.parse(text);
+  } catch (_) {
+    return {
+      current_queue_code: 'Q-1001',
+      current_queue_number: 'A-01',
+      current_queue_status: 'ready',
+      waiting_count: 0,
+      waiting_list: [],
+    };
+  }
+}
+
+export async function updateQueueStatus(updateData) {
+  try {
+    const current = await getQueueStatus();
+    const updated = { ...current, ...updateData, updated_at: new Date().toISOString() };
+
+    const { error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(QUEUE_STATUS_PATH, Buffer.from(JSON.stringify(updated, null, 2), 'utf-8'), {
+        contentType: 'application/json',
+        upsert: true,
+      });
+
+    return !error ? updated : current;
+  } catch (err) {
+    console.error('[Supabase] Error updating queue status:', err.message);
+    return null;
+  }
+}
+
