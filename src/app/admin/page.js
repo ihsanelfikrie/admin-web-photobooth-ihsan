@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import QRCode from 'qrcode';
+import JSZip from 'jszip';
 
 const SUPABASE_CDN_BASE = 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets';
 
@@ -18,7 +19,7 @@ export default function OnlineAdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinError, setPinError]               = useState(false);
 
-  // Tabs: 'dashboard' | 'sessions' | 'kiosk' | 'queue' | 'vouchers' | 'cleanup'
+  // Tabs: 'dashboard' | 'finance' | 'sessions' | 'kiosk' | 'frames' | 'queue' | 'vouchers' | 'cleanup'
   const [activeTab, setActiveTab]             = useState('dashboard');
 
   // Data States
@@ -27,6 +28,10 @@ export default function OnlineAdminPage() {
   const [vouchers, setVouchers]               = useState([]);
   const [telemetry, setTelemetry]             = useState(null);
   const [queue, setQueue]                     = useState(null);
+  const [frames, setFrames]                   = useState([]);
+  const [finance, setFinance]                 = useState(null);
+  const [financeRange, setFinanceRange]       = useState('all'); // 'all' | 'today' | 'week' | 'month'
+
   const [searchQuery, setSearchQuery]         = useState('');
   const [statusFilter, setStatusFilter]       = useState('all');
 
@@ -35,9 +40,11 @@ export default function OnlineAdminPage() {
   const [qrModalSession, setQrModalSession]   = useState(null);
   const [qrDataUrl, setQrDataUrl]             = useState(null);
   const [toastMessage, setToastMessage]       = useState(null);
+  const [zipping, setZipping]                 = useState(false);
 
   // Form States
-  const [refillQty, setRefillQty]             = useState(700);
+  const [announcementInput, setAnnouncementInput] = useState('');
+  const [announcementActive, setAnnouncementActive] = useState(true);
   const [voucherCode, setVoucherCode]         = useState('');
   const [voucherType, setVoucherType]         = useState('free');
   const [voucherValue, setVoucherValue]       = useState('100');
@@ -74,6 +81,8 @@ export default function OnlineAdminPage() {
         loadVouchers(pin);
         loadTelemetry();
         loadQueue();
+        loadFrames();
+        loadFinance(financeRange, pin);
       } else {
         setPinError(true);
       }
@@ -130,7 +139,13 @@ export default function OnlineAdminPage() {
     try {
       const res  = await fetch('/api/kiosk/status');
       const json = await res.json();
-      if (json.success) setTelemetry(json.telemetry);
+      if (json.success) {
+        setTelemetry(json.telemetry);
+        if (json.telemetry?.announcement) {
+          setAnnouncementInput(json.telemetry.announcement.text || '');
+          setAnnouncementActive(json.telemetry.announcement.active !== false);
+        }
+      }
     } catch (err) {
       console.error('Failed to load telemetry:', err);
     }
@@ -143,6 +158,26 @@ export default function OnlineAdminPage() {
       if (json.success) setQueue(json.queue);
     } catch (err) {
       console.error('Failed to load queue:', err);
+    }
+  };
+
+  const loadFrames = async () => {
+    try {
+      const res  = await fetch('/api/frames');
+      const json = await res.json();
+      if (json.success) setFrames(json.frames || []);
+    } catch (err) {
+      console.error('Failed to load frames:', err);
+    }
+  };
+
+  const loadFinance = async (range = financeRange, pin = currentPin) => {
+    try {
+      const res  = await fetch(`/api/finance?range=${range}&pin=${pin}`);
+      const json = await res.json();
+      if (json.success) setFinance(json.finance);
+    } catch (err) {
+      console.error('Failed to load finance:', err);
     }
   };
 
@@ -189,6 +224,184 @@ export default function OnlineAdminPage() {
       showToast('Gagal memproses refill kertas', 'error');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  // One-Click Event Mode Switcher
+  const handleToggleEventMode = async () => {
+    const isEvent = telemetry?.is_event_mode;
+    const confirmMsg = isEvent
+      ? 'Nonaktifkan Mode Event? Photobooth akan kembali ke Mode Komersial (wajib bayar QRIS).'
+      : 'Aktifkan Mode Event? Photobooth akan bebas bayar (pengunjung langsung melangkah memilih frame & foto gratis).';
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      setActionLoading(true);
+      const res = await fetch('/api/kiosk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle_event_mode', pin: currentPin }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setTelemetry(json.telemetry);
+        showToast(json.message);
+      } else {
+        showToast(json.error || 'Gagal mengubah mode event', 'error');
+      }
+    } catch (err) {
+      showToast('Gagal mengubah mode event', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Live Announcement Updater
+  const handleSaveAnnouncement = async (e) => {
+    e.preventDefault();
+    try {
+      setActionLoading(true);
+      const res = await fetch('/api/kiosk/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_announcement',
+          announcement: {
+            text: announcementInput.trim(),
+            active: announcementActive,
+            updated_at: Date.now(),
+          },
+          pin: currentPin,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setTelemetry(json.telemetry);
+        showToast('Pengumuman layar Kiosk berhasil diperbarui!');
+      } else {
+        showToast(json.error || 'Gagal memperbarui pengumuman', 'error');
+      }
+    } catch (err) {
+      showToast('Gagal memperbarui pengumuman', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Frame Catalog Toggle
+  const handleToggleFrame = async (frameId) => {
+    try {
+      setActionLoading(true);
+      const res = await fetch('/api/frames', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle', frameId, pin: currentPin }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setFrames(json.frames);
+        showToast('Status bingkai berhasil diperbarui.');
+      } else {
+        showToast(json.error || 'Gagal memperbarui bingkai', 'error');
+      }
+    } catch (err) {
+      showToast('Gagal memproses bingkai', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Export Financial CSV
+  const handleExportCsv = () => {
+    if (!finance?.transactions || finance.transactions.length === 0) {
+      showToast('Tidak ada data transaksi untuk diekspor', 'error');
+      return;
+    }
+
+    const headers = ['Order ID', 'ID Sesi', 'Waktu Transaksi', 'Metode Pembayaran', 'Harga Asli (Rp)', 'Total Bayar (Rp)', 'Status'];
+    const rows = finance.transactions.map(t => [
+      `"${t.orderId}"`,
+      `"${t.sessionId}"`,
+      `"${new Date(t.createdAt).toLocaleString('id-ID')}"`,
+      `"${t.paymentMethod}"`,
+      t.originalPrice,
+      t.amount,
+      `"${t.status}"`,
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `tarasabooth-laporan-keuangan-${financeRange}-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('Laporan CSV berhasil diunduh!');
+  };
+
+  // One-Click Session ZIP Downloader (JSZip)
+  const handleDownloadZip = async (session) => {
+    if (!session) return;
+    setZipping(true);
+    showToast('Sedang menyiapkan arsip ZIP softfile...');
+
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder(`tarasabooth-${session.sessionId}`);
+
+      // 1. Composite Frame
+      const compUrl = getDisplayCdnUrl(session.cdnCompositeUrl || session.compositeUrl);
+      if (compUrl) {
+        try {
+          const res = await fetch(compUrl);
+          const blob = await res.blob();
+          folder.file(`hasil-bingkai-4r-${session.sessionId}.jpg`, blob);
+        } catch (_) {}
+      }
+
+      // 2. Video Reel MP4
+      const videoUrl = getDisplayCdnUrl(session.cdnVideoUrl || session.videoUrl);
+      if (videoUrl) {
+        try {
+          const res = await fetch(videoUrl);
+          const blob = await res.blob();
+          folder.file(`video-reel-${session.sessionId}.mp4`, blob);
+        } catch (_) {}
+      }
+
+      // 3. Single Poses
+      const singles = session.singlePhotos || session.cdnSinglePhotos || [];
+      for (let i = 0; i < singles.length; i++) {
+        const item = singles[i];
+        const sUrl = getDisplayCdnUrl(typeof item === 'string' ? item : (item.publicUrl || item.url || item.filePath));
+        if (sUrl) {
+          try {
+            const res = await fetch(sUrl);
+            const blob = await res.blob();
+            folder.file(`pose-${i + 1}-${session.sessionId}.jpg`, blob);
+          } catch (_) {}
+        }
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const blobUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `tarasabooth-paket-lengkap-${session.sessionId}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+
+      showToast(`Paket ZIP sesi ${session.sessionId} berhasil diunduh!`);
+    } catch (err) {
+      console.error('ZIP error:', err);
+      showToast('Gagal membuat paket ZIP', 'error');
+    } finally {
+      setZipping(false);
     }
   };
 
@@ -488,7 +701,7 @@ export default function OnlineAdminPage() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar w-full md:w-auto">
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 no-scrollbar w-full md:w-auto">
           <div className="flex items-center gap-1 bg-white/10 p-1 rounded-full border border-white/20 text-xs font-bold shrink-0">
             <button
               onClick={() => setActiveTab('dashboard')}
@@ -497,6 +710,14 @@ export default function OnlineAdminPage() {
               }`}
             >
               Ringkasan
+            </button>
+            <button
+              onClick={() => { setActiveTab('finance'); loadFinance(financeRange); }}
+              className={`px-3 py-1.5 rounded-full transition-all cursor-pointer shrink-0 text-xs ${
+                activeTab === 'finance' ? 'bg-[#E5FD5F] text-[#111111] shadow-xs font-black' : 'text-white hover:bg-white/10'
+              }`}
+            >
+              Keuangan
             </button>
             <button
               onClick={() => { setActiveTab('sessions'); loadSessions(); }}
@@ -515,6 +736,14 @@ export default function OnlineAdminPage() {
               Kiosk &amp; Kertas
             </button>
             <button
+              onClick={() => { setActiveTab('frames'); loadFrames(); }}
+              className={`px-3 py-1.5 rounded-full transition-all cursor-pointer shrink-0 text-xs ${
+                activeTab === 'frames' ? 'bg-[#E5FD5F] text-[#111111] shadow-xs font-black' : 'text-white hover:bg-white/10'
+              }`}
+            >
+              Frame ({frames.length})
+            </button>
+            <button
               onClick={() => { setActiveTab('queue'); loadQueue(); }}
               className={`px-3 py-1.5 rounded-full transition-all cursor-pointer shrink-0 text-xs ${
                 activeTab === 'queue' ? 'bg-[#E5FD5F] text-[#111111] shadow-xs font-black' : 'text-white hover:bg-white/10'
@@ -528,7 +757,7 @@ export default function OnlineAdminPage() {
                 activeTab === 'vouchers' ? 'bg-[#E5FD5F] text-[#111111] shadow-xs font-black' : 'text-white hover:bg-white/10'
               }`}
             >
-              Voucher ({vouchers.length})
+              Voucher
             </button>
             <button
               onClick={() => setActiveTab('cleanup')}
@@ -581,12 +810,12 @@ export default function OnlineAdminPage() {
               </div>
 
               <div className="bg-white p-4 sm:p-5 rounded-3xl border-2 border-[#F908E0]/40 shadow-sm flex flex-col justify-between">
-                <span className="text-[10px] sm:text-xs font-bold text-[#F908E0] uppercase">Kamera Canon EOS</span>
-                <div className="text-xl sm:text-2xl font-black text-[#111111] mt-2">
-                  {telemetry?.camera?.detected ? 'TERHUBUNG' : 'SIMULASI'}
+                <span className="text-[10px] sm:text-xs font-bold text-[#F908E0] uppercase">Mode Kiosk</span>
+                <div className="text-lg sm:text-xl font-black text-[#111111] mt-2 truncate">
+                  {telemetry?.is_event_mode ? 'EVENT (FREE)' : 'KOMERSIAL (QRIS)'}
                 </div>
                 <span className="text-[9px] sm:text-[10px] text-slate-500 font-semibold mt-1">
-                  Baterai: {telemetry?.camera?.battery_pct ?? 100}%
+                  Kamera: {telemetry?.camera?.detected ? 'Canon EOS' : 'Simulasi'}
                 </span>
               </div>
             </div>
@@ -595,22 +824,29 @@ export default function OnlineAdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-slate-200 shadow-sm space-y-4">
                 <h3 className="font-black text-sm uppercase text-[#120CD6] tracking-wider">
-                  AKSI CEPAT TEKNISI
+                  AKSI CEPAT PUSAT KENDALI
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setActiveTab('sessions')}
+                    onClick={() => { setActiveTab('finance'); loadFinance(); }}
                     className="p-3 bg-slate-50 hover:bg-[#E5FD5F] border border-slate-200 rounded-2xl text-left transition-all cursor-pointer"
                   >
-                    <div className="text-xs font-black uppercase text-[#111111]">Lihat Semua Sesi</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Cetak ulang &amp; softfile</div>
+                    <div className="text-xs font-black uppercase text-[#111111]">Laporan Keuangan</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Omset &amp; ekspor CSV</div>
                   </button>
                   <button
                     onClick={() => setActiveTab('kiosk')}
                     className="p-3 bg-slate-50 hover:bg-[#E5FD5F] border border-slate-200 rounded-2xl text-left transition-all cursor-pointer"
                   >
-                    <div className="text-xs font-black uppercase text-[#111111]">Refill Kertas</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Tambah kuota cetak</div>
+                    <div className="text-xs font-black uppercase text-[#111111]">Mode Event &amp; Refill</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Saklar bebas bayar</div>
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('frames'); loadFrames(); }}
+                    className="p-3 bg-slate-50 hover:bg-[#E5FD5F] border border-slate-200 rounded-2xl text-left transition-all cursor-pointer"
+                  >
+                    <div className="text-xs font-black uppercase text-[#111111]">Katalog Bingkai</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Aktifkan / matikan</div>
                   </button>
                   <button
                     onClick={() => setActiveTab('queue')}
@@ -618,13 +854,6 @@ export default function OnlineAdminPage() {
                   >
                     <div className="text-xs font-black uppercase text-[#111111]">Panggil Antrian</div>
                     <div className="text-[10px] text-slate-500 mt-0.5">Kontrol tiket masuk</div>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('vouchers')}
-                    className="p-3 bg-slate-50 hover:bg-[#E5FD5F] border border-slate-200 rounded-2xl text-left transition-all cursor-pointer"
-                  >
-                    <div className="text-xs font-black uppercase text-[#111111]">Buat Voucher</div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">Diskon &amp; free pass</div>
                   </button>
                 </div>
               </div>
@@ -655,7 +884,145 @@ export default function OnlineAdminPage() {
           </div>
         )}
 
-        {/* ── TAB 2: SESSIONS ──────────────────────────────────────────── */}
+        {/* ── TAB 2: FINANCE (REKAP KEUANGAN & CSV EXPORT) ─────────────── */}
+        {activeTab === 'finance' && (
+          <div className="space-y-5">
+            
+            {/* Header & Filter Bar */}
+            <div className="bg-[#120CD6] text-white p-6 rounded-3xl shadow-md border-2 border-[#120CD6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <span className="px-3 py-1 bg-[#E5FD5F] text-[#111111] rounded-full text-[10px] font-black uppercase tracking-wider">
+                  LAPORAN PEMBUKUAN
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black mt-2 uppercase tracking-tight">
+                  Rekap Keuangan &amp; Penjualan
+                </h2>
+                <p className="text-xs text-white/80 mt-0.5">
+                  Ringkasan pendapatan dari QRIS, Tunai, dan penggunaan Voucher photobooth.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportCsv}
+                  className="px-5 py-2.5 bg-[#E5FD5F] hover:bg-[#d6f046] text-[#111111] rounded-full text-xs font-black uppercase transition cursor-pointer shadow-md flex items-center gap-2"
+                >
+                  <span>⬇ EKSPOR LAPORAN CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Time Filter Pills */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              {[
+                { id: 'all', label: 'Semua Waktu' },
+                { id: 'today', label: 'Hari Ini (24 Jam)' },
+                { id: 'week', label: '7 Hari Terakhir' },
+                { id: 'month', label: '30 Hari Terakhir' },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => { setFinanceRange(f.id); loadFinance(f.id); }}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition cursor-pointer ${
+                    financeRange === f.id ? 'bg-[#120CD6] text-[#E5FD5F] shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Financial Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-sm">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Total Pendapatan Kotor (Gross)</span>
+                <div className="text-2xl sm:text-3xl font-black text-[#120CD6] mt-2">
+                  Rp {(finance?.totalGross || 0).toLocaleString('id-ID')}
+                </div>
+                <span className="text-[10px] text-slate-400 font-semibold mt-1 block">
+                  Dari {finance?.totalSessions || 0} total sesi foto
+                </span>
+              </div>
+
+              <div className="bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-sm">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">QRIS Midtrans</span>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-600 mt-2">
+                  Rp {(finance?.breakdown?.qris?.amount || 0).toLocaleString('id-ID')}
+                </div>
+                <span className="text-[10px] text-slate-400 font-semibold mt-1 block">
+                  {finance?.breakdown?.qris?.count || 0} transaksi non-tunai
+                </span>
+              </div>
+
+              <div className="bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-sm">
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Tunai &amp; Voucher Free Pass</span>
+                <div className="text-2xl sm:text-3xl font-black text-[#F908E0] mt-2">
+                  Rp {(finance?.breakdown?.cash?.amount || 0).toLocaleString('id-ID')}
+                </div>
+                <span className="text-[10px] text-slate-400 font-semibold mt-1 block">
+                  Tunai: {finance?.breakdown?.cash?.count || 0} • Free Pass: {finance?.breakdown?.voucher?.count || 0}
+                </span>
+              </div>
+            </div>
+
+            {/* Transactions Table */}
+            <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+                <h3 className="font-black text-xs uppercase text-[#120CD6]">
+                  RINCIAN TRANSAKSI ({finance?.transactions?.length || 0})
+                </h3>
+              </div>
+
+              <div className="overflow-x-auto max-h-[50vh]">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-500 sticky top-0">
+                    <tr>
+                      <th className="p-3">Order ID</th>
+                      <th className="p-3">Sesi</th>
+                      <th className="p-3">Waktu</th>
+                      <th className="p-3">Metode</th>
+                      <th className="p-3 text-right">Nominal</th>
+                      <th className="p-3 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(!finance?.transactions || finance.transactions.length === 0) ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-400 font-bold">
+                          Belum ada transaksi pada periode ini.
+                        </td>
+                      </tr>
+                    ) : (
+                      finance.transactions.map((t, idx) => (
+                        <tr key={t.orderId || idx} className="hover:bg-slate-50">
+                          <td className="p-3 font-mono font-bold text-slate-800">{t.orderId}</td>
+                          <td className="p-3 font-mono text-[#120CD6] font-semibold">{t.sessionId}</td>
+                          <td className="p-3 text-slate-500 text-[11px]">
+                            {new Date(t.createdAt).toLocaleDateString('id-ID', {
+                              day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                            })}
+                          </td>
+                          <td className="p-3 font-semibold text-slate-700">{t.paymentMethod}</td>
+                          <td className="p-3 text-right font-black text-slate-900">
+                            Rp {t.amount.toLocaleString('id-ID')}
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase">
+                              {t.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ── TAB 3: SESSIONS (WITH ONE-CLICK ZIP EXPORT) ──────────────── */}
         {activeTab === 'sessions' && (
           <div className="space-y-4">
             
@@ -695,7 +1062,7 @@ export default function OnlineAdminPage() {
               </div>
             </div>
 
-            {/* Sessions Table (Desktop) & Cards (Mobile) */}
+            {/* Sessions Table */}
             <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm overflow-hidden">
               {filteredSessions.length === 0 ? (
                 <div className="p-12 text-center text-slate-400 font-bold text-xs uppercase">
@@ -760,6 +1127,14 @@ export default function OnlineAdminPage() {
                             <td className="p-3 sm:p-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
+                                  onClick={() => handleDownloadZip(session)}
+                                  disabled={zipping}
+                                  className="px-2.5 py-1 bg-slate-100 hover:bg-[#E5FD5F] text-[#111111] text-[10px] font-black rounded-lg transition-all cursor-pointer"
+                                  title="Unduh Paket ZIP"
+                                >
+                                  ZIP
+                                </button>
+                                <button
                                   onClick={() => openQrModal(session)}
                                   className="px-2.5 py-1 bg-slate-100 hover:bg-[#E5FD5F] text-[#111111] text-[10px] font-black rounded-lg transition-all cursor-pointer"
                                   title="Tampilkan QR Code"
@@ -778,7 +1153,7 @@ export default function OnlineAdminPage() {
                                   className="px-2.5 py-1 bg-[#120CD6] text-[#E5FD5F] hover:bg-blue-800 text-[10px] font-black rounded-lg transition-all cursor-pointer shadow-xs"
                                   title="Kirim ke Printer Kiosk"
                                 >
-                                  Cetak Ulang
+                                  Cetak
                                 </button>
                                 <button
                                   onClick={() => handleDeleteSession(session.sessionId)}
@@ -801,7 +1176,7 @@ export default function OnlineAdminPage() {
           </div>
         )}
 
-        {/* ── TAB 3: KIOSK & KERTAS (HARDWARE TELEMETRY) ───────────────── */}
+        {/* ── TAB 4: KIOSK & KERTAS (EVENT MODE & MARQUEE) ─────────────── */}
         {activeTab === 'kiosk' && (
           <div className="space-y-5">
             
@@ -809,7 +1184,7 @@ export default function OnlineAdminPage() {
             <div className="bg-[#120CD6] text-white p-6 rounded-3xl shadow-md border-2 border-[#120CD6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <span className="px-3 py-1 bg-[#E5FD5F] text-[#111111] rounded-full text-[10px] font-black uppercase tracking-wider">
-                  TELEMETRI MESIN
+                  TELEMETRI MESIN &amp; SAKLAR EVENT
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black mt-2 uppercase tracking-tight">
                   Status Kiosk &amp; Monitor Kertas
@@ -819,12 +1194,19 @@ export default function OnlineAdminPage() {
                 </p>
               </div>
 
-              <button
-                onClick={loadTelemetry}
-                className="px-4 py-2 bg-[#E5FD5F] text-[#111111] rounded-full text-xs font-black uppercase hover:opacity-95 transition cursor-pointer shrink-0"
-              >
-                Cek Ulang Status
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleToggleEventMode}
+                  disabled={actionLoading}
+                  className={`px-5 py-2.5 rounded-full text-xs font-black uppercase transition cursor-pointer shadow-md ${
+                    telemetry?.is_event_mode
+                      ? 'bg-[#F908E0] text-white hover:bg-pink-600'
+                      : 'bg-[#E5FD5F] text-[#111111] hover:bg-[#d6f046]'
+                  }`}
+                >
+                  {telemetry?.is_event_mode ? '★ MODE EVENT AKTIF (BEBAS BAYAR)' : 'MODE KOMERSIAL (BAYAR QRIS)'}
+                </button>
+              </div>
             </div>
 
             {/* Paper Stock Formula Emas Card */}
@@ -901,10 +1283,57 @@ export default function OnlineAdminPage() {
               </div>
             </div>
 
-            {/* Camera & Machine Hardware Details */}
+            {/* Live Kiosk Announcement Banner Editor */}
+            <div className="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                <span className="text-xs font-black uppercase text-[#120CD6]">
+                  PENGUMUMAN RUNNING TEXT DI LAYAR KIOSK (LIVE MARQUEE)
+                </span>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                  announcementActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {announcementActive ? 'Tayang di Kiosk' : 'Mati'}
+                </span>
+              </div>
+
+              <form onSubmit={handleSaveAnnouncement} className="space-y-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Teks Pengumuman (Contoh: "Selamat Menempuh Hidup Baru Sarah &amp; Rian!" atau "Promo Diskon 50%!"):
+                  </label>
+                  <input
+                    type="text"
+                    value={announcementInput}
+                    onChange={(e) => setAnnouncementInput(e.target.value)}
+                    placeholder="Ketik teks pesan pengumuman..."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-bold focus:outline-none focus:border-[#120CD6]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={announcementActive}
+                      onChange={(e) => setAnnouncementActive(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#120CD6]"
+                    />
+                    <span>Aktifkan tampilan banner di layar booth</span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="px-5 py-2.5 bg-[#120CD6] text-[#E5FD5F] font-black text-xs rounded-xl uppercase hover:bg-blue-800 transition cursor-pointer shadow-xs"
+                  >
+                    Simpan &amp; Tayangkan
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Hardware Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
-              {/* Canon DSLR Hardware */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-slate-200 shadow-sm space-y-3">
                 <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                   <span className="text-xs font-black uppercase text-[#120CD6]">Kamera Canon EOS (EDSDK)</span>
@@ -926,14 +1355,9 @@ export default function OnlineAdminPage() {
                     <span className="text-slate-500">Exposure Mode:</span>
                     <span className="font-bold">Auto Strobe Switching</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">ISO / Shutter / Diafragma:</span>
-                    <span className="font-mono font-bold">ISO 800 • 1/60s • f/4.0</span>
-                  </div>
                 </div>
               </div>
 
-              {/* Machine Heartbeat & OS */}
               <div className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-slate-200 shadow-sm space-y-3">
                 <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                   <span className="text-xs font-black uppercase text-[#120CD6]">Konektivitas Mesin Kiosk</span>
@@ -951,23 +1375,92 @@ export default function OnlineAdminPage() {
                     <span className="text-slate-500">Ping Terakhir:</span>
                     <span className="font-bold">Baru saja (Real-Time)</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Format Kertas:</span>
-                    <span className="font-bold">Dual-Size (2x6 Strip &amp; 4R Postcard)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Resolusi Cetak:</span>
-                    <span className="font-mono font-bold">1800×1200 px @ 300 DPI</span>
-                  </div>
                 </div>
               </div>
-
             </div>
 
           </div>
         )}
 
-        {/* ── TAB 4: QUEUE (KONTROL ANTRIAN PELANGGAN) ─────────────────── */}
+        {/* ── TAB 5: FRAMES (KATALOG BINGKAI ONLINE) ───────────────────── */}
+        {activeTab === 'frames' && (
+          <div className="space-y-5">
+            
+            {/* Header Banner */}
+            <div className="bg-[#120CD6] text-white p-6 rounded-3xl shadow-md border-2 border-[#120CD6] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <span className="px-3 py-1 bg-[#E5FD5F] text-[#111111] rounded-full text-[10px] font-black uppercase tracking-wider">
+                  KATALOG TEMPLATE
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black mt-2 uppercase tracking-tight">
+                  Manajemen Bingkai Foto Online
+                </h2>
+                <p className="text-xs text-white/80 mt-0.5">
+                  Aktifkan atau matikan template bingkai yang tampil di layar bilik foto langsung dari HP Anda.
+                </p>
+              </div>
+
+              <button
+                onClick={loadFrames}
+                className="px-4 py-2 bg-[#E5FD5F] text-[#111111] rounded-full text-xs font-black uppercase hover:opacity-95 transition cursor-pointer shrink-0"
+              >
+                Refresh Katalog
+              </button>
+            </div>
+
+            {/* Frames Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {frames.map((frame) => (
+                <div
+                  key={frame.id}
+                  className={`bg-white rounded-3xl border-2 p-4 shadow-sm flex flex-col justify-between transition-all ${
+                    frame.active ? 'border-slate-200' : 'border-slate-300 opacity-60 bg-slate-50'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="aspect-[2/3] bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 flex items-center justify-center p-2 relative">
+                      {frame.previewUrl ? (
+                        <img src={frame.previewUrl} alt={frame.name} className="w-full h-full object-contain" />
+                      ) : (
+                        <div className="text-center">
+                          <span className="text-xs font-black text-[#120CD6] uppercase">{frame.id}</span>
+                          <span className="text-[10px] text-slate-400 block mt-1">{frame.width}×{frame.height}px</span>
+                        </div>
+                      )}
+
+                      <span className={`absolute top-2 right-2 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase shadow-xs ${
+                        frame.active ? 'bg-[#E5FD5F] text-[#111111]' : 'bg-slate-300 text-slate-700'
+                      }`}>
+                        {frame.active ? 'Aktif di Kiosk' : 'Disembunyikan'}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-black text-[#F908E0] uppercase tracking-wider">{frame.category || 'Umum'}</span>
+                      <h4 className="font-black text-sm text-slate-900 truncate">{frame.name}</h4>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{frame.photoCount} Pose • {frame.description || 'Template resmi TarasaBooth'}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleToggleFrame(frame.id)}
+                    disabled={actionLoading}
+                    className={`mt-4 w-full py-2.5 rounded-xl text-xs font-black uppercase transition cursor-pointer ${
+                      frame.active
+                        ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white'
+                        : 'bg-[#120CD6] text-[#E5FD5F] hover:bg-blue-800'
+                    }`}
+                  >
+                    {frame.active ? 'Sembunyikan dari Kiosk' : 'Aktifkan di Kiosk'}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+          </div>
+        )}
+
+        {/* ── TAB 6: QUEUE (KONTROL ANTRIAN PELANGGAN) ─────────────────── */}
         {activeTab === 'queue' && (
           <div className="space-y-5">
             
@@ -1064,11 +1557,9 @@ export default function OnlineAdminPage() {
           </div>
         )}
 
-        {/* ── TAB 5: VOUCHERS ──────────────────────────────────────────── */}
+        {/* ── TAB 7: VOUCHERS ──────────────────────────────────────────── */}
         {activeTab === 'vouchers' && (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-            
-            {/* Left: Create Voucher Form */}
             <div className="md:col-span-5 bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-sm space-y-4">
               <h3 className="text-xs font-black uppercase text-[#120CD6] tracking-wider">
                 TAMBAH VOUCHER BARU
@@ -1149,7 +1640,6 @@ export default function OnlineAdminPage() {
               </form>
             </div>
 
-            {/* Right: Voucher List */}
             <div className="md:col-span-7 bg-white p-6 rounded-3xl border-2 border-slate-200 shadow-sm space-y-3">
               <h3 className="text-xs font-black uppercase text-[#120CD6] tracking-wider">
                 DAFTAR VOUCHER AKTIF ({vouchers.length})
@@ -1190,11 +1680,10 @@ export default function OnlineAdminPage() {
                 ))}
               </div>
             </div>
-
           </div>
         )}
 
-        {/* ── TAB 6: CLEANUP ───────────────────────────────────────────── */}
+        {/* ── TAB 8: CLEANUP ───────────────────────────────────────────── */}
         {activeTab === 'cleanup' && (
           <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-200 shadow-sm space-y-4 max-w-2xl mx-auto">
             <h3 className="text-base font-black uppercase text-[#120CD6]">
@@ -1268,7 +1757,7 @@ export default function OnlineAdminPage() {
         </div>
       )}
 
-      {/* ── MODAL: DETAIL SESI ────────────────────────────────────────── */}
+      {/* ── MODAL: DETAIL SESI (WITH ZIP EXPORT) ───────────────────────── */}
       {selectedSession && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
           <div className="bg-white text-[#111111] rounded-3xl p-6 max-w-lg w-full shadow-2xl border-2 border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in">
@@ -1298,7 +1787,14 @@ export default function OnlineAdminPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-2">
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              <button
+                onClick={() => handleDownloadZip(selectedSession)}
+                disabled={zipping}
+                className="py-3 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-black uppercase transition cursor-pointer"
+              >
+                {zipping ? 'Menyiapkan...' : '⬇ Unduh ZIP'}
+              </button>
               <button
                 onClick={() => {
                   handleCloudReprint(selectedSession.sessionId);
@@ -1306,7 +1802,7 @@ export default function OnlineAdminPage() {
                 }}
                 className="py-3 bg-[#120CD6] text-[#E5FD5F] rounded-xl text-xs font-black uppercase hover:bg-blue-800 transition cursor-pointer"
               >
-                Cetak Ulang ke Booth
+                Cetak Ulang
               </button>
               <button
                 onClick={() => {
@@ -1315,7 +1811,7 @@ export default function OnlineAdminPage() {
                 }}
                 className="py-3 bg-[#E5FD5F] text-[#111111] rounded-xl text-xs font-black uppercase hover:opacity-90 transition cursor-pointer"
               >
-                Tampilkan QR
+                Lihat QR
               </button>
             </div>
           </div>

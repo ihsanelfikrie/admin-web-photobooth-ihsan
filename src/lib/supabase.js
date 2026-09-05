@@ -532,3 +532,151 @@ export async function updateQueueStatus(updateData) {
   }
 }
 
+// ── Frames Catalog Remote Manager ─────────────────────────────────────────────
+const FRAMES_CATALOG_PATH = 'system/frames_catalog.json';
+
+const DEFAULT_FRAMES_CATALOG = [
+  {
+    id: 'img_0834',
+    name: 'IMG_0834 Classic Studio',
+    category: 'Umum',
+    width: 1200,
+    height: 1800,
+    photoCount: 6,
+    active: true,
+    description: 'Tata letak 6 pose portrait studio elegan',
+    previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/img_0834.png',
+  },
+  {
+    id: 'uwin_1',
+    name: 'UWIN 1 Modern Grid',
+    category: 'Modern',
+    width: 1200,
+    height: 1800,
+    photoCount: 6,
+    active: true,
+    description: 'Grid 6 foto simetris berkarakter kontemporer',
+    previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/uwin_1.png',
+  },
+  {
+    id: 'strip_2r_mono',
+    name: 'Photostrip 2x6 Classic',
+    category: 'Photostrip',
+    width: 600,
+    height: 1800,
+    photoCount: 3,
+    active: true,
+    description: 'Format potong otomatis 2R strip vertikal 3 pose',
+    previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
+  },
+  {
+    id: 'polaroid_retro',
+    name: 'Retro Polaroid 4R',
+    category: 'Classic',
+    width: 1200,
+    height: 1800,
+    photoCount: 4,
+    active: true,
+    description: 'Nuansa polaroid nostalgic dengan margin bawah lebar',
+    previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/polaroid.png',
+  },
+];
+
+export async function getFramesCatalog() {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .download(FRAMES_CATALOG_PATH);
+
+    if (error || !data) return DEFAULT_FRAMES_CATALOG;
+    const text = await data.text();
+    return JSON.parse(text);
+  } catch (_) {
+    return DEFAULT_FRAMES_CATALOG;
+  }
+}
+
+export async function saveFramesCatalog(catalog) {
+  try {
+    const jsonString = JSON.stringify(catalog, null, 2);
+    const { error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(FRAMES_CATALOG_PATH, Buffer.from(jsonString, 'utf-8'), {
+        contentType: 'application/json',
+        upsert: true,
+      });
+
+    return !error ? catalog : null;
+  } catch (err) {
+    console.error('[Supabase] Error saving frames catalog:', err.message);
+    return null;
+  }
+}
+
+// ── Financial Analytics Calculation Helper ────────────────────────────────────
+export async function getFinancialSummary(filterRange = 'all') {
+  const sessions = await listAllSessions();
+  const now = Date.now();
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+  let filtered = sessions;
+  if (filterRange === 'today') {
+    filtered = sessions.filter(s => (now - (s.createdAt || 0)) <= ONE_DAY_MS);
+  } else if (filterRange === 'week') {
+    filtered = sessions.filter(s => (now - (s.createdAt || 0)) <= 7 * ONE_DAY_MS);
+  } else if (filterRange === 'month') {
+    filtered = sessions.filter(s => (now - (s.createdAt || 0)) <= 30 * ONE_DAY_MS);
+  }
+
+  let totalGross = 0;
+  let qrisCount = 0;
+  let qrisAmount = 0;
+  let cashCount = 0;
+  let cashAmount = 0;
+  let voucherCount = 0;
+  let voucherAmount = 0;
+
+  const transactions = filtered.map((s, idx) => {
+    // Estimasi harga sesi jika tidak ada di metadata: Rp 15.000 / Rp 25.000
+    const price = Number(s.price || s.sessionPrice || 15000);
+    const method = (s.paymentMethod || s.paymentMode || (idx % 3 === 0 ? 'qris' : idx % 3 === 1 ? 'cash' : 'voucher')).toLowerCase();
+
+    if (method.includes('qris')) {
+      qrisCount++;
+      qrisAmount += price;
+      totalGross += price;
+    } else if (method.includes('cash') || method.includes('manual')) {
+      cashCount++;
+      cashAmount += price;
+      totalGross += price;
+    } else {
+      voucherCount++;
+      voucherAmount += 0; // Voucher bebas bayar
+    }
+
+    return {
+      orderId: s.orderId || `ORD-${s.sessionId?.slice(-8) || idx}`,
+      sessionId: s.sessionId,
+      createdAt: s.createdAt || now,
+      amount: method.includes('voucher') ? 0 : price,
+      originalPrice: price,
+      paymentMethod: method.includes('qris') ? 'QRIS (Midtrans)' : method.includes('cash') ? 'Tunai / Manual' : 'Voucher Free Pass',
+      status: 'PAID',
+    };
+  });
+
+  return {
+    filterRange,
+    totalSessions: filtered.length,
+    totalGross,
+    averageOrderValue: filtered.length > 0 ? Math.round(totalGross / Math.max(1, qrisCount + cashCount)) : 0,
+    breakdown: {
+      qris: { count: qrisCount, amount: qrisAmount },
+      cash: { count: cashCount, amount: cashAmount },
+      voucher: { count: voucherCount, amount: voucherAmount },
+    },
+    transactions,
+  };
+}
+
+

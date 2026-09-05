@@ -31,7 +31,42 @@ export async function POST(req) {
       });
     }
 
-    // Action 2: Telemetry Heartbeat from Kiosk App
+    // Action 2: Toggle Event Mode (Free Pass Wedding / Gathering)
+    if (action === 'toggle_event_mode') {
+      if (pin !== adminPin) {
+        return NextResponse.json({ success: false, error: 'Unauthorized PIN' }, { status: 401 });
+      }
+      const current = await getKioskTelemetry();
+      const newEventMode = !current.is_event_mode;
+      const updated = await saveKioskTelemetry({
+        ...current,
+        is_event_mode: newEventMode,
+      });
+      return NextResponse.json({
+        success: true,
+        message: newEventMode ? 'Mode Event (Bebas Bayar) diaktifkan!' : 'Mode Komersial (Bayar QRIS) diaktifkan!',
+        telemetry: updated,
+      });
+    }
+
+    // Action 3: Update Live Kiosk Announcement
+    if (action === 'update_announcement') {
+      if (pin !== adminPin) {
+        return NextResponse.json({ success: false, error: 'Unauthorized PIN' }, { status: 401 });
+      }
+      const current = await getKioskTelemetry();
+      const updated = await saveKioskTelemetry({
+        ...current,
+        announcement: body.announcement || { text: '', active: false },
+      });
+      return NextResponse.json({
+        success: true,
+        message: 'Pengumuman layar Kiosk berhasil diperbarui!',
+        telemetry: updated,
+      });
+    }
+
+    // Action 4: Telemetry Heartbeat from Kiosk App
     if (telemetry) {
       const updated = await saveKioskTelemetry(telemetry);
       return NextResponse.json({ success: true, telemetry: updated });
