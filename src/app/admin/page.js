@@ -47,7 +47,10 @@ import {
   CheckCircle,
   Radio,
   Code,
-  FileCode
+  FileCode,
+  Mail,
+  Lock,
+  EyeOff
 } from 'lucide-react';
 
 const SUPABASE_CDN_BASE = 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets';
@@ -351,9 +354,14 @@ ${photosXml.trimEnd()}
 
 export default function OnlineAdminPage() {
   // Auth state
+  const [loginMethod, setLoginMethod]         = useState('credentials'); // 'credentials' | 'pin'
+  const [emailInput, setEmailInput]           = useState('admin@tarasabooth.com');
+  const [passwordInput, setPasswordInput]     = useState('');
+  const [showPassword, setShowPassword]       = useState(false);
+  const [currentUser, setCurrentUser]         = useState({ email: 'admin@tarasabooth.com', name: 'Admin Tarasa Booth' });
   const [pinInput, setPinInput]               = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [pinError, setPinError]               = useState(false);
+  const [authError, setAuthError]             = useState('');
 
   // Tabs:
   // 'dashboard' | 'transactions' | 'live_monitor' | 'statistics' |
@@ -468,9 +476,13 @@ export default function OnlineAdminPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Check stored PIN session
+  // Check stored auth session
   useEffect(() => {
     const savedPin = sessionStorage.getItem('admin_pin');
+    const savedEmail = sessionStorage.getItem('admin_user_email');
+    if (savedEmail) {
+      setCurrentUser(prev => ({ ...prev, email: savedEmail }));
+    }
     if (savedPin) {
       verifyPin(savedPin);
     }
@@ -484,6 +496,9 @@ export default function OnlineAdminPage() {
       if (res.ok && json.success) {
         setIsAuthenticated(true);
         sessionStorage.setItem('admin_pin', pin);
+        if (!sessionStorage.getItem('admin_user_email')) {
+          sessionStorage.setItem('admin_user_email', 'admin@tarasabooth.com');
+        }
         setSessions(json.sessions || []);
         loadVouchers(pin);
         loadTelemetry();
@@ -491,25 +506,69 @@ export default function OnlineAdminPage() {
         loadFrames();
         loadFinance(financeRange, pin);
       } else {
-        setPinError(true);
+        setAuthError('PIN salah! Masukkan PIN yang benar (1234).');
       }
     } catch (_) {
-      setPinError(true);
+      setAuthError('Gagal memverifikasi PIN.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = (e) => {
+  const handleCredentialLogin = async (e) => {
     e.preventDefault();
-    setPinError(false);
+    setAuthError('');
+    try {
+      setLoading(true);
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailInput.trim(),
+          password: passwordInput,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setIsAuthenticated(true);
+        const pin = json.pin || '1234';
+        sessionStorage.setItem('admin_pin', pin);
+        sessionStorage.setItem('admin_user_email', json.user?.email || emailInput.trim());
+        setCurrentUser(json.user || { email: emailInput.trim(), name: 'Admin Tarasa Booth' });
+
+        const sessRes = await fetch(`/api/sessions?pin=${pin}`);
+        const sessJson = await sessRes.json();
+        if (sessRes.ok && sessJson.success) {
+          setSessions(sessJson.sessions || []);
+        }
+        loadVouchers(pin);
+        loadTelemetry();
+        loadQueue();
+        loadFrames();
+        loadFinance(financeRange, pin);
+      } else {
+        setAuthError(json.error || 'Email atau kata sandi salah. Silakan coba lagi.');
+      }
+    } catch (err) {
+      setAuthError('Terjadi gangguan jaringan saat login.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePinLogin = (e) => {
+    e.preventDefault();
+    setAuthError('');
     verifyPin(pinInput);
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem('admin_pin');
+    sessionStorage.removeItem('admin_user_email');
     setIsAuthenticated(false);
     setPinInput('');
+    setPasswordInput('');
+    setAuthError('');
   };
 
   const currentPin = useMemo(() => {
@@ -1235,14 +1294,11 @@ export default function OnlineAdminPage() {
     });
   }, [frames]);
 
-  // ── PIN Login Screen (SANS Signature Electric Blue #120CD6) ──────────────────────────
+  // ── SANS Signature Login Screen (Electric Blue #120CD6) ──────────────────────────
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#120CD6] text-white flex items-center justify-center p-4 select-none font-sans">
-        <form
-          onSubmit={handleLogin}
-          className="w-full max-w-md p-8 md:p-10 bg-white text-[#111111] rounded-3xl shadow-2xl flex flex-col items-center gap-6 border-4 border-white"
-        >
+        <div className="w-full max-w-md p-8 md:p-10 bg-white text-[#111111] rounded-3xl shadow-2xl flex flex-col items-center gap-6 border-4 border-white">
           {/* SANS Brand Tag */}
           <div className="flex items-center gap-2 px-4 py-1.5 bg-[#E5FD5F] text-[#111111] rounded-full text-xs font-black uppercase tracking-wider border border-[#120CD6]">
             <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
@@ -1258,49 +1314,150 @@ export default function OnlineAdminPage() {
             </p>
           </div>
 
-          <div className="w-full space-y-2">
-            <input
-              type="password"
-              maxLength={8}
-              value={pinInput}
-              onChange={(e) => {
-                setPinInput(e.target.value);
-                setPinError(false);
-              }}
-              placeholder="••••"
-              className="w-full text-center tracking-widest text-3xl font-mono py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl text-[#111111] focus:outline-none focus:border-[#120CD6] transition-colors placeholder:text-slate-300"
-              autoFocus
-            />
-            {pinError && (
-              <p className="text-xs text-rose-600 font-bold text-center flex items-center justify-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" />
-                PIN salah! Masukkan PIN yang benar (1234).
-              </p>
-            )}
+          {/* Login Method Toggle */}
+          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl w-full border border-slate-200">
+            <button
+              type="button"
+              onClick={() => { setLoginMethod('credentials'); setAuthError(''); }}
+              className={`py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                loginMethod === 'credentials'
+                  ? 'bg-[#120CD6] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-[#111111]'
+              }`}
+            >
+              Email &amp; Sandi
+            </button>
+            <button
+              type="button"
+              onClick={() => { setLoginMethod('pin'); setAuthError(''); }}
+              className={`py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+                loginMethod === 'pin'
+                  ? 'bg-[#120CD6] text-white shadow-xs'
+                  : 'text-slate-600 hover:text-[#111111]'
+              }`}
+            >
+              PIN Kiosk
+            </button>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] font-black rounded-xl text-xs uppercase tracking-wider transition-all border-2 border-[#120CD6] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                <span>Memverifikasi...</span>
-              </>
-            ) : (
-              <>
-                <span>Masuk ke Panel Admin</span>
-                <ChevronRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+          {authError && (
+            <div className="w-full p-3.5 bg-rose-50 border-2 border-rose-500 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{authError}</span>
+            </div>
+          )}
+
+          {loginMethod === 'credentials' ? (
+            <form onSubmit={handleCredentialLogin} className="w-full space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-600 block">
+                  Email Akun Admin
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="email"
+                    required
+                    value={emailInput}
+                    onChange={(e) => {
+                      setEmailInput(e.target.value);
+                      setAuthError('');
+                    }}
+                    placeholder="admin@tarasabooth.com"
+                    className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-sm font-semibold text-[#111111] focus:outline-none focus:border-[#120CD6] transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-600 block">
+                  Kata Sandi
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={passwordInput}
+                    onChange={(e) => {
+                      setPasswordInput(e.target.value);
+                      setAuthError('');
+                    }}
+                    placeholder="••••••••••••"
+                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-sm font-semibold text-[#111111] focus:outline-none focus:border-[#120CD6] transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] font-black rounded-xl text-xs uppercase tracking-wider transition-all border-2 border-[#120CD6] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Memverifikasi Akun...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Masuk ke Panel Admin</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handlePinLogin} className="w-full space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-600 block text-center">
+                  Masukkan PIN Akses (4-8 Digit)
+                </label>
+                <input
+                  type="password"
+                  maxLength={8}
+                  value={pinInput}
+                  onChange={(e) => {
+                    setPinInput(e.target.value);
+                    setAuthError('');
+                  }}
+                  placeholder="••••"
+                  className="w-full text-center tracking-widest text-3xl font-mono py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl text-[#111111] focus:outline-none focus:border-[#120CD6] transition-colors placeholder:text-slate-300"
+                  autoFocus
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] font-black rounded-xl text-xs uppercase tracking-wider transition-all border-2 border-[#120CD6] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Memverifikasi PIN...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Masuk dengan PIN</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
 
           <p className="text-[11px] text-slate-400 text-center font-medium">
             SANS Design System • 100% Flat &amp; High Contrast
           </p>
-        </form>
+        </div>
       </div>
     );
   }
@@ -1438,13 +1595,12 @@ export default function OnlineAdminPage() {
               TB
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-xs font-black text-white truncate">admin@photobooth.local</p>
-              <button
-                onClick={() => setActiveTab('kiosks')}
-                className="text-[10px] text-[#E5FD5F] hover:underline cursor-pointer font-semibold"
-              >
-                Edit Profile
-              </button>
+              <p className="text-xs font-black text-white truncate" title={currentUser?.email || 'admin@tarasabooth.com'}>
+                {currentUser?.email || 'admin@tarasabooth.com'}
+              </p>
+              <span className="text-[10px] text-[#E5FD5F] font-semibold block">
+                Tarasa Administrator
+              </span>
             </div>
           </div>
           
