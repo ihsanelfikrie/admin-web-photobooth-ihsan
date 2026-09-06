@@ -1,5 +1,5 @@
-# Photobooth Online Admin & Softfile Web Gallery
-### JobFair UPKK UIN Antasari 26-27 Agustus 2026
+# Tarasa Booth — Online Admin & Softfile Web Gallery
+### Tarasa Booth Official Cloud Portal
 
 Aplikasi Web mandiri yang siap dideploy ke **Vercel** untuk:
 1. 📲 **Galeri Softfile Publik**: Pengunjung dapat mengunduh foto struk 4R HD, Video MP4 16:9, dan foto satuan dari smartphone mereka dari mana saja via QR Code (tidak perlu satu Wi-Fi).
