@@ -438,6 +438,7 @@ export default function OnlineAdminPage() {
       min_photos: 6,
       max_photos: 12,
       print_count: 1,
+      inactivity_timeout: 90,
     };
   });
 
@@ -2597,6 +2598,20 @@ export default function OnlineAdminPage() {
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
                     />
                     <p className="text-[10px] text-slate-400">Default lembar cetak fisik (default: 1 lembar).</p>
+                  </div>
+
+                  {/* Timeout Watchdog Kiosk */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <label className="font-bold text-slate-700 uppercase block">Watchdog Timeout (Detik):</label>
+                    <input
+                      type="number"
+                      min="30"
+                      max="300"
+                      value={pricingConfig.inactivity_timeout || 90}
+                      onChange={(e) => setPricingConfig({ ...pricingConfig, inactivity_timeout: Number(e.target.value) })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400">Reset otomatis bila kios ditinggal (default: 90s).</p>
                   </div>
                 </div>
 
