@@ -45,7 +45,9 @@ import {
   FileText,
   Menu,
   CheckCircle,
-  Radio
+  Radio,
+  Code,
+  FileCode
 } from 'lucide-react';
 
 const SUPABASE_CDN_BASE = 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets';
@@ -55,6 +57,296 @@ function getDisplayCdnUrl(url) {
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   const filename = url.split('/').pop();
   return filename ? `${SUPABASE_CDN_BASE}/${filename}` : null;
+}
+
+// ── XML Presets & Helpers ───────────────────────────────────────────────
+const XML_PRESETS = {
+  receipt3: {
+    label: 'Receipt Vintage 3-Pose (Thermal 58/80mm)',
+    size: 'Receipt',
+    photoCount: 3,
+    xml: `<frame>
+  <name>Receipt Vintage Strip 3-Pose</name>
+  <width>576</width>
+  <height>1200</height>
+  <photos>
+    <photo>
+      <x>48</x>
+      <y>120</y>
+      <width>480</width>
+      <height>300</height>
+      <rotation>0</rotation>
+      <zIndex>1</zIndex>
+    </photo>
+    <photo>
+      <x>48</x>
+      <y>450</y>
+      <width>480</width>
+      <height>300</height>
+      <rotation>0</rotation>
+      <zIndex>2</zIndex>
+    </photo>
+    <photo>
+      <x>48</x>
+      <y>780</y>
+      <width>480</width>
+      <height>300</height>
+      <rotation>0</rotation>
+      <zIndex>3</zIndex>
+    </photo>
+  </photos>
+</frame>`,
+  },
+  receipt4: {
+    label: 'Receipt Mini 4-Pose (Thermal)',
+    size: 'Receipt',
+    photoCount: 4,
+    xml: `<frame>
+  <name>Receipt Mini Strip 4-Pose</name>
+  <width>576</width>
+  <height>1400</height>
+  <photos>
+    <photo>
+      <x>48</x>
+      <y>80</y>
+      <width>480</width>
+      <height>280</height>
+      <rotation>0</rotation>
+      <zIndex>1</zIndex>
+    </photo>
+    <photo>
+      <x>48</x>
+      <y>390</y>
+      <width>480</width>
+      <height>280</height>
+      <rotation>0</rotation>
+      <zIndex>2</zIndex>
+    </photo>
+    <photo>
+      <x>48</x>
+      <y>700</y>
+      <width>480</width>
+      <height>280</height>
+      <rotation>0</rotation>
+      <zIndex>3</zIndex>
+    </photo>
+    <photo>
+      <x>48</x>
+      <y>1010</y>
+      <width>480</width>
+      <height>280</height>
+      <rotation>0</rotation>
+      <zIndex>4</zIndex>
+    </photo>
+  </photos>
+</frame>`,
+  },
+  strip2r: {
+    label: 'Photostrip 2R 3-Pose (2x6 inches)',
+    size: '2R',
+    photoCount: 3,
+    xml: `<frame>
+  <name>Photostrip 2x6 Classic 3-Pose</name>
+  <width>600</width>
+  <height>1800</height>
+  <photos>
+    <photo>
+      <x>50</x>
+      <y>100</y>
+      <width>500</width>
+      <height>480</height>
+      <rotation>0</rotation>
+      <zIndex>1</zIndex>
+    </photo>
+    <photo>
+      <x>50</x>
+      <y>640</y>
+      <width>500</width>
+      <height>480</height>
+      <rotation>0</rotation>
+      <zIndex>2</zIndex>
+    </photo>
+    <photo>
+      <x>50</x>
+      <y>1180</y>
+      <width>500</width>
+      <height>480</height>
+      <rotation>0</rotation>
+      <zIndex>3</zIndex>
+    </photo>
+  </photos>
+</frame>`,
+  },
+  grid4: {
+    label: '4R Classic Grid 4-Pose (2x2)',
+    size: '4R',
+    photoCount: 4,
+    xml: `<frame>
+  <name>Classic 4R Grid 2x2</name>
+  <width>1200</width>
+  <height>1800</height>
+  <photos>
+    <photo>
+      <x>70</x>
+      <y>80</y>
+      <width>510</width>
+      <height>700</height>
+      <rotation>0</rotation>
+      <zIndex>1</zIndex>
+    </photo>
+    <photo>
+      <x>620</x>
+      <y>80</y>
+      <width>510</width>
+      <height>700</height>
+      <rotation>0</rotation>
+      <zIndex>2</zIndex>
+    </photo>
+    <photo>
+      <x>70</x>
+      <y>820</y>
+      <width>510</width>
+      <height>700</height>
+      <rotation>0</rotation>
+      <zIndex>3</zIndex>
+    </photo>
+    <photo>
+      <x>620</x>
+      <y>820</y>
+      <width>510</width>
+      <height>700</height>
+      <rotation>0</rotation>
+      <zIndex>4</zIndex>
+    </photo>
+  </photos>
+</frame>`,
+  },
+  studio6: {
+    label: 'Studio 4R 6-Pose Grid',
+    size: '4R',
+    photoCount: 6,
+    xml: `<frame>
+  <name>Studio 4R 6-Pose Grid</name>
+  <width>1200</width>
+  <height>1800</height>
+  <photos>
+    <photo>
+      <x>70</x>
+      <y>80</y>
+      <width>510</width>
+      <height>460</height>
+      <rotation>0</rotation>
+      <zIndex>1</zIndex>
+    </photo>
+    <photo>
+      <x>620</x>
+      <y>80</y>
+      <width>510</width>
+      <height>460</height>
+      <rotation>0</rotation>
+      <zIndex>2</zIndex>
+    </photo>
+    <photo>
+      <x>70</x>
+      <y>580</y>
+      <width>510</width>
+      <height>460</height>
+      <rotation>0</rotation>
+      <zIndex>3</zIndex>
+    </photo>
+    <photo>
+      <x>620</x>
+      <y>580</y>
+      <width>510</width>
+      <height>460</height>
+      <rotation>0</rotation>
+      <zIndex>4</zIndex>
+    </photo>
+    <photo>
+      <x>70</x>
+      <y>1080</y>
+      <width>510</width>
+      <height>460</height>
+      <rotation>0</rotation>
+      <zIndex>5</zIndex>
+    </photo>
+    <photo>
+      <x>620</x>
+      <y>1080</y>
+      <width>510</width>
+      <height>460</height>
+      <rotation>0</rotation>
+      <zIndex>6</zIndex>
+    </photo>
+  </photos>
+</frame>`,
+  },
+};
+
+function parseXmlClient(xmlText) {
+  if (!xmlText || !xmlText.trim()) return null;
+  try {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+    if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+      return { error: 'Format XML tidak valid (Syntax Error)' };
+    }
+    const frameNode = xmlDoc.getElementsByTagName('frame')[0];
+    if (!frameNode) return { error: 'Elemen <frame> tidak ditemukan dalam XML.' };
+    const name = frameNode.getElementsByTagName('name')[0]?.textContent || 'Custom Frame';
+    const width = parseInt(frameNode.getElementsByTagName('width')[0]?.textContent || '1200', 10);
+    const height = parseInt(frameNode.getElementsByTagName('height')[0]?.textContent || '1800', 10);
+    const photoNodes = xmlDoc.getElementsByTagName('photo');
+    const photos = [];
+    for (let i = 0; i < photoNodes.length; i++) {
+      const p = photoNodes[i];
+      photos.push({
+        slotId: i + 1,
+        x: parseInt(p.getElementsByTagName('x')[0]?.textContent || '0', 10),
+        y: parseInt(p.getElementsByTagName('y')[0]?.textContent || '0', 10),
+        width: parseInt(p.getElementsByTagName('width')[0]?.textContent || '400', 10),
+        height: parseInt(p.getElementsByTagName('height')[0]?.textContent || '400', 10),
+        rotation: parseInt(p.getElementsByTagName('rotation')[0]?.textContent || '0', 10),
+        zIndex: parseInt(p.getElementsByTagName('zIndex')[0]?.textContent || (i + 1), 10),
+      });
+    }
+    return { name, width, height, photos };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+function generateXmlTemplate(name, size, photoCount) {
+  const isReceipt = size === 'Receipt';
+  const is2R = size === '2R';
+  const width = isReceipt ? 576 : is2R ? 600 : 1200;
+  const height = isReceipt ? 1200 : 1800;
+  const count = Number(photoCount) || 3;
+  
+  let photosXml = '';
+  const slotHeight = Math.floor((height - 160) / count) - 20;
+  const slotWidth = width - 80;
+  
+  for (let i = 0; i < count; i++) {
+    const yPos = 80 + i * (slotHeight + 20);
+    photosXml += `    <photo>
+      <x>40</x>
+      <y>${yPos}</y>
+      <width>${slotWidth}</width>
+      <height>${slotHeight}</height>
+      <rotation>0</rotation>
+      <zIndex>${i + 1}</zIndex>
+    </photo>\n`;
+  }
+
+  return `<frame>
+  <name>${name || 'New Template'}</name>
+  <width>${width}</width>
+  <height>${height}</height>
+  <photos>
+${photosXml.trimEnd()}
+  </photos>
+</frame>`;
 }
 
 export default function OnlineAdminPage() {
@@ -109,13 +401,16 @@ export default function OnlineAdminPage() {
 
   // Template Modal State
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
-  const [templateForm, setTemplateForm] = useState({
-    name: '',
+  const [templateTabMode, setTemplateTabMode]         = useState('xml'); // 'xml' | 'form'
+  const [templateForm, setTemplateForm]               = useState({
+    name: 'Receipt Vintage Strip 3-Pose',
     size: 'Receipt',
     category: 'Receipt Strip',
     photoCount: 3,
-    previewUrl: ''
+    previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
+    xmlText: XML_PRESETS.receipt3.xml,
   });
+  const [viewingXmlTemplate, setViewingXmlTemplate]   = useState(null);
 
   // Kiosks registry (persisted or populated)
   const [kiosks, setKiosks] = useState([
@@ -726,26 +1021,101 @@ export default function OnlineAdminPage() {
     showToast('Kiosk telah dihapus.');
   };
 
-  // Template CRUD Handlers
-  const handleSaveTemplate = (e) => {
+  // Template CRUD Handlers with XML Parity
+  const handleSaveTemplate = async (e) => {
     e.preventDefault();
-    if (!templateForm.name.trim()) return;
+    let name = templateForm.name.trim();
+    let size = templateForm.size;
+    let category = templateForm.category;
+    let photoCount = Number(templateForm.photoCount) || 3;
+    let width = size === 'Receipt' ? 576 : size === '2R' ? 600 : 1200;
+    let height = size === 'Receipt' ? 1200 : 1800;
+    let xml = templateForm.xmlText;
+
+    if (templateTabMode === 'xml') {
+      const parsed = parseXmlClient(templateForm.xmlText);
+      if (parsed?.error) {
+        showToast(parsed.error, 'error');
+        return;
+      }
+      if (parsed) {
+        if (parsed.name) name = parsed.name;
+        if (parsed.width) width = parsed.width;
+        if (parsed.height) height = parsed.height;
+        if (parsed.photos?.length) photoCount = parsed.photos.length;
+        if (width <= 600) size = width <= 576 ? 'Receipt' : '2R';
+        else size = '4R';
+      }
+    } else {
+      xml = generateXmlTemplate(name, size, photoCount);
+    }
+
+    if (!name) {
+      showToast('Nama template tidak boleh kosong', 'error');
+      return;
+    }
 
     const newTemplate = {
       id: `frame_${Date.now()}`,
-      name: templateForm.name,
-      size: templateForm.size,
-      category: templateForm.category,
-      photoCount: Number(templateForm.photoCount) || 3,
+      name,
+      size,
+      category,
+      photoCount,
+      width,
+      height,
       userCaptured: 0,
       source: 'Custom Upload',
       active: true,
-      previewUrl: templateForm.previewUrl || 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png'
+      previewUrl: templateForm.previewUrl || 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
+      xml: xml || generateXmlTemplate(name, size, photoCount)
     };
-    setFrames(prev => [newTemplate, ...prev]);
-    setIsTemplateModalOpen(false);
-    setTemplateForm({ name: '', size: 'Receipt', category: 'Receipt Strip', photoCount: 3, previewUrl: '' });
-    showToast('Template baru berhasil ditambahkan.');
+
+    try {
+      setActionLoading(true);
+      const res = await fetch('/api/frames', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add', frame: newTemplate, pin: currentPin }),
+      });
+      const json = await res.json();
+      if (json.success && json.frames) {
+        setFrames(json.frames);
+      } else {
+        setFrames(prev => [newTemplate, ...prev]);
+      }
+      setIsTemplateModalOpen(false);
+      showToast('Template XML baru berhasil disimpan!');
+    } catch (err) {
+      setFrames(prev => [newTemplate, ...prev]);
+      setIsTemplateModalOpen(false);
+      showToast('Template berhasil disimpan.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId, templateName) => {
+    if (!confirm(`Hapus template ${templateName || templateId}?`)) return;
+    try {
+      setActionLoading(true);
+      const res = await fetch('/api/frames', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', frameId: templateId, pin: currentPin }),
+      });
+      const json = await res.json();
+      if (json.success && json.frames) {
+        setFrames(json.frames);
+      } else {
+        setFrames(prev => prev.filter(f => f.id !== templateId));
+      }
+      showToast('Template berhasil dihapus.');
+    } catch (_) {
+      setFrames(prev => prev.filter(f => f.id !== templateId));
+      showToast('Template dihapus.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   // Stats calculation
@@ -834,18 +1204,24 @@ export default function OnlineAdminPage() {
 
     if (!frames || frames.length === 0) return defaults;
 
-    return frames.map((f, idx) => ({
-      no: idx + 1,
-      id: f.id,
-      name: f.name || `Template ${idx + 1}`,
-      size: f.size || (f.name?.toLowerCase().includes('receipt') ? 'Receipt' : f.photoCount <= 3 ? '2R' : '4R'),
-      totalCapturedPhoto: f.photoCount || 3,
-      totalPhotos: f.photoCount || 3,
-      userCaptured: f.userCaptured || Math.floor(Math.random() * 80) + 15,
-      source: f.source || 'System Default',
-      active: f.active !== false,
-      previewUrl: f.previewUrl || 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
-    }));
+    return frames.map((f, idx) => {
+      const size = f.size || (f.name?.toLowerCase().includes('receipt') ? 'Receipt' : f.photoCount <= 3 ? '2R' : '4R');
+      const photoCount = f.photoCount || 3;
+      const xml = f.xml || generateXmlTemplate(f.name, size, photoCount);
+      return {
+        no: idx + 1,
+        id: f.id,
+        name: f.name || `Template ${idx + 1}`,
+        size,
+        totalCapturedPhoto: photoCount,
+        totalPhotos: photoCount,
+        userCaptured: f.userCaptured || Math.floor(Math.random() * 80) + 15,
+        source: f.source || 'System Default',
+        active: f.active !== false,
+        previewUrl: f.previewUrl || 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
+        xml,
+      };
+    });
   }, [frames]);
 
   // ── PIN Login Screen (Forest Green Branded) ──────────────────────────
@@ -2389,13 +2765,22 @@ export default function OnlineAdminPage() {
                               </span>
                             </td>
                             <td className="py-3.5 px-4 text-center">
-                              <button
-                                onClick={() => setPreviewModalImg(tmpl.previewUrl)}
-                                className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                                title="Lihat Preview"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => setPreviewModalImg(tmpl.previewUrl)}
+                                  className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Lihat Pratinjau Gambar"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setViewingXmlTemplate(tmpl)}
+                                  className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Lihat &amp; Salin Kode XML"
+                                >
+                                  <Code className="w-4 h-4" />
+                                </button>
+                              </div>
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center justify-center gap-2">
@@ -2408,14 +2793,18 @@ export default function OnlineAdminPage() {
                                   {tmpl.active ? 'Active' : 'Off'}
                                 </button>
                                 <button
-                                  onClick={() => showToast(`Edit template ${tmpl.name}`)}
-                                  className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
+                                  onClick={() => {
+                                    setViewingXmlTemplate(tmpl);
+                                  }}
+                                  className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors cursor-pointer"
+                                  title="Edit XML Template"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                  onClick={() => showToast(`Hapus template ${tmpl.name}`)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                                  onClick={() => handleDeleteTemplate(tmpl.id, tmpl.name)}
+                                  className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors cursor-pointer"
+                                  title="Hapus Template"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -2660,91 +3049,251 @@ export default function OnlineAdminPage() {
         </div>
       )}
 
-      {/* 4. Add Template Modal */}
+      {/* 4. Add Template Modal with XML Editor & Presets */}
       {isTemplateModalOpen && (
         <div 
           className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setIsTemplateModalOpen(false)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl border border-slate-100"
+            className="bg-white rounded-3xl p-6 max-w-2xl w-full space-y-4 shadow-2xl border border-slate-100 max-h-[92vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-800">Add New Template</h3>
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                  <Layout className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">Tambah Template Frame</h3>
+                  <p className="text-[11px] text-slate-400">Konfigurasi struktur koordinat slot foto &amp; XML</p>
+                </div>
+              </div>
               <button 
                 onClick={() => setIsTemplateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1"
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveTemplate} className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Template Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Receipt Vintage 4-Pose"
-                  value={templateForm.name}
-                  onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
-                />
-              </div>
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl shrink-0 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setTemplateTabMode('xml')}
+                className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  templateTabMode === 'xml' ? 'bg-white text-[#0B3B2B] shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Code className="w-3.5 h-3.5" />
+                <span>Editor XML Langsung</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTemplateTabMode('form')}
+                className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  templateTabMode === 'form' ? 'bg-white text-[#0B3B2B] shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Form Parameter Visual</span>
+              </button>
+            </div>
 
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Ukuran Frame (Size)</label>
-                <select
-                  value={templateForm.size}
-                  onChange={(e) => setTemplateForm({ ...templateForm, size: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
-                >
-                  <option value="Receipt">Receipt (Thermal 58mm / 80mm)</option>
-                  <option value="2R">2R (2x6 inches Photostrip)</option>
-                  <option value="4R">4R (4x6 inches Studio Classic)</option>
-                </select>
+            {/* Presets Quick Selector */}
+            <div className="space-y-1.5 shrink-0">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Pilih Preset Cepat:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {Object.entries(XML_PRESETS).map(([key, p]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      setTemplateForm({
+                        ...templateForm,
+                        name: p.label.split(' (')[0],
+                        size: p.size,
+                        photoCount: p.photoCount,
+                        xmlText: p.xml,
+                      });
+                      showToast(`Preset ${p.label} dimuat!`);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 text-[11px] font-semibold text-slate-700 transition-colors cursor-pointer"
+                  >
+                    {p.label.split(' (')[0]}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Jumlah Slot Foto</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={8}
-                  value={templateForm.photoCount}
-                  onChange={(e) => setTemplateForm({ ...templateForm, photoCount: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
-                />
-              </div>
+            <form onSubmit={handleSaveTemplate} className="space-y-3 text-xs flex-1 overflow-y-auto pr-1">
+              
+              {templateTabMode === 'xml' ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-slate-700">Kode Konfigurasi Frame XML:</label>
+                    <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
+                      Format Kompatibel dengan Kiosk Offline
+                    </span>
+                  </div>
+                  <textarea
+                    rows={11}
+                    value={templateForm.xmlText}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setTemplateForm({ ...templateForm, xmlText: val });
+                      const parsed = parseXmlClient(val);
+                      if (parsed && !parsed.error) {
+                        if (parsed.name) setTemplateForm(prev => ({ ...prev, xmlText: val, name: parsed.name, photoCount: parsed.photos?.length || 3 }));
+                      }
+                    }}
+                    placeholder="<frame> ... </frame>"
+                    className="w-full p-3 font-mono text-[11px] bg-slate-900 text-emerald-300 rounded-xl border border-slate-700 focus:border-emerald-500 focus:outline-none leading-relaxed"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    💡 Anda bisa langsung salin (copy) kode XML dari panel admin offline dan tempelkan di sini.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="font-semibold text-slate-700">Nama Template</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Receipt Vintage 3-Pose"
+                      value={templateForm.name}
+                      onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                    />
+                  </div>
 
-              <div className="space-y-1">
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">Ukuran Frame (Size)</label>
+                    <select
+                      value={templateForm.size}
+                      onChange={(e) => {
+                        const newSize = e.target.value;
+                        setTemplateForm({
+                          ...templateForm,
+                          size: newSize,
+                          xmlText: generateXmlTemplate(templateForm.name, newSize, templateForm.photoCount)
+                        });
+                      }}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                    >
+                      <option value="Receipt">Receipt (Thermal 58mm / 80mm)</option>
+                      <option value="2R">2R (2x6 inches Photostrip)</option>
+                      <option value="4R">4R (4x6 inches Studio Classic)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-semibold text-slate-700">Jumlah Slot Foto</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={8}
+                      value={templateForm.photoCount}
+                      onChange={(e) => {
+                        const count = Number(e.target.value);
+                        setTemplateForm({
+                          ...templateForm,
+                          photoCount: count,
+                          xmlText: generateXmlTemplate(templateForm.name, templateForm.size, count)
+                        });
+                      }}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1 pt-1">
                 <label className="font-semibold text-slate-700">URL Gambar Bingkai (PNG Transparan)</label>
                 <input
                   type="text"
                   placeholder="https://..."
                   value={templateForm.previewUrl}
                   onChange={(e) => setTemplateForm({ ...templateForm, previewUrl: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs"
                 />
               </div>
 
-              <div className="pt-3 flex gap-2">
+              <div className="pt-3 flex gap-2 shrink-0 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsTemplateModalOpen(false)}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold rounded-xl"
+                  disabled={actionLoading}
+                  className="flex-1 py-2.5 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold rounded-xl cursor-pointer disabled:opacity-50"
                 >
-                  Simpan Template
+                  {actionLoading ? 'Menyimpan...' : 'Simpan Template XML'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. XML Template Viewer Modal */}
+      {viewingXmlTemplate && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setViewingXmlTemplate(null)}
+        >
+          <div 
+            className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl border border-slate-100"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold text-slate-800">{viewingXmlTemplate.name}</h3>
+                <p className="text-[11px] text-slate-400">Kode XML Slot &amp; Layout Template</p>
+              </div>
+              <button 
+                onClick={() => setViewingXmlTemplate(null)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-slate-900 rounded-2xl p-4 overflow-x-auto max-h-80 border border-slate-800">
+              <pre className="font-mono text-xs text-emerald-300 whitespace-pre leading-relaxed">
+                {viewingXmlTemplate.xml || generateXmlTemplate(viewingXmlTemplate.name, viewingXmlTemplate.size, viewingXmlTemplate.totalPhotos)}
+              </pre>
+            </div>
+
+            <div className="pt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const xmlContent = viewingXmlTemplate.xml || generateXmlTemplate(viewingXmlTemplate.name, viewingXmlTemplate.size, viewingXmlTemplate.totalPhotos);
+                  navigator.clipboard.writeText(xmlContent);
+                  showToast('Kode XML berhasil disalin ke clipboard!');
+                }}
+                className="flex-1 py-2.5 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Salin Kode XML</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewingXmlTemplate(null)}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
