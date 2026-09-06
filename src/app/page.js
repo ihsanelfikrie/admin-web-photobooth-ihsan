@@ -91,16 +91,27 @@ export default function HomePage() {
             <span>Reels &amp; Story</span>
           </div>
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center gap-1">
-            <span className="text-xs text-emerald-600 font-black">24 JAM</span>
+            <span className="text-xs text-[#120CD6] font-black">24 JAM</span>
             <span>Cloud Safe</span>
           </div>
         </div>
 
       </div>
 
-      {/* Footer */}
-      <footer className="text-center text-xs text-white/80 py-2">
-        TarasaBooth • Self-Service Photobooth Studio
+      {/* SANS Creative Signature Footer (Section 11.3) */}
+      <footer className="w-full max-w-4xl border-t border-white/20 pt-4 pb-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-white/90">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-[#E5FD5F]" />
+          <span className="font-bold text-white">SANS Creative</span>
+          <span className="text-white/70">• TarasaBooth Studio</span>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] md:text-xs">
+          <span>Instagram: <strong className="text-white">@Ihsanelfikrie_</strong></span>
+          <span className="text-white/40">•</span>
+          <span>Email: <strong className="text-white">ihsanelfikrie134@gmail.com</strong></span>
+          <span className="text-white/40">•</span>
+          <span>WhatsApp: <strong className="text-white">+62 858-2271-3356</strong></span>
+        </div>
       </footer>
 
     </main>

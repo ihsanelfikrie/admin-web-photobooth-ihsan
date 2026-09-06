@@ -59,7 +59,7 @@ function getDisplayCdnUrl(url) {
   return filename ? `${SUPABASE_CDN_BASE}/${filename}` : null;
 }
 
-// ── XML Presets & Helpers ───────────────────────────────────────────────
+// ── SANS XML Presets & Helpers ───────────────────────────────────────────────
 const XML_PRESETS = {
   receipt3: {
     label: 'Receipt Vintage 3-Pose (Thermal 58/80mm)',
@@ -399,7 +399,7 @@ export default function OnlineAdminPage() {
     location: 'Outlet Utama'
   });
 
-  // Template Modal State
+  // Template Modal State with XML Parity
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [templateTabMode, setTemplateTabMode]         = useState('xml'); // 'xml' | 'form'
   const [templateForm, setTemplateForm]               = useState({
@@ -871,7 +871,7 @@ export default function OnlineAdminPage() {
     const domain = typeof window !== 'undefined' ? window.location.origin : 'https://admin-web-photobooth-ihsan.vercel.app';
     const softfileUrl = `${domain}/softfile/${session.sessionId}`;
     try {
-      const dataUrl = await QRCode.toDataURL(softfileUrl, { width: 350, margin: 2, color: { dark: '#0B3B2B', light: '#FFFFFF' } });
+      const dataUrl = await QRCode.toDataURL(softfileUrl, { width: 350, margin: 2, color: { dark: '#120CD6', light: '#FFFFFF' } });
       setQrDataUrl(dataUrl);
     } catch (_) {
       setQrDataUrl(null);
@@ -1163,6 +1163,7 @@ export default function OnlineAdminPage() {
         source: 'System Default',
         active: true,
         previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/img_0834.png',
+        xml: XML_PRESETS.studio6.xml,
       },
       {
         no: 2,
@@ -1175,6 +1176,7 @@ export default function OnlineAdminPage() {
         source: 'System Default',
         active: true,
         previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
+        xml: XML_PRESETS.receipt3.xml,
       },
       {
         no: 3,
@@ -1187,6 +1189,7 @@ export default function OnlineAdminPage() {
         source: 'System Default',
         active: true,
         previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
+        xml: XML_PRESETS.strip2r.xml,
       },
       {
         no: 4,
@@ -1199,6 +1202,7 @@ export default function OnlineAdminPage() {
         source: 'System Default',
         active: true,
         previewUrl: 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/polaroid.png',
+        xml: XML_PRESETS.grid4.xml,
       }
     ];
 
@@ -1224,30 +1228,26 @@ export default function OnlineAdminPage() {
     });
   }, [frames]);
 
-  // ── PIN Login Screen (Forest Green Branded) ──────────────────────────
+  // ── PIN Login Screen (SANS Signature Electric Blue #120CD6) ──────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#07251B] text-slate-100 flex items-center justify-center p-4 select-none font-sans relative overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="min-h-screen bg-[#120CD6] text-white flex items-center justify-center p-4 select-none font-sans">
         <form
           onSubmit={handleLogin}
-          className="relative z-10 w-full max-w-md p-8 md:p-10 bg-white text-slate-900 rounded-3xl shadow-2xl flex flex-col items-center gap-6 border border-emerald-950/10"
+          className="w-full max-w-md p-8 md:p-10 bg-white text-[#111111] rounded-3xl shadow-2xl flex flex-col items-center gap-6 border-4 border-white"
         >
-          {/* Brand Tag */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-[#0B3B2B]/10 text-[#0B3B2B] rounded-full text-xs font-bold tracking-wide">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          {/* SANS Brand Tag */}
+          <div className="flex items-center gap-2 px-4 py-1.5 bg-[#E5FD5F] text-[#111111] rounded-full text-xs font-black uppercase tracking-wider border border-[#120CD6]">
+            <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
             TARASA BOOTH MANAGEMENT
           </div>
 
-          <div className="text-center space-y-1.5">
-            <h1 className="text-2xl md:text-3xl font-black text-[#0B3B2B] tracking-tight">
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl md:text-3xl font-black text-[#120CD6] uppercase tracking-tight">
               Tarasa Booth
             </h1>
-            <p className="text-xs text-slate-500 font-medium">
-              Silakan masukkan PIN otentikasi administrator
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+              Pusat Kendali Photobooth Studio
             </p>
           </div>
 
@@ -1261,13 +1261,13 @@ export default function OnlineAdminPage() {
                 setPinError(false);
               }}
               placeholder="••••"
-              className="w-full text-center tracking-widest text-3xl font-mono py-3.5 bg-slate-50 border border-slate-300 rounded-2xl text-slate-900 focus:outline-none focus:border-[#0B3B2B] focus:ring-2 focus:ring-[#0B3B2B]/20 transition-all placeholder:text-slate-300"
+              className="w-full text-center tracking-widest text-3xl font-mono py-3.5 bg-slate-50 border-2 border-slate-300 rounded-2xl text-[#111111] focus:outline-none focus:border-[#120CD6] transition-colors placeholder:text-slate-300"
               autoFocus
             />
             {pinError && (
-              <p className="text-xs text-rose-600 font-semibold text-center flex items-center justify-center gap-1">
+              <p className="text-xs text-rose-600 font-bold text-center flex items-center justify-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
-                PIN salah! Masukkan PIN yang benar.
+                PIN salah! Masukkan PIN yang benar (1234).
               </p>
             )}
           </div>
@@ -1275,7 +1275,7 @@ export default function OnlineAdminPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-[#0B3B2B] hover:bg-[#0E4A37] active:bg-[#07251B] text-white font-bold rounded-xl text-sm transition-all shadow-md hover:shadow-lg active:scale-[0.99] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] font-black rounded-xl text-xs uppercase tracking-wider transition-all border-2 border-[#120CD6] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -1290,8 +1290,8 @@ export default function OnlineAdminPage() {
             )}
           </button>
 
-          <p className="text-[11px] text-slate-400 text-center">
-            Pusat kendali Photobooth Studio &amp; Receipt Booth
+          <p className="text-[11px] text-slate-400 text-center font-medium">
+            SANS Design System • 100% Flat &amp; High Contrast
           </p>
         </form>
       </div>
@@ -1333,18 +1333,18 @@ export default function OnlineAdminPage() {
     },
   ];
 
-  // ── Main Authenticated Layout ───────────────────────────────────────
+  // ── Main Authenticated Layout (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F, White #FFFFFF) ───────────────────
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans flex flex-col md:flex-row antialiased">
+    <div className="min-h-screen bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row antialiased selection:bg-[#E5FD5F] selection:text-[#111111]">
       
       {/* Toast Alert */}
       {toastMessage && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 animate-bounce transition-all ${
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 border-2 transition-all ${
           toastMessage.type === 'error'
-            ? 'bg-rose-600 text-white shadow-rose-900/20'
-            : 'bg-[#0B3B2B] text-white shadow-emerald-950/30'
+            ? 'bg-rose-600 text-white border-white'
+            : 'bg-[#120CD6] text-white border-[#E5FD5F]'
         }`}>
-          {toastMessage.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+          {toastMessage.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-[#E5FD5F]" />}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -1352,27 +1352,27 @@ export default function OnlineAdminPage() {
       {/* Mobile Drawer Overlay */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* ── Left Sidebar (Deep Forest Green: #0B3B2B) ────────────────── */}
-      <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-[#0B3B2B] text-white flex flex-col z-50 transition-transform duration-200 shrink-0 ${
+      {/* ── Left Sidebar (Electric Blue: #120CD6) ────────────────── */}
+      <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-[#120CD6] text-white flex flex-col z-50 transition-transform duration-200 shrink-0 ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         
         {/* Brand Header */}
-        <div className="p-5 border-b border-white/10 flex items-center justify-between shrink-0">
+        <div className="p-5 border-b border-white/15 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 font-black text-sm">
+            <div className="w-9 h-9 rounded-xl bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center font-black text-sm shadow-xs">
               TB
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight leading-tight">
+              <h2 className="text-base font-black text-white tracking-tight uppercase leading-tight">
                 Tarasa Booth
               </h2>
-              <p className="text-[10px] text-[#A3C2B4] font-medium tracking-wide">
+              <p className="text-[10px] text-[#E5FD5F] font-bold uppercase tracking-wider">
                 Booth Management
               </p>
             </div>
@@ -1380,7 +1380,7 @@ export default function OnlineAdminPage() {
           
           <button 
             onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden text-[#A3C2B4] hover:text-white p-1"
+            className="md:hidden text-white/80 hover:text-white p-1 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1390,7 +1390,7 @@ export default function OnlineAdminPage() {
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
           {menuGroups.map((group) => (
             <div key={group.groupTitle} className="space-y-1">
-              <div className="px-3 pb-1.5 text-[10px] font-bold tracking-wider text-[#7AA897] uppercase select-none">
+              <div className="px-3 pb-1.5 text-[10px] font-black tracking-widest text-[#E5FD5F] uppercase select-none">
                 {group.groupTitle}
               </div>
               
@@ -1409,13 +1409,13 @@ export default function OnlineAdminPage() {
                       if (item.id === 'templates') loadFrames();
                       if (item.id === 'gallery') loadSessions();
                     }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all text-left cursor-pointer ${
                       isActive
-                        ? 'bg-white text-[#0B3B2B] font-bold shadow-sm'
-                        : 'text-[#D1E2DA] hover:bg-white/10 hover:text-white'
+                        ? 'bg-[#E5FD5F] text-[#111111] font-black border border-[#120CD6]'
+                        : 'text-white/85 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#0B3B2B]' : 'text-[#A3C2B4]'}`} />
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#111111]' : 'text-white/70'}`} />
                     <span className="truncate">{item.label}</span>
                   </button>
                 );
@@ -1425,16 +1425,16 @@ export default function OnlineAdminPage() {
         </div>
 
         {/* Sidebar Footer User Info */}
-        <div className="p-3 border-t border-white/10 bg-[#07291E] shrink-0">
+        <div className="p-3.5 border-t border-white/15 bg-[#0D099E] shrink-0">
           <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-full bg-emerald-700/60 border border-emerald-500/40 flex items-center justify-center text-emerald-200 text-xs font-bold shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#E5FD5F] text-[#111111] flex items-center justify-center text-xs font-black shrink-0 border border-white">
               TB
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-xs font-semibold text-white truncate">admin@tarasabooth.com</p>
+              <p className="text-xs font-black text-white truncate">admin@tarasabooth.com</p>
               <button
                 onClick={() => setActiveTab('kiosks')}
-                className="text-[10px] text-[#A3C2B4] hover:text-white underline cursor-pointer"
+                className="text-[10px] text-[#E5FD5F] hover:underline cursor-pointer font-semibold"
               >
                 Edit Profile
               </button>
@@ -1443,7 +1443,7 @@ export default function OnlineAdminPage() {
           
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-semibold text-rose-300 hover:text-white hover:bg-rose-600/30 transition-colors cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl text-xs font-bold text-white bg-rose-500/20 hover:bg-rose-500 transition-colors cursor-pointer uppercase"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Logout</span>
@@ -1455,21 +1455,23 @@ export default function OnlineAdminPage() {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top Header Bar */}
-        <header className="h-16 bg-white border-b border-slate-200/80 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+        <header className="h-16 bg-white border-b-2 border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
+              className="md:hidden p-2 text-slate-700 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h1 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight">
+            <h1 className="text-lg md:text-xl font-black text-[#120CD6] tracking-tight uppercase">
               Booth Management
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 text-xs md:text-sm font-medium text-slate-500">
-            <span>{currentDateIndo}</span>
+          <div className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#111111]">
+            <span className="px-3.5 py-1.5 bg-[#F5F5F5] rounded-full border border-slate-200">
+              {currentDateIndo}
+            </span>
           </div>
         </header>
 
@@ -1482,45 +1484,45 @@ export default function OnlineAdminPage() {
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               
-              {/* 3 Metric Cards matching Screenshot 1 */}
+              {/* 3 Metric Cards (SANS Signature Accents) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 
                 {/* Metric 1: Total Kiosk */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 mb-1">Total Kiosk</p>
-                    <p className="text-2xl md:text-3xl font-extrabold text-slate-900">{kiosks.length}</p>
-                    <p className="text-[11px] text-slate-400 mt-1 font-medium">kiosk aktif</p>
+                    <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Total Kiosk</p>
+                    <p className="text-3xl font-black text-[#111111]">{kiosks.length}</p>
+                    <p className="text-[11px] text-slate-400 mt-1 font-semibold">kiosk aktif</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <Zap className="w-6 h-6 fill-blue-500" />
+                  <div className="w-12 h-12 rounded-2xl bg-[#120CD6] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Zap className="w-6 h-6 fill-white" />
                   </div>
                 </div>
 
                 {/* Metric 2: Revenue Bulan Ini */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 mb-1">Revenue Bulan Ini</p>
-                    <p className="text-2xl md:text-3xl font-extrabold text-slate-900">
+                    <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Revenue Bulan Ini</p>
+                    <p className="text-3xl font-black text-[#120CD6]">
                       Rp {(finance?.totalRevenue || (sessions.length * 25000) || 1450000).toLocaleString('id-ID')}
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-1 font-medium">Bulan ini</p>
+                    <p className="text-[11px] text-slate-400 mt-1 font-semibold">Bulan ini</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F908E0] text-white flex items-center justify-center shrink-0 shadow-xs">
                     <DollarSign className="w-6 h-6" />
                   </div>
                 </div>
 
                 {/* Metric 3: Total Revenue */}
-                <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center justify-between">
+                <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 mb-1">Total Revenue</p>
-                    <p className="text-2xl md:text-3xl font-extrabold text-slate-900">
+                    <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Total Revenue</p>
+                    <p className="text-3xl font-black text-[#111111]">
                       Rp {(((finance?.totalRevenue || 0) * 1.6) || (sessions.length * 25000 * 2) || 8925000).toLocaleString('id-ID')}
                     </p>
-                    <p className="text-[11px] text-slate-400 mt-1 font-medium">Semua waktu</p>
+                    <p className="text-[11px] text-slate-400 mt-1 font-semibold">Semua waktu</p>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#E5FD5F] text-[#111111] border-2 border-[#120CD6] flex items-center justify-center shrink-0 shadow-xs">
                     <TrendingUp className="w-6 h-6" />
                   </div>
                 </div>
@@ -1530,15 +1532,15 @@ export default function OnlineAdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {/* Left: Active Kiosks */}
-                <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 md:p-6">
+                <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 md:p-6">
                   <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <div>
-                      <h2 className="text-base font-bold text-slate-800">Active Kiosks</h2>
+                      <h2 className="text-base font-black text-[#111111] uppercase tracking-tight">Active Kiosks</h2>
                       <p className="text-xs text-slate-400">Daftar photobooth yang sedang beroperasi</p>
                     </div>
                     <button
                       onClick={() => setActiveTab('live_monitor')}
-                      className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-black text-[#120CD6] hover:underline flex items-center gap-1 cursor-pointer uppercase"
                     >
                       <span>Lihat Live Monitor</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -1549,22 +1551,22 @@ export default function OnlineAdminPage() {
                     {kiosks.map((k) => (
                       <div
                         key={k.id}
-                        className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="p-4 rounded-xl border border-slate-200 bg-[#F5F5F5] hover:bg-slate-100 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shrink-0 shadow-2xs">
-                            <Store className="w-5 h-5 text-emerald-700" />
+                          <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#120CD6] flex items-center justify-center text-[#120CD6] shrink-0 font-black">
+                            <Store className="w-5 h-5" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <h3 className="text-sm font-bold text-slate-800">{k.name}</h3>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <h3 className="text-sm font-black text-[#111111]">{k.name}</h3>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#120CD6]" />
                                 Live
                               </span>
                             </div>
                             <p className="text-xs text-slate-500 mt-0.5">{k.deviceType} • {k.location}</p>
-                            <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-2 font-medium">
+                            <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2 font-bold">
                               <span>Kertas: {k.paperRoll}%</span>
                               <span>•</span>
                               <span>Ping: 24 ms</span>
@@ -1577,7 +1579,7 @@ export default function OnlineAdminPage() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => { setActiveTab('live_monitor'); }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition-colors cursor-pointer"
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#120CD6] hover:bg-blue-800 text-white transition-colors cursor-pointer uppercase"
                           >
                             Kelola
                           </button>
@@ -1588,15 +1590,15 @@ export default function OnlineAdminPage() {
                 </div>
 
                 {/* Right: Activity Feed */}
-                <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 md:p-6">
+                <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 md:p-6">
                   <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <div>
-                      <h2 className="text-base font-bold text-slate-800">Activity Feed</h2>
+                      <h2 className="text-base font-black text-[#111111] uppercase tracking-tight">Activity Feed</h2>
                       <p className="text-xs text-slate-400">Aktivitas sistem terkini</p>
                     </div>
                     <button
                       onClick={loadSessions}
-                      className="text-xs text-slate-500 hover:text-slate-800 p-1 cursor-pointer"
+                      className="text-xs text-slate-500 hover:text-[#120CD6] p-1 cursor-pointer"
                       title="Refresh Aktivitas"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
@@ -1605,44 +1607,44 @@ export default function OnlineAdminPage() {
 
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#E5FD5F] text-[#111111] border border-[#120CD6] flex items-center justify-center shrink-0">
                         <CheckCircle2 className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800">Pembayaran QRIS Berhasil</p>
+                        <p className="text-xs font-black text-[#111111]">Pembayaran QRIS Berhasil</p>
                         <p className="text-[11px] text-slate-500">Kiosk 1 Receipt Booth • Rp 25.000</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">2 menit lalu</p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#120CD6] text-white flex items-center justify-center shrink-0">
                         <Printer className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800">Cetak Kertas Selesai</p>
+                        <p className="text-xs font-black text-[#111111]">Cetak Kertas Selesai</p>
                         <p className="text-[11px] text-slate-500">1 lembar receipt dicetak tanpa kendala</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">8 menit lalu</p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#F908E0] text-white flex items-center justify-center shrink-0">
                         <CloudSyncIcon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800">Softfile Cloud Disinkronkan</p>
+                        <p className="text-xs font-black text-[#111111]">Softfile Cloud Disinkronkan</p>
                         <p className="text-[11px] text-slate-500">Supabase Storage CDN siap diunduh tamu</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">14 menit lalu</p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 text-[#111111] border border-slate-300 flex items-center justify-center shrink-0">
                         <Activity className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-slate-800">Heartbeat Kiosk Terhubung</p>
+                        <p className="text-xs font-black text-[#111111]">Heartbeat Kiosk Terhubung</p>
                         <p className="text-[11px] text-slate-500">Redmi Pad SE WebSocket connected</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">30 menit lalu</p>
                       </div>
@@ -1660,18 +1662,18 @@ export default function OnlineAdminPage() {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Daftar Transaksi</h2>
+                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Daftar Transaksi</h2>
                   <p className="text-xs text-slate-500">Riwayat transaksi pembayaran pelanggan di setiap kiosk</p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="bg-white border border-slate-200 rounded-xl p-1 flex items-center text-xs font-semibold shadow-2xs">
+                  <div className="bg-white border-2 border-slate-200 rounded-xl p-1 flex items-center text-xs font-bold">
                     {['all', 'today', 'week', 'month'].map((range) => (
                       <button
                         key={range}
                         onClick={() => { setFinanceRange(range); loadFinance(range); }}
-                        className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                          financeRange === range ? 'bg-[#0B3B2B] text-white' : 'text-slate-600 hover:text-slate-900'
+                        className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer uppercase ${
+                          financeRange === range ? 'bg-[#120CD6] text-white font-black' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         {range === 'all' ? 'Semua' : range === 'today' ? 'Hari Ini' : range === 'week' ? '7 Hari' : 'Bulan Ini'}
@@ -1681,7 +1683,7 @@ export default function OnlineAdminPage() {
 
                   <button
                     onClick={handleExportCsv}
-                    className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-2xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-[#E5FD5F] hover:bg-[#d8f244] border-2 border-[#120CD6] rounded-xl text-xs font-black text-[#111111] flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Export CSV</span>
@@ -1690,7 +1692,7 @@ export default function OnlineAdminPage() {
               </div>
 
               {/* Transactions Table Card */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="relative w-full sm:w-72">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1699,18 +1701,18 @@ export default function OnlineAdminPage() {
                       placeholder="Cari order ID atau ID sesi..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#0B3B2B]"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
 
-                  <div className="text-xs text-slate-500 font-medium">
-                    Total: <span className="font-bold text-slate-900">{finance?.transactions?.length || 0}</span> transaksi
+                  <div className="text-xs text-slate-500 font-bold">
+                    Total: <span className="font-black text-[#120CD6]">{finance?.transactions?.length || 0}</span> transaksi
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 text-slate-500 font-semibold border-b border-slate-100">
+                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
                         <th className="py-3.5 px-4">Order ID</th>
                         <th className="py-3.5 px-4">ID Sesi</th>
@@ -1721,24 +1723,24 @@ export default function OnlineAdminPage() {
                         <th className="py-3.5 px-4">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {(finance?.transactions && finance.transactions.length > 0) ? (
                         finance.transactions.map((t, idx) => (
-                          <tr key={t.orderId || idx} className="hover:bg-slate-50/60 transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-medium text-slate-800">{t.orderId}</td>
+                          <tr key={t.orderId || idx} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{t.orderId}</td>
                             <td className="py-3.5 px-4 font-mono text-slate-600">{t.sessionId}</td>
                             <td className="py-3.5 px-4 text-slate-500">{new Date(t.createdAt).toLocaleString('id-ID')}</td>
-                            <td className="py-3.5 px-4 text-slate-700 font-medium">Tarasa Receipt Booth</td>
+                            <td className="py-3.5 px-4 text-slate-800 font-bold">Tarasa Receipt Booth</td>
                             <td className="py-3.5 px-4">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold">
                                 {t.paymentMethod || 'QRIS Midtrans'}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 font-bold text-slate-900">
+                            <td className="py-3.5 px-4 font-black text-slate-900">
                               Rp {Number(t.amount || 25000).toLocaleString('id-ID')}
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
                                 <Check className="w-3 h-3" />
                                 Settlement
                               </span>
@@ -1746,21 +1748,20 @@ export default function OnlineAdminPage() {
                           </tr>
                         ))
                       ) : (
-                        // Fallback sample rows if finance has no mock
                         [1, 2, 3].map((num) => (
-                          <tr key={num} className="hover:bg-slate-50/60 transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-medium text-slate-800">TRSA-ORD-2026090{num}</td>
+                          <tr key={num} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-slate-900">TRSA-ORD-2026090{num}</td>
                             <td className="py-3.5 px-4 font-mono text-slate-600">SES-882{num}</td>
                             <td className="py-3.5 px-4 text-slate-500">06/09/2026, 14:2{num} WIB</td>
-                            <td className="py-3.5 px-4 text-slate-700 font-medium">Tarasa Receipt Booth</td>
+                            <td className="py-3.5 px-4 text-slate-800 font-bold">Tarasa Receipt Booth</td>
                             <td className="py-3.5 px-4">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold">
                                 Midtrans QRIS
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 font-bold text-slate-900">Rp 25.000</td>
+                            <td className="py-3.5 px-4 font-black text-slate-900">Rp 25.000</td>
                             <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
                                 <Check className="w-3 h-3" />
                                 Settlement
                               </span>
@@ -1776,7 +1777,7 @@ export default function OnlineAdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 3: LIVE MONITOR (Matching Screenshot 2)
+              VIEW 3: LIVE MONITOR
           ══════════════════════════════════════════════════════════════ */}
           {activeTab === 'live_monitor' && (
             <div className="space-y-6">
@@ -1784,22 +1785,19 @@ export default function OnlineAdminPage() {
               {/* Header with WebSocket Live Badge */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Live Monitor</h2>
+                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Live Monitor</h2>
                   <p className="text-xs text-slate-500">Pantau kesehatan dan performa booth secara real-time</p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-2xs">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                    </span>
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E5FD5F] border-2 border-[#120CD6] text-[#111111] text-xs font-black">
+                    <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
                     <span>WebSocket Live</span>
                   </div>
 
                   <button
                     onClick={() => { loadTelemetry(); loadQueue(); }}
-                    className="p-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer"
+                    className="p-2 rounded-xl bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer"
                     title="Refresh Status"
                   >
                     <RefreshCw className="w-4 h-4" />
@@ -1809,40 +1807,40 @@ export default function OnlineAdminPage() {
 
               {/* Kesehatan Kiosk Cards */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Kesehatan Kiosk</h3>
+                <h3 className="text-xs font-black text-slate-700 uppercase tracking-wider">Kesehatan Kiosk</h3>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   {kiosks.map((k) => (
-                    <div key={k.id} className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 space-y-4">
+                    <div key={k.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
                       
                       {/* Card Top */}
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold">
-                            <Radio className="w-5 h-5 text-emerald-700" />
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
+                            <Radio className="w-5 h-5 text-[#120CD6]" />
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-slate-800">{k.name}</h4>
+                            <h4 className="text-sm font-black text-[#111111]">{k.name}</h4>
                             <p className="text-xs text-slate-400">{k.deviceType}</p>
                           </div>
                         </div>
 
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
+                          <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
                           Online
                         </span>
                       </div>
 
                       {/* Specs Grid */}
                       <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                          <p className="text-[11px] text-slate-400 font-medium">Ping Latency</p>
-                          <p className="text-base font-extrabold text-emerald-700 mt-0.5">24 ms</p>
+                        <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
+                          <p className="text-[11px] text-slate-500 font-bold uppercase">Ping Latency</p>
+                          <p className="text-base font-black text-[#120CD6] mt-0.5">24 ms</p>
                         </div>
 
-                        <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                          <p className="text-[11px] text-slate-400 font-medium">Status Sesi</p>
-                          <p className="text-base font-extrabold text-slate-800 mt-0.5">
+                        <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
+                          <p className="text-[11px] text-slate-500 font-bold uppercase">Status Sesi</p>
+                          <p className="text-base font-black text-[#111111] mt-0.5">
                             {telemetry?.status === 'session' ? 'IN_SESSION' : 'IDLE / READY'}
                           </p>
                         </div>
@@ -1850,15 +1848,13 @@ export default function OnlineAdminPage() {
 
                       {/* Sisa Kertas Meter */}
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-semibold">
+                        <div className="flex items-center justify-between text-xs font-bold">
                           <span className="text-slate-600">Sisa Kertas Thermal</span>
-                          <span className="text-slate-900 font-bold">{k.paperRoll} / {k.paperMax} Lembar</span>
+                          <span className="text-[#111111] font-black">{k.paperRoll} / {k.paperMax} Lembar</span>
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${
-                              k.paperRoll > 30 ? 'bg-emerald-500' : 'bg-rose-500'
-                            }`}
+                            className="h-full rounded-full bg-[#120CD6] transition-all"
                             style={{ width: `${(k.paperRoll / k.paperMax) * 100}%` }}
                           />
                         </div>
@@ -1869,7 +1865,7 @@ export default function OnlineAdminPage() {
                         <button
                           onClick={() => handlePaperRefill(100)}
                           disabled={actionLoading}
-                          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                          className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#111111] text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase"
                         >
                           <Printer className="w-3.5 h-3.5" />
                           <span>Refill Kertas (+100)</span>
@@ -1878,10 +1874,10 @@ export default function OnlineAdminPage() {
                         <button
                           onClick={handleToggleEventMode}
                           disabled={actionLoading}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
+                          className={`px-3.5 py-2 rounded-xl text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase ${
                             telemetry?.is_event_mode
-                              ? 'bg-amber-100 text-amber-900 hover:bg-amber-200'
-                              : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                              ? 'bg-[#F908E0] text-white'
+                              : 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]'
                           }`}
                         >
                           <Sliders className="w-3.5 h-3.5" />
@@ -1890,30 +1886,30 @@ export default function OnlineAdminPage() {
                       </div>
 
                       {/* Mini Queue Controller */}
-                      <div className="p-3 bg-emerald-950/5 rounded-xl border border-emerald-950/10 space-y-2">
+                      <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-200 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-800">Antrian Terkini</span>
-                          <span className="text-[11px] font-semibold text-emerald-800">
+                          <span className="text-xs font-black text-[#120CD6] uppercase">Antrian Terkini</span>
+                          <span className="text-[11px] font-bold text-slate-600">
                             Menunggu: {queue?.waiting_count || 0}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <div className="font-mono">
-                            <span className="text-slate-400">Kode: </span>
-                            <span className="font-bold text-slate-800">{queue?.current_queue_code || 'Q-1001'}</span>
+                            <span className="text-slate-500">Kode: </span>
+                            <span className="font-black text-[#111111]">{queue?.current_queue_code || 'Q-1001'}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={handlePromoteQueue}
                               disabled={actionLoading}
-                              className="px-2.5 py-1 bg-[#0B3B2B] text-white rounded-md text-[11px] font-bold hover:bg-[#0E4A37] cursor-pointer"
+                              className="px-3 py-1 bg-[#120CD6] text-white rounded-lg text-xs font-black hover:bg-blue-800 cursor-pointer uppercase"
                             >
                               Panggil
                             </button>
                             <button
                               onClick={handleReleaseQueue}
                               disabled={actionLoading}
-                              className="px-2.5 py-1 bg-rose-50 text-rose-700 rounded-md text-[11px] font-bold hover:bg-rose-100 cursor-pointer"
+                              className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold hover:bg-rose-200 cursor-pointer uppercase"
                             >
                               Lepas
                             </button>
@@ -1927,13 +1923,13 @@ export default function OnlineAdminPage() {
               </div>
 
               {/* Performa Hari Ini Table */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-800">Performa Hari Ini</h3>
+                  <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Performa Hari Ini</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
                         <th className="py-3 px-4">Nama Kiosk</th>
                         <th className="py-3 px-4">Total Sesi</th>
@@ -1944,18 +1940,18 @@ export default function OnlineAdminPage() {
                         <th className="py-3 px-4">Terakhir Aktif</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {kiosks.map((k) => (
-                        <tr key={k.id} className="hover:bg-slate-50/60">
-                          <td className="py-3.5 px-4 font-bold text-slate-800">{k.name}</td>
-                          <td className="py-3.5 px-4 font-medium">14</td>
-                          <td className="py-3.5 px-4 text-emerald-700 font-semibold">14</td>
+                        <tr key={k.id} className="hover:bg-slate-50">
+                          <td className="py-3.5 px-4 font-black text-slate-900">{k.name}</td>
+                          <td className="py-3.5 px-4 font-bold text-[#111111]">14</td>
+                          <td className="py-3.5 px-4 font-black text-[#120CD6]">14</td>
                           <td className="py-3.5 px-4 text-slate-400">0</td>
-                          <td className="py-3.5 px-4 text-slate-700">14 lembar</td>
-                          <td className="py-3.5 px-4 font-bold text-slate-900">
+                          <td className="py-3.5 px-4 text-slate-700 font-bold">14 lembar</td>
+                          <td className="py-3.5 px-4 font-black text-[#111111]">
                             Rp {(14 * k.price).toLocaleString('id-ID')}
                           </td>
-                          <td className="py-3.5 px-4 text-slate-500">Baru saja</td>
+                          <td className="py-3.5 px-4 text-slate-500 font-medium">Baru saja</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1972,90 +1968,90 @@ export default function OnlineAdminPage() {
           {activeTab === 'statistics' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">Statistik &amp; Analisis Performa</h2>
+                <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Statistik &amp; Analisis Performa</h2>
                 <p className="text-xs text-slate-500">Wawasan analitik penggunaan photobooth dan konversi pendapatan</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                  <p className="text-xs font-semibold text-slate-500">Rata-rata Sesi / Hari</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">28 Sesi</p>
-                  <p className="text-[11px] text-emerald-600 font-semibold mt-1">↑ +14% vs minggu lalu</p>
+                <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rata-rata Sesi / Hari</p>
+                  <p className="text-3xl font-black text-[#111111] mt-1">28 Sesi</p>
+                  <p className="text-[11px] text-[#120CD6] font-bold mt-1">↑ +14% vs minggu lalu</p>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                  <p className="text-xs font-semibold text-slate-500">Durasi Sesi Rata-rata</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">2m 45s</p>
+                <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Durasi Sesi Rata-rata</p>
+                  <p className="text-3xl font-black text-[#120CD6] mt-1">2m 45s</p>
                   <p className="text-[11px] text-slate-400 font-medium mt-1">Alur cepat &amp; efisien</p>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
-                  <p className="text-xs font-semibold text-slate-500">Tingkat Keberhasilan Unduh</p>
-                  <p className="text-2xl font-black text-slate-900 mt-1">98.4%</p>
-                  <p className="text-[11px] text-emerald-600 font-semibold mt-1">Supabase CDN stabil</p>
+                <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tingkat Keberhasilan Unduh</p>
+                  <p className="text-3xl font-black text-[#111111] mt-1">98.4%</p>
+                  <p className="text-[11px] text-[#120CD6] font-bold mt-1">Supabase CDN stabil</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-                  <h3 className="text-sm font-bold text-slate-800">Pangsa Metode Pembayaran</h3>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+                  <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Pangsa Metode Pembayaran</h3>
                   <div className="space-y-3">
                     <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1">
+                      <div className="flex justify-between text-xs font-bold mb-1">
                         <span>QRIS Midtrans</span>
-                        <span className="font-bold">85%</span>
+                        <span className="font-black text-[#120CD6]">85%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-emerald-600 h-full rounded-full" style={{ width: '85%' }} />
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div className="bg-[#120CD6] h-full rounded-full" style={{ width: '85%' }} />
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1">
+                      <div className="flex justify-between text-xs font-bold mb-1">
                         <span>Voucher Promo</span>
-                        <span className="font-bold">10%</span>
+                        <span className="font-black text-[#F908E0]">10%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-blue-600 h-full rounded-full" style={{ width: '10%' }} />
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div className="bg-[#F908E0] h-full rounded-full" style={{ width: '10%' }} />
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1">
+                      <div className="flex justify-between text-xs font-bold mb-1">
                         <span>Event Bebas Bayar</span>
-                        <span className="font-bold">5%</span>
+                        <span className="font-black text-amber-600">5%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-amber-500 h-full rounded-full" style={{ width: '5%' }} />
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div className="bg-[#E5FD5F] h-full rounded-full border border-[#120CD6]" style={{ width: '5%' }} />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-                  <h3 className="text-sm font-bold text-slate-800">Distribusi Ukuran Template</h3>
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+                  <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Distribusi Ukuran Template</h3>
                   <div className="space-y-3">
                     <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1">
+                      <div className="flex justify-between text-xs font-bold mb-1">
                         <span>Receipt Strip (Thermal)</span>
-                        <span className="font-bold">65%</span>
+                        <span className="font-black text-[#120CD6]">65%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-[#0B3B2B] h-full rounded-full" style={{ width: '65%' }} />
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div className="bg-[#120CD6] h-full rounded-full" style={{ width: '65%' }} />
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1">
+                      <div className="flex justify-between text-xs font-bold mb-1">
                         <span>4R Classic Grid</span>
-                        <span className="font-bold">25%</span>
+                        <span className="font-black text-[#F908E0]">25%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-purple-600 h-full rounded-full" style={{ width: '25%' }} />
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div className="bg-[#F908E0] h-full rounded-full" style={{ width: '25%' }} />
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-xs font-semibold mb-1">
+                      <div className="flex justify-between text-xs font-bold mb-1">
                         <span>Photostrip 2R</span>
-                        <span className="font-bold">10%</span>
+                        <span className="font-black text-slate-700">10%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div className="bg-teal-500 h-full rounded-full" style={{ width: '10%' }} />
+                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div className="bg-[#E5FD5F] h-full rounded-full border border-[#120CD6]" style={{ width: '10%' }} />
                       </div>
                     </div>
                   </div>
@@ -2065,7 +2061,7 @@ export default function OnlineAdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 5: KIOSK (Matching Screenshot 3)
+              VIEW 5: KIOSK
           ══════════════════════════════════════════════════════════════ */}
           {activeTab === 'kiosks' && (
             <div className="space-y-6">
@@ -2073,7 +2069,7 @@ export default function OnlineAdminPage() {
               {/* Header + Add Button */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Kiosk Management</h2>
+                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Kiosk Management</h2>
                   <p className="text-xs text-slate-500">Kelola seluruh bilik photobooth dan receipt booth yang terdaftar</p>
                 </div>
 
@@ -2091,15 +2087,15 @@ export default function OnlineAdminPage() {
                     });
                     setIsKioskModalOpen(true);
                   }}
-                  className="px-4 py-2 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                  className="px-4 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
                 >
                   <Plus className="w-4 h-4" />
                   <span>+ Add Kiosk</span>
                 </button>
               </div>
 
-              {/* Table Card matching Screenshot 3 */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              {/* Table Card */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
                   <div className="relative w-full sm:w-72">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -2108,14 +2104,14 @@ export default function OnlineAdminPage() {
                       placeholder="Search kiosk..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#0B3B2B]"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
                         <th className="py-3.5 px-4">Name</th>
                         <th className="py-3.5 px-4">Payment Gateway</th>
@@ -2126,32 +2122,32 @@ export default function OnlineAdminPage() {
                         <th className="py-3.5 px-4 text-center">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {kiosks
                         .filter(k => searchQuery === '' || k.name.toLowerCase().includes(searchQuery.toLowerCase()))
                         .map((k) => (
-                          <tr key={k.id} className="hover:bg-slate-50/60 transition-colors">
+                          <tr key={k.id} className="hover:bg-slate-50 transition-colors">
                             <td className="py-3.5 px-4">
-                              <div className="font-bold text-slate-800">{k.name}</div>
+                              <div className="font-black text-[#111111]">{k.name}</div>
                               <div className="text-[11px] text-slate-400">{k.deviceType}</div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+                              <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-bold">
                                 {k.gateway}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 font-bold text-slate-900">
+                            <td className="py-3.5 px-4 font-black text-[#111111]">
                               Rp {k.price.toLocaleString('id-ID')}
                             </td>
                             <td className="py-3.5 px-4">
-                              <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-600 bg-slate-50 px-2 py-1 rounded-md border border-slate-200 w-fit">
+                              <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700 bg-slate-50 px-2 py-1 rounded-md border border-slate-200 w-fit font-bold">
                                 <span>{k.licenseKey}</span>
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(k.licenseKey);
                                     showToast('License Key disalin ke clipboard');
                                   }}
-                                  className="text-slate-400 hover:text-slate-700"
+                                  className="text-slate-400 hover:text-[#120CD6]"
                                   title="Salin Key"
                                 >
                                   <Copy className="w-3 h-3" />
@@ -2159,12 +2155,12 @@ export default function OnlineAdminPage() {
                               </div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#120CD6]" />
                                 {k.status}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-500">{k.created}</td>
+                            <td className="py-3.5 px-4 text-slate-500 font-bold">{k.created}</td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center justify-center gap-2">
                                 <button
@@ -2181,7 +2177,7 @@ export default function OnlineAdminPage() {
                                     });
                                     setIsKioskModalOpen(true);
                                   }}
-                                  className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                                  className="p-1.5 text-slate-500 hover:text-[#120CD6] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                   title="Edit Kiosk"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
@@ -2211,61 +2207,61 @@ export default function OnlineAdminPage() {
           {activeTab === 'payment_gateway' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">Payment Gateway Integration</h2>
+                <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Payment Gateway Integration</h2>
                 <p className="text-xs text-slate-500">Konfigurasi jalur pembayaran otomatis Midtrans QRIS Dynamic</p>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
                       <CreditCard className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-800">Midtrans Snap / Core API</h3>
+                      <h3 className="text-sm font-black text-[#111111]">Midtrans Snap / Core API</h3>
                       <p className="text-xs text-slate-400">QRIS Dinamis Otomatis dengan notifikasi Webhook instan</p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
+                    <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
                     Terhubung &amp; Aktif
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   <div className="space-y-1.5">
-                    <label className="font-semibold text-slate-700">Environment Mode</label>
-                    <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800">
+                    <label className="font-bold text-slate-700 uppercase">Environment Mode</label>
+                    <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800">
                       <option value="production">Production (Live Transaksi Nyata)</option>
                       <option value="sandbox">Sandbox (Pengujian)</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-semibold text-slate-700">Kadaluwarsa QRIS</label>
+                    <label className="font-bold text-slate-700 uppercase">Kadaluwarsa QRIS</label>
                     <input
                       type="text"
                       defaultValue="5 Menit"
                       disabled
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-500"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-500"
                     />
                   </div>
 
                   <div className="space-y-1.5 md:col-span-2">
-                    <label className="font-semibold text-slate-700">Webhook Notification URL</label>
+                    <label className="font-bold text-slate-700 uppercase">Webhook Notification URL</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         readOnly
                         value="https://admin-web-photobooth-ihsan.vercel.app/api/payment/webhook"
-                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-600"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-700 font-bold"
                       />
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText("https://admin-web-photobooth-ihsan.vercel.app/api/payment/webhook");
                           showToast('URL Webhook disalin ke clipboard');
                         }}
-                        className="px-4 py-2.5 bg-[#0B3B2B] text-white rounded-xl font-semibold text-xs shrink-0 cursor-pointer"
+                        className="px-4 py-2.5 bg-[#120CD6] text-white rounded-xl font-black text-xs shrink-0 cursor-pointer uppercase"
                       >
                         Salin URL
                       </button>
@@ -2279,7 +2275,7 @@ export default function OnlineAdminPage() {
                 <div className="pt-3 flex justify-end">
                   <button
                     onClick={() => showToast('Koneksi Midtrans QRIS berhasil diverifikasi!')}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-[#E5FD5F] hover:bg-[#d8f244] text-[#111111] border-2 border-[#120CD6] rounded-xl font-black text-xs transition-colors cursor-pointer uppercase"
                   >
                     Tes Ping Koneksi
                   </button>
@@ -2295,32 +2291,32 @@ export default function OnlineAdminPage() {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Voucher Management</h2>
+                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Voucher Management</h2>
                   <p className="text-xs text-slate-500">Kelola kupon diskon dan kode promosi untuk pengunjung photobooth</p>
                 </div>
               </div>
 
               {/* Form Tambah Voucher */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 md:p-6 space-y-4">
-                <h3 className="text-sm font-bold text-slate-800">Buat Voucher Baru</h3>
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 space-y-4">
+                <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Buat Voucher Baru</h3>
                 <form onSubmit={handleSaveVoucher} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Kode Voucher</label>
+                    <label className="font-bold text-slate-700 uppercase">Kode Voucher</label>
                     <input
                       type="text"
                       placeholder="e.g. DISKON50"
                       value={voucherCode}
                       onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-bold text-slate-800"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-black text-[#120CD6]"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Tipe Potongan</label>
+                    <label className="font-bold text-slate-700 uppercase">Tipe Potongan</label>
                     <select
                       value={voucherType}
                       onChange={(e) => setVoucherType(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
                     >
                       <option value="free">Gratis 100%</option>
                       <option value="percent">Persentase (%)</option>
@@ -2329,40 +2325,40 @@ export default function OnlineAdminPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Nilai Diskon</label>
+                    <label className="font-bold text-slate-700 uppercase">Nilai Diskon</label>
                     <input
                       type="number"
                       value={voucherValue}
                       onChange={(e) => setVoucherValue(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Maks Penggunaan</label>
+                    <label className="font-bold text-slate-700 uppercase">Maks Penggunaan</label>
                     <input
                       type="number"
                       value={voucherMaxUses}
                       onChange={(e) => setVoucherMaxUses(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800"
                     />
                   </div>
 
                   <div className="sm:col-span-2 md:col-span-3 space-y-1">
-                    <label className="font-semibold text-slate-700">Keterangan / Event</label>
+                    <label className="font-bold text-slate-700 uppercase">Keterangan / Event</label>
                     <input
                       type="text"
                       placeholder="e.g. Promo Grand Opening Tarasa Booth"
                       value={voucherDesc}
                       onChange={(e) => setVoucherDesc(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium"
                     />
                   </div>
 
                   <div className="flex items-end">
                     <button
                       type="submit"
-                      className="w-full py-2 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-2xs"
+                      className="w-full py-2 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
                     >
                       + Simpan Voucher
                     </button>
@@ -2371,10 +2367,10 @@ export default function OnlineAdminPage() {
               </div>
 
               {/* Tabel Voucher */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
                         <th className="py-3.5 px-4">Kode Voucher</th>
                         <th className="py-3.5 px-4">Tipe Diskon</th>
@@ -2385,24 +2381,24 @@ export default function OnlineAdminPage() {
                         <th className="py-3.5 px-4 text-center">Aksi</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {vouchers.length > 0 ? (
                         vouchers.map((v) => (
-                          <tr key={v.code} className="hover:bg-slate-50/60 transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-bold text-slate-800">{v.code}</td>
-                            <td className="py-3.5 px-4 capitalize text-slate-600">{v.type}</td>
-                            <td className="py-3.5 px-4 font-bold text-slate-900">
+                          <tr key={v.code} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-black text-[#120CD6]">{v.code}</td>
+                            <td className="py-3.5 px-4 capitalize text-slate-600 font-bold">{v.type}</td>
+                            <td className="py-3.5 px-4 font-black text-slate-900">
                               {v.type === 'free' ? '100% Free' : v.type === 'percent' ? `${v.value}%` : `Rp ${Number(v.value).toLocaleString('id-ID')}`}
                             </td>
-                            <td className="py-3.5 px-4 font-medium text-slate-700">
+                            <td className="py-3.5 px-4 font-bold text-slate-700">
                               {v.usedCount || 0} / {v.maxUses || '∞'}
                             </td>
                             <td className="py-3.5 px-4 text-slate-500">{v.description || '-'}</td>
                             <td className="py-3.5 px-4">
                               <button
                                 onClick={() => handleToggleVoucher(v)}
-                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
-                                  v.active !== false ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-black cursor-pointer transition-colors ${
+                                  v.active !== false ? 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]' : 'bg-slate-100 text-slate-500'
                                 }`}
                               >
                                 {v.active !== false ? 'Aktif' : 'Nonaktif'}
@@ -2421,7 +2417,7 @@ export default function OnlineAdminPage() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-slate-400">
+                          <td colSpan={7} className="py-8 text-center text-slate-400 font-bold">
                             Belum ada voucher yang dibuat.
                           </td>
                         </tr>
@@ -2434,19 +2430,19 @@ export default function OnlineAdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 8: GALLERY (Matching Screenshot 4)
+              VIEW 8: GALLERY
           ══════════════════════════════════════════════════════════════ */}
           {activeTab === 'gallery' && (
             <div className="space-y-6">
               
               {/* Header */}
               <div>
-                <h2 className="text-xl font-bold text-slate-800">Kiosk Galleries</h2>
+                <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Kiosk Galleries</h2>
                 <p className="text-xs text-slate-500">Daftar galeri dan sesi foto berdasarkan kiosk</p>
               </div>
 
-              {/* Kiosks Summary Table matching Screenshot 4 */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              {/* Kiosks Summary Table */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
                   <div className="relative w-full sm:w-72">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -2455,14 +2451,14 @@ export default function OnlineAdminPage() {
                       placeholder="Search kiosk..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#0B3B2B]"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
                         <th className="py-3.5 px-4">Kiosk Name</th>
                         <th className="py-3.5 px-4">Sesi Hari Ini</th>
@@ -2470,28 +2466,28 @@ export default function OnlineAdminPage() {
                         <th className="py-3.5 px-4 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {kiosks.map((k) => (
-                        <tr key={k.id} className="hover:bg-slate-50/60 transition-colors">
+                        <tr key={k.id} className="hover:bg-slate-50 transition-colors">
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                              <span className="font-bold text-slate-800">{k.name}</span>
-                              <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
+                              <span className="font-black text-[#111111]">{k.name}</span>
+                              <span className="text-[11px] text-[#111111] font-black bg-[#E5FD5F] px-2.5 py-0.5 rounded-full border border-[#120CD6]">
                                 Active Today
                               </span>
                             </div>
                           </td>
-                          <td className="py-4 px-4 font-semibold text-slate-700">
+                          <td className="py-4 px-4 font-black text-[#120CD6]">
                             {sessions.length || 14} Sesi
                           </td>
-                          <td className="py-4 px-4 font-semibold text-slate-700">
+                          <td className="py-4 px-4 font-black text-slate-800">
                             {sessions.length || 14} Softfile
                           </td>
                           <td className="py-4 px-4 text-right">
                             <button
                               onClick={() => setActiveGalleryKiosk(k)}
-                              className="px-4 py-2 rounded-xl bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold text-xs shadow-2xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                              className="px-4 py-2 rounded-xl bg-[#120CD6] hover:bg-blue-800 text-white font-black text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer uppercase"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               <span>View Gallery</span>
@@ -2508,7 +2504,7 @@ export default function OnlineAdminPage() {
               <div className="space-y-4 pt-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-bold text-slate-800">
+                    <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">
                       Semua Sesi Galeri ({filteredSessions.length})
                     </h3>
                     <p className="text-xs text-slate-400">Softfile foto &amp; video tersinkronisasi di cloud storage</p>
@@ -2517,24 +2513,24 @@ export default function OnlineAdminPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setStatusFilter('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                        statusFilter === 'all' ? 'bg-[#0B3B2B] text-white' : 'bg-white border border-slate-200 text-slate-600'
+                      className={`px-3 py-1 rounded-lg text-xs font-black cursor-pointer uppercase ${
+                        statusFilter === 'all' ? 'bg-[#120CD6] text-white' : 'bg-white border border-slate-200 text-slate-600'
                       }`}
                     >
                       Semua
                     </button>
                     <button
                       onClick={() => setStatusFilter('active')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                        statusFilter === 'active' ? 'bg-[#0B3B2B] text-white' : 'bg-white border border-slate-200 text-slate-600'
+                      className={`px-3 py-1 rounded-lg text-xs font-black cursor-pointer uppercase ${
+                        statusFilter === 'active' ? 'bg-[#120CD6] text-white' : 'bg-white border border-slate-200 text-slate-600'
                       }`}
                     >
                       Aktif ({stats.activeCount})
                     </button>
                     <button
                       onClick={() => setStatusFilter('expired')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                        statusFilter === 'expired' ? 'bg-[#0B3B2B] text-white' : 'bg-white border border-slate-200 text-slate-600'
+                      className={`px-3 py-1 rounded-lg text-xs font-black cursor-pointer uppercase ${
+                        statusFilter === 'expired' ? 'bg-[#120CD6] text-white' : 'bg-white border border-slate-200 text-slate-600'
                       }`}
                     >
                       Kedaluwarsa ({stats.expiredCount})
@@ -2549,7 +2545,7 @@ export default function OnlineAdminPage() {
                       const isExpired = (now - (session.createdAt || 0)) > TWENTY_FOUR_HOURS_MS;
 
                       return (
-                        <div key={session.sessionId} className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
+                        <div key={session.sessionId} className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
                           {/* Image preview */}
                           <div
                             onClick={() => compUrl && setPreviewModalImg(compUrl)}
@@ -2562,13 +2558,13 @@ export default function OnlineAdminPage() {
                                 className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                              <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold">
                                 No preview available
                               </div>
                             )}
                             <div className="absolute top-2.5 right-2.5">
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                isExpired ? 'bg-slate-900/80 text-white' : 'bg-emerald-600 text-white'
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                isExpired ? 'bg-slate-900 text-white' : 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]'
                               }`}>
                                 {isExpired ? 'Expired' : 'Aktif'}
                               </span>
@@ -2578,8 +2574,8 @@ export default function OnlineAdminPage() {
                           {/* Session Info & Actions */}
                           <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
                             <div>
-                              <p className="font-mono font-bold text-xs text-slate-800">{session.sessionId}</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5">
+                              <p className="font-mono font-black text-xs text-[#120CD6]">{session.sessionId}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5 font-bold">
                                 {new Date(session.createdAt || Date.now()).toLocaleString('id-ID')}
                               </p>
                             </div>
@@ -2588,7 +2584,7 @@ export default function OnlineAdminPage() {
                               <button
                                 onClick={() => handleDownloadZip(session)}
                                 disabled={zipping}
-                                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-lg bg-[#120CD6] hover:bg-blue-800 text-white text-[11px] font-black flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
                               >
                                 <Download className="w-3 h-3" />
                                 <span>ZIP</span>
@@ -2596,7 +2592,7 @@ export default function OnlineAdminPage() {
 
                               <button
                                 onClick={() => openQrModal(session)}
-                                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-lg bg-[#E5FD5F] hover:bg-[#d8f244] text-[#111111] border border-[#120CD6] text-[11px] font-black flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
                               >
                                 <Share2 className="w-3 h-3" />
                                 <span>QR</span>
@@ -2604,7 +2600,7 @@ export default function OnlineAdminPage() {
 
                               <button
                                 onClick={() => copySoftfileLink(session.sessionId)}
-                                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
                               >
                                 <Copy className="w-3 h-3" />
                                 <span>Link</span>
@@ -2612,7 +2608,7 @@ export default function OnlineAdminPage() {
 
                               <button
                                 onClick={() => handleDeleteSession(session.sessionId)}
-                                className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
                               >
                                 <Trash2 className="w-3 h-3" />
                                 <span>Hapus</span>
@@ -2624,7 +2620,7 @@ export default function OnlineAdminPage() {
                     })}
                   </div>
                 ) : (
-                  <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-400 text-xs">
+                  <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-400 text-xs font-bold">
                     Belum ada sesi foto yang tersimpan di cloud storage.
                   </div>
                 )}
@@ -2639,20 +2635,20 @@ export default function OnlineAdminPage() {
           {activeTab === 'public_gallery' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">Public Gallery &amp; Guest Portal</h2>
+                <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Public Gallery &amp; Guest Portal</h2>
                 <p className="text-xs text-slate-500">Konfigurasi portal unduh softfile tamu &amp; kebijakan privasi otomatis</p>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-800">Portal Unduh Softfile Tamu</h3>
+                    <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Portal Unduh Softfile Tamu</h3>
                     <p className="text-xs text-slate-400">Halaman mandiri bagi tamu memindai QR dan mengunduh foto &amp; video</p>
                   </div>
                   <Link
                     href="/"
                     target="_blank"
-                    className="px-3.5 py-1.5 bg-[#0B3B2B] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs hover:bg-[#0E4A37]"
+                    className="px-4 py-2 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer uppercase"
                   >
                     <span>Buka Portal Tamu</span>
                     <Globe className="w-3.5 h-3.5" />
@@ -2660,21 +2656,21 @@ export default function OnlineAdminPage() {
                 </div>
 
                 <div className="space-y-4 text-xs">
-                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="p-4 bg-[#F5F5F5] rounded-xl border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-800">Kebijakan Retensi Supabase (24 Jam)</span>
-                      <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <span className="font-black text-[#111111] uppercase">Kebijakan Retensi Supabase (24 Jam)</span>
+                      <span className="text-[#111111] font-black bg-[#E5FD5F] px-2.5 py-0.5 rounded-full border border-[#120CD6]">
                         Auto-Cleanup Active
                       </span>
                     </div>
-                    <p className="text-slate-500 leading-relaxed">
+                    <p className="text-slate-600 leading-relaxed font-medium">
                       Sesi foto dan video akan otomatis dibersihkan dari penyimpanan cloud setelah 24 jam untuk menjaga kuota storage dan privasi tamu.
                     </p>
                     <div className="pt-2">
                       <button
                         onClick={handleRunCleanup}
                         disabled={cleanupRunning}
-                        className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                        className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-black text-xs transition-colors cursor-pointer flex items-center gap-1.5 uppercase"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>{cleanupRunning ? 'Sedang membersihkan...' : 'Jalankan Pembersihan Supabase Sekarang'}</span>
@@ -2687,7 +2683,7 @@ export default function OnlineAdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 10: TEMPLATES (Matching Screenshot 5)
+              VIEW 10: TEMPLATES (XML Parity & SANS Styling)
           ══════════════════════════════════════════════════════════════ */}
           {activeTab === 'templates' && (
             <div className="space-y-6">
@@ -2695,21 +2691,21 @@ export default function OnlineAdminPage() {
               {/* Header + Add Template Button */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Template Management</h2>
+                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Template Management</h2>
                   <p className="text-xs text-slate-500">Kelola bingkai photobooth untuk format Receipt, 2R, dan 4R</p>
                 </div>
 
                 <button
                   onClick={() => setIsTemplateModalOpen(true)}
-                  className="px-4 py-2 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                  className="px-4 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
                 >
                   <Plus className="w-4 h-4" />
                   <span>+ Add Template</span>
                 </button>
               </div>
 
-              {/* Table Card matching Screenshot 5 */}
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              {/* Table Card */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b border-slate-100">
                   <div className="relative w-full sm:w-72">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -2718,14 +2714,14 @@ export default function OnlineAdminPage() {
                       placeholder="Search template..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#0B3B2B]"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
                         <th className="py-3.5 px-4">No</th>
                         <th className="py-3.5 px-4">Template Name</th>
@@ -2734,33 +2730,33 @@ export default function OnlineAdminPage() {
                         <th className="py-3.5 px-4">Total Photos</th>
                         <th className="py-3.5 px-4">User Captured</th>
                         <th className="py-3.5 px-4">Source</th>
-                        <th className="py-3.5 px-4 text-center">Preview</th>
+                        <th className="py-3.5 px-4 text-center">Preview &amp; XML</th>
                         <th className="py-3.5 px-4 text-center">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 font-medium">
                       {allTemplates
                         .filter(t => searchQuery === '' || t.name.toLowerCase().includes(searchQuery.toLowerCase()))
                         .map((tmpl, idx) => (
-                          <tr key={tmpl.id || idx} className="hover:bg-slate-50/60 transition-colors">
-                            <td className="py-3.5 px-4 font-semibold text-slate-600">{tmpl.no || idx + 1}</td>
-                            <td className="py-3.5 px-4 font-bold text-slate-800">{tmpl.name}</td>
+                          <tr key={tmpl.id || idx} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-3.5 px-4 font-black text-slate-500">{tmpl.no || idx + 1}</td>
+                            <td className="py-3.5 px-4 font-black text-slate-900">{tmpl.name}</td>
                             <td className="py-3.5 px-4">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black ${
                                 tmpl.size === 'Receipt'
-                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                  ? 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]'
                                   : tmpl.size === '2R'
-                                  ? 'bg-blue-50 text-blue-800 border border-blue-200'
-                                  : 'bg-purple-50 text-purple-800 border border-purple-200'
+                                  ? 'bg-blue-100 text-[#120CD6] border border-blue-300'
+                                  : 'bg-purple-100 text-[#F908E0] border border-purple-300'
                               }`}>
                                 {tmpl.size}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-700 font-medium">{tmpl.totalCapturedPhoto}</td>
-                            <td className="py-3.5 px-4 text-slate-700 font-medium">{tmpl.totalPhotos}</td>
-                            <td className="py-3.5 px-4 text-slate-700 font-medium">{tmpl.userCaptured}</td>
+                            <td className="py-3.5 px-4 text-slate-700 font-bold">{tmpl.totalCapturedPhoto}</td>
+                            <td className="py-3.5 px-4 text-slate-700 font-bold">{tmpl.totalPhotos}</td>
+                            <td className="py-3.5 px-4 text-slate-700 font-bold">{tmpl.userCaptured}</td>
                             <td className="py-3.5 px-4">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium text-[11px]">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold text-[11px]">
                                 {tmpl.source}
                               </span>
                             </td>
@@ -2768,14 +2764,14 @@ export default function OnlineAdminPage() {
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   onClick={() => setPreviewModalImg(tmpl.previewUrl)}
-                                  className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                                  className="p-1.5 text-slate-600 hover:text-[#120CD6] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                   title="Lihat Pratinjau Gambar"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => setViewingXmlTemplate(tmpl)}
-                                  className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                  className="p-1.5 text-slate-600 hover:text-[#120CD6] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                   title="Lihat &amp; Salin Kode XML"
                                 >
                                   <Code className="w-4 h-4" />
@@ -2786,17 +2782,15 @@ export default function OnlineAdminPage() {
                               <div className="flex items-center justify-center gap-2">
                                 <button
                                   onClick={() => handleToggleFrame(tmpl.id)}
-                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition-colors ${
-                                    tmpl.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-black cursor-pointer transition-colors ${
+                                    tmpl.active ? 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]' : 'bg-slate-100 text-slate-500'
                                   }`}
                                 >
                                   {tmpl.active ? 'Active' : 'Off'}
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    setViewingXmlTemplate(tmpl);
-                                  }}
-                                  className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors cursor-pointer"
+                                  onClick={() => setViewingXmlTemplate(tmpl)}
+                                  className="p-1 text-slate-400 hover:text-[#120CD6] rounded transition-colors cursor-pointer"
                                   title="Edit XML Template"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
@@ -2827,52 +2821,87 @@ export default function OnlineAdminPage() {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-800">Template Categories</h2>
+                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Template Categories</h2>
                   <p className="text-xs text-slate-500">Kategori format rasio bingkai untuk photobooth</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
                     <Printer className="w-5 h-5" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800">Receipt Strip (Thermal)</h3>
-                  <p className="text-xs text-slate-500">Kertas thermal roll 58mm / 80mm monokrom vintage.</p>
-                  <p className="text-xs font-bold text-emerald-800">4 Template Aktif</p>
+                  <h3 className="text-sm font-black text-[#111111] uppercase">Receipt Strip (Thermal)</h3>
+                  <p className="text-xs text-slate-500 font-medium">Kertas thermal roll 58mm / 80mm monokrom vintage.</p>
+                  <p className="text-xs font-black text-[#120CD6]">4 Template Aktif</p>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
                     <Layers className="w-5 h-5" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800">Photostrip 2R</h3>
-                  <p className="text-xs text-slate-500">Ukuran 2x6 strip vertikal dengan 3 atau 4 slot foto.</p>
-                  <p className="text-xs font-bold text-blue-800">6 Template Aktif</p>
+                  <h3 className="text-sm font-black text-[#111111] uppercase">Photostrip 2R</h3>
+                  <p className="text-xs text-slate-500 font-medium">Ukuran 2x6 strip vertikal dengan 3 atau 4 slot foto.</p>
+                  <p className="text-xs font-black text-[#120CD6]">6 Template Aktif</p>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#F908E0] flex items-center justify-center font-bold">
                     <Layout className="w-5 h-5" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800">Classic 4R Studio</h3>
-                  <p className="text-xs text-slate-500">Format cetak penuh 4x6 grid 4 atau 6 slot pose.</p>
-                  <p className="text-xs font-bold text-purple-800">8 Template Aktif</p>
+                  <h3 className="text-sm font-black text-[#111111] uppercase">Classic 4R Studio</h3>
+                  <p className="text-xs text-slate-500 font-medium">Format cetak penuh 4x6 grid 4 atau 6 slot pose.</p>
+                  <p className="text-xs font-black text-[#F908E0]">8 Template Aktif</p>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                     <Folder className="w-5 h-5" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-800">Event &amp; Wedding</h3>
-                  <p className="text-xs text-slate-500">Desain custom khusus pernikahan dan pameran brand.</p>
-                  <p className="text-xs font-bold text-amber-800">3 Template Aktif</p>
+                  <h3 className="text-sm font-black text-[#111111] uppercase">Event &amp; Wedding</h3>
+                  <p className="text-xs text-slate-500 font-medium">Desain custom khusus pernikahan dan pameran brand.</p>
+                  <p className="text-xs font-black text-amber-700">3 Template Aktif</p>
                 </div>
               </div>
             </div>
           )}
 
         </main>
+
+        {/* SANS Creative Signature Footer (agent nya sans design.md Section 11.3) */}
+        <footer className="mt-auto border-t-2 border-slate-200 bg-white px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-slate-600">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#120CD6]" />
+            <span className="font-bold text-[#111111] uppercase tracking-wide">SANS Creative</span>
+            <span className="text-slate-400">• Booth Management System</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] md:text-xs">
+            <a 
+              href="https://instagram.com/Ihsanelfikrie_" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-[#120CD6] transition-colors"
+            >
+              Instagram: <strong className="text-[#111111]">@Ihsanelfikrie_</strong>
+            </a>
+            <span className="text-slate-300">•</span>
+            <a 
+              href="mailto:ihsanelfikrie134@gmail.com" 
+              className="hover:text-[#120CD6] transition-colors"
+            >
+              Email: <strong className="text-[#111111]">ihsanelfikrie134@gmail.com</strong>
+            </a>
+            <span className="text-slate-300">•</span>
+            <a 
+              href="https://wa.me/6285822713356" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-[#120CD6] transition-colors"
+            >
+              WhatsApp: <strong className="text-[#111111]">+62 858-2271-3356</strong>
+            </a>
+          </div>
+        </footer>
       </div>
 
       {/* ── MODALS ────────────────────────────────────────────────────── */}
@@ -2880,13 +2909,13 @@ export default function OnlineAdminPage() {
       {/* 1. Fullscreen Preview Image Modal */}
       {previewModalImg && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
           onClick={() => setPreviewModalImg(null)}
         >
-          <div className="relative max-w-xl max-h-[90vh] bg-white rounded-2xl p-2 shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="relative max-w-xl max-h-[90vh] bg-white rounded-2xl p-2 shadow-2xl border-4 border-[#120CD6]" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setPreviewModalImg(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-slate-700 cursor-pointer shadow-lg"
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#120CD6] text-white flex items-center justify-center hover:bg-blue-800 cursor-pointer shadow-lg font-black"
             >
               <X className="w-4 h-4" />
             </button>
@@ -2902,42 +2931,42 @@ export default function OnlineAdminPage() {
       {/* 2. QR Code Guest Download Modal */}
       {qrModalSession && (
         <div 
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
           onClick={() => setQrModalSession(null)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border border-slate-100"
+            className="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-[#120CD6]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <span className="text-xs font-bold text-slate-800">QR Softfile Tamu</span>
+              <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">QR Softfile Tamu</span>
               <button 
                 onClick={() => setQrModalSession(null)}
-                className="text-slate-400 hover:text-slate-700 p-1"
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 inline-block mx-auto">
+            <div className="p-3 bg-[#F5F5F5] rounded-2xl border-2 border-[#120CD6] inline-block mx-auto">
               {qrDataUrl ? (
                 <img src={qrDataUrl} alt="QR Code" className="w-56 h-56 mx-auto rounded-xl" />
               ) : (
-                <div className="w-56 h-56 flex items-center justify-center text-xs text-slate-400">
+                <div className="w-56 h-56 flex items-center justify-center text-xs text-slate-400 font-bold">
                   Membuat QR...
                 </div>
               )}
             </div>
 
             <div className="space-y-1">
-              <p className="font-mono font-bold text-sm text-slate-900">{qrModalSession.sessionId}</p>
-              <p className="text-xs text-slate-500">Scan menggunakan kamera HP untuk mengunduh foto &amp; video</p>
+              <p className="font-mono font-black text-sm text-[#111111]">{qrModalSession.sessionId}</p>
+              <p className="text-xs text-slate-500 font-medium">Scan menggunakan kamera HP untuk mengunduh foto &amp; video</p>
             </div>
 
             <div className="pt-2">
               <button
                 onClick={() => copySoftfileLink(qrModalSession.sessionId)}
-                className="w-full py-2.5 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase"
               >
                 Salin Link Softfile
               </button>
@@ -2949,44 +2978,44 @@ export default function OnlineAdminPage() {
       {/* 3. Add/Edit Kiosk Modal */}
       {isKioskModalOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
           onClick={() => setIsKioskModalOpen(false)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl border border-slate-100"
+            className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl border-2 border-[#120CD6]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-800">
+              <h3 className="text-sm font-black text-[#120CD6] uppercase tracking-tight">
                 {editingKiosk ? 'Edit Kiosk' : 'Tambah Kiosk Baru'}
               </h3>
               <button 
                 onClick={() => setIsKioskModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1"
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveKiosk} className="space-y-3 text-xs">
+            <form onSubmit={handleSaveKiosk} className="space-y-3 text-xs font-medium">
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Nama Kiosk</label>
+                <label className="font-bold text-slate-700 uppercase">Nama Kiosk</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Tarasa Receipt Booth 2"
                   value={kioskForm.name}
                   onChange={(e) => setKioskForm({ ...kioskForm, name: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Tipe Perangkat &amp; Printer</label>
+                <label className="font-bold text-slate-700 uppercase">Tipe Perangkat &amp; Printer</label>
                 <select
                   value={kioskForm.deviceType}
                   onChange={(e) => setKioskForm({ ...kioskForm, deviceType: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
                 >
                   <option value="Tablet Android (Receipt Thermal 58mm)">Tablet Android (Receipt Thermal 58mm)</option>
                   <option value="Tablet Android (Receipt Thermal 80mm)">Tablet Android (Receipt Thermal 80mm)</option>
@@ -2996,22 +3025,22 @@ export default function OnlineAdminPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Tarif per Sesi (Rp)</label>
+                <label className="font-bold text-slate-700 uppercase">Tarif per Sesi (Rp)</label>
                 <input
                   type="number"
                   required
                   value={kioskForm.price}
                   onChange={(e) => setKioskForm({ ...kioskForm, price: Number(e.target.value) })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-black"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Payment Gateway</label>
+                <label className="font-bold text-slate-700 uppercase">Payment Gateway</label>
                 <select
                   value={kioskForm.gateway}
                   onChange={(e) => setKioskForm({ ...kioskForm, gateway: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
                 >
                   <option value="Midtrans QRIS">Midtrans QRIS</option>
                   <option value="Manual Tunai">Manual Tunai</option>
@@ -3020,12 +3049,12 @@ export default function OnlineAdminPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700">Lokasi / Outlet</label>
+                <label className="font-bold text-slate-700 uppercase">Lokasi / Outlet</label>
                 <input
                   type="text"
                   value={kioskForm.location}
                   onChange={(e) => setKioskForm({ ...kioskForm, location: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
                 />
               </div>
 
@@ -3033,13 +3062,13 @@ export default function OnlineAdminPage() {
                 <button
                   type="button"
                   onClick={() => setIsKioskModalOpen(false)}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold rounded-xl"
+                  className="flex-1 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl cursor-pointer uppercase"
                 >
                   Simpan Kiosk
                 </button>
@@ -3052,20 +3081,20 @@ export default function OnlineAdminPage() {
       {/* 4. Add Template Modal with XML Editor & Presets */}
       {isTemplateModalOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
           onClick={() => setIsTemplateModalOpen(false)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-2xl w-full space-y-4 shadow-2xl border border-slate-100 max-h-[92vh] flex flex-col"
+            className="bg-white rounded-3xl p-6 max-w-2xl w-full space-y-4 shadow-2xl border-2 border-[#120CD6] max-h-[92vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
                   <Layout className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800">Tambah Template Frame</h3>
+                  <h3 className="text-sm font-black text-[#120CD6] uppercase tracking-tight">Tambah Template Frame</h3>
                   <p className="text-[11px] text-slate-400">Konfigurasi struktur koordinat slot foto &amp; XML</p>
                 </div>
               </div>
@@ -3078,12 +3107,12 @@ export default function OnlineAdminPage() {
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl shrink-0 text-xs font-bold">
+            <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl shrink-0 text-xs font-black uppercase">
               <button
                 type="button"
                 onClick={() => setTemplateTabMode('xml')}
                 className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  templateTabMode === 'xml' ? 'bg-white text-[#0B3B2B] shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  templateTabMode === 'xml' ? 'bg-[#120CD6] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Code className="w-3.5 h-3.5" />
@@ -3093,7 +3122,7 @@ export default function OnlineAdminPage() {
                 type="button"
                 onClick={() => setTemplateTabMode('form')}
                 className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  templateTabMode === 'form' ? 'bg-white text-[#0B3B2B] shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  templateTabMode === 'form' ? 'bg-[#120CD6] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -3103,7 +3132,7 @@ export default function OnlineAdminPage() {
 
             {/* Presets Quick Selector */}
             <div className="space-y-1.5 shrink-0">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                 Pilih Preset Cepat:
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -3121,7 +3150,7 @@ export default function OnlineAdminPage() {
                       });
                       showToast(`Preset ${p.label} dimuat!`);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 text-[11px] font-semibold text-slate-700 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-[#E5FD5F] hover:text-[#111111] border border-slate-200 text-[11px] font-bold text-slate-700 transition-colors cursor-pointer"
                   >
                     {p.label.split(' (')[0]}
                   </button>
@@ -3134,8 +3163,8 @@ export default function OnlineAdminPage() {
               {templateTabMode === 'xml' ? (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="font-bold text-slate-700">Kode Konfigurasi Frame XML:</label>
-                    <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
+                    <label className="font-black text-slate-700 uppercase">Kode Konfigurasi Frame XML:</label>
+                    <span className="text-[11px] text-[#111111] font-black bg-[#E5FD5F] px-2.5 py-0.5 rounded-full border border-[#120CD6]">
                       Format Kompatibel dengan Kiosk Offline
                     </span>
                   </div>
@@ -3151,28 +3180,28 @@ export default function OnlineAdminPage() {
                       }
                     }}
                     placeholder="<frame> ... </frame>"
-                    className="w-full p-3 font-mono text-[11px] bg-slate-900 text-emerald-300 rounded-xl border border-slate-700 focus:border-emerald-500 focus:outline-none leading-relaxed"
+                    className="w-full p-3 font-mono text-[11px] bg-[#111111] text-[#E5FD5F] rounded-xl border-2 border-slate-700 focus:border-[#120CD6] focus:outline-none leading-relaxed font-bold"
                   />
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-500 font-medium">
                     💡 Anda bisa langsung salin (copy) kode XML dari panel admin offline dan tempelkan di sini.
                   </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="font-semibold text-slate-700">Nama Template</label>
+                    <label className="font-bold text-slate-700 uppercase">Nama Template</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Receipt Vintage 3-Pose"
                       value={templateForm.name}
                       onChange={(e) => setTemplateForm({ ...templateForm, name: e.target.value })}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Ukuran Frame (Size)</label>
+                    <label className="font-bold text-slate-700 uppercase">Ukuran Frame (Size)</label>
                     <select
                       value={templateForm.size}
                       onChange={(e) => {
@@ -3183,7 +3212,7 @@ export default function OnlineAdminPage() {
                           xmlText: generateXmlTemplate(templateForm.name, newSize, templateForm.photoCount)
                         });
                       }}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
                     >
                       <option value="Receipt">Receipt (Thermal 58mm / 80mm)</option>
                       <option value="2R">2R (2x6 inches Photostrip)</option>
@@ -3192,7 +3221,7 @@ export default function OnlineAdminPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-semibold text-slate-700">Jumlah Slot Foto</label>
+                    <label className="font-bold text-slate-700 uppercase">Jumlah Slot Foto</label>
                     <input
                       type="number"
                       min={1}
@@ -3206,20 +3235,20 @@ export default function OnlineAdminPage() {
                           xmlText: generateXmlTemplate(templateForm.name, templateForm.size, count)
                         });
                       }}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-black"
                     />
                   </div>
                 </div>
               )}
 
               <div className="space-y-1 pt-1">
-                <label className="font-semibold text-slate-700">URL Gambar Bingkai (PNG Transparan)</label>
+                <label className="font-bold text-slate-700 uppercase">URL Gambar Bingkai (PNG Transparan)</label>
                 <input
                   type="text"
                   placeholder="https://..."
                   value={templateForm.previewUrl}
                   onChange={(e) => setTemplateForm({ ...templateForm, previewUrl: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-medium"
                 />
               </div>
 
@@ -3227,14 +3256,14 @@ export default function OnlineAdminPage() {
                 <button
                   type="button"
                   onClick={() => setIsTemplateModalOpen(false)}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer uppercase"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex-1 py-2.5 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold rounded-xl cursor-pointer disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl cursor-pointer disabled:opacity-50 uppercase"
                 >
                   {actionLoading ? 'Menyimpan...' : 'Simpan Template XML'}
                 </button>
@@ -3247,17 +3276,17 @@ export default function OnlineAdminPage() {
       {/* 5. XML Template Viewer Modal */}
       {viewingXmlTemplate && (
         <div 
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
           onClick={() => setViewingXmlTemplate(null)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl border border-slate-100"
+            className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl border-2 border-[#120CD6]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-bold text-slate-800">{viewingXmlTemplate.name}</h3>
-                <p className="text-[11px] text-slate-400">Kode XML Slot &amp; Layout Template</p>
+                <h3 className="text-sm font-black text-[#120CD6] uppercase tracking-tight">{viewingXmlTemplate.name}</h3>
+                <p className="text-[11px] text-slate-400 font-semibold">Kode XML Slot &amp; Layout Template</p>
               </div>
               <button 
                 onClick={() => setViewingXmlTemplate(null)}
@@ -3267,8 +3296,8 @@ export default function OnlineAdminPage() {
               </button>
             </div>
 
-            <div className="bg-slate-900 rounded-2xl p-4 overflow-x-auto max-h-80 border border-slate-800">
-              <pre className="font-mono text-xs text-emerald-300 whitespace-pre leading-relaxed">
+            <div className="bg-[#111111] rounded-2xl p-4 overflow-x-auto max-h-80 border-2 border-slate-700">
+              <pre className="font-mono text-xs text-[#E5FD5F] whitespace-pre leading-relaxed font-bold">
                 {viewingXmlTemplate.xml || generateXmlTemplate(viewingXmlTemplate.name, viewingXmlTemplate.size, viewingXmlTemplate.totalPhotos)}
               </pre>
             </div>
@@ -3281,7 +3310,7 @@ export default function OnlineAdminPage() {
                   navigator.clipboard.writeText(xmlContent);
                   showToast('Kode XML berhasil disalin ke clipboard!');
                 }}
-                className="flex-1 py-2.5 bg-[#0B3B2B] hover:bg-[#0E4A37] text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                className="flex-1 py-2.5 bg-[#E5FD5F] hover:bg-[#d8f244] text-[#111111] border-2 border-[#120CD6] font-black rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer uppercase"
               >
                 <Copy className="w-3.5 h-3.5" />
                 <span>Salin Kode XML</span>
@@ -3289,7 +3318,7 @@ export default function OnlineAdminPage() {
               <button
                 type="button"
                 onClick={() => setViewingXmlTemplate(null)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer uppercase"
               >
                 Tutup
               </button>
