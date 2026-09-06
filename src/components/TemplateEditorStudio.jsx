@@ -116,11 +116,16 @@ export default function TemplateEditorStudio({
   const [viewCode, setViewCode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toastError, setToastError] = useState(null);
+  const [toastSuccess, setToastSuccess] = useState(null);
+  const [snapGuides, setSnapGuides] = useState({ x: null, y: null });
+  const [isInteracting, setIsInteracting] = useState(false);
 
   // Canvas Refs & Dragging
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
   const dragStateRef = useRef(null);
+  const pendingUpdateRef = useRef(null);
+  const rafIdRef = useRef(null);
 
   // Switch preset
   const handleSizePresetChange = (presetKey) => {
@@ -141,17 +146,13 @@ export default function TemplateEditorStudio({
   // Add new photo slot
   const handleAddSlot = () => {
     const nextId = slots.length > 0 ? Math.max(...slots.map((s) => s.id)) + 1 : 1;
-    
-    // Proportional slot size (like in reference video: 120x213 or 3x4 aspect)
-    const defaultW = Math.round(width * 0.28);
-    const defaultH = Math.round(height * 0.24);
-    
-    // Position in grid (3 columns per row)
-    const slotIdx = slots.length;
-    const col = slotIdx % 3;
-    const row = Math.floor(slotIdx / 3);
-    const marginX = Math.round(width * 0.05);
-    const gapX = Math.round(width * 0.035);
+    const defaultW = Math.round(width * 0.42);
+    const defaultH = Math.round(height * 0.28);
+
+    const row = (nextId - 1) % 4;
+    const col = Math.floor((nextId - 1) / 4);
+    const marginX = Math.round(width * 0.08);
+    const gapX = Math.round(width * 0.04);
     const marginY = Math.round(height * 0.12);
     const gapY = Math.round(height * 0.035);
 
@@ -168,9 +169,8 @@ export default function TemplateEditorStudio({
       zIndex: slots.length + 1,
     };
 
-    setSlots([...slots, newSlot]);
+    setSlots((prev) => [...prev, newSlot]);
     setActiveSlotId(nextId);
-    showToast?.(`Slot foto #${nextId} ditambahkan`);
   };
 
   // Remove slot
@@ -181,7 +181,6 @@ export default function TemplateEditorStudio({
     if (activeSlotId === slotId) {
       setActiveSlotId(updated[0]?.id || null);
     }
-    showToast?.(`Slot foto #${slotId} dihapus`);
   };
 
   // Rotate template
@@ -202,7 +201,8 @@ export default function TemplateEditorStudio({
     const reader = new FileReader();
     reader.onload = (event) => {
       setBgImage(event.target.result);
-      showToast?.('Gambar overlay bingkai berhasil dimuat!');
+      setToastSuccess('Gambar overlay bingkai berhasil dimuat!');
+      setTimeout(() => setToastSuccess(null), 3000);
     };
     reader.readAsDataURL(file);
   };
@@ -213,10 +213,15 @@ export default function TemplateEditorStudio({
     if (file) handleProcessFile(file);
   };
 
-  // ── Drag & Resize Engine ───────────────────────────────────────────────────
-  const handleMouseDownSlot = (e, slot, actionType = 'move', handle = null) => {
+  // ── High-Performance 60/120 FPS Drag & Resize Engine (rAF + Pointer Events) ──
+  const handlePointerDownSlot = (e, slot, actionType = 'move', handle = null) => {
     e.stopPropagation();
+    e.preventDefault();
     setActiveSlotId(slot.id);
+    setIsInteracting(true);
+
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
 
     dragStateRef.current = {
       actionType,
@@ -224,82 +229,148 @@ export default function TemplateEditorStudio({
       startX: e.clientX,
       startY: e.clientY,
       initialSlot: { ...slot },
+      scaleX: width / rect.width,
+      scaleY: height / rect.height,
     };
+
+    try {
+      if (e.target && typeof e.target.setPointerCapture === 'function') {
+        e.target.setPointerCapture(e.pointerId);
+      }
+    } catch (_) {}
   };
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!dragStateRef.current || !canvasRef.current) return;
-      const { actionType, handle, startX, startY, initialSlot } = dragStateRef.current;
-      const rect = canvasRef.current.getBoundingClientRect();
-
-      const scaleX = width / rect.width;
-      const scaleY = height / rect.height;
+    const handlePointerMove = (e) => {
+      if (!dragStateRef.current) return;
+      const { actionType, handle, startX, startY, initialSlot, scaleX, scaleY } = dragStateRef.current;
 
       const dx = (e.clientX - startX) * scaleX;
       const dy = (e.clientY - startY) * scaleY;
 
-      setSlots((prevSlots) =>
-        prevSlots.map((s) => {
-          if (s.id !== initialSlot.id) return s;
+      pendingUpdateRef.current = { actionType, handle, initialSlot, dx, dy };
 
-          if (actionType === 'move') {
-            const nextX = Math.round(Math.max(0, Math.min(width - s.width, initialSlot.x + dx)));
-            const nextY = Math.round(Math.max(0, Math.min(height - s.height, initialSlot.y + dy)));
-            return { ...s, x: nextX, y: nextY };
-          }
+      if (!rafIdRef.current) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
+          if (!pendingUpdateRef.current) return;
+          const { actionType, handle, initialSlot, dx, dy } = pendingUpdateRef.current;
 
-          if (actionType === 'resize') {
-            let newX = initialSlot.x;
-            let newY = initialSlot.y;
-            let newW = initialSlot.width;
-            let newH = initialSlot.height;
-            const minSize = 40;
+          let activeGuideX = null;
+          let activeGuideY = null;
+          const snapThreshold = 10;
 
-            if (handle.includes('e')) {
-              newW = Math.max(minSize, Math.min(width - initialSlot.x, initialSlot.width + dx));
-            }
-            if (handle.includes('s')) {
-              newH = Math.max(minSize, Math.min(height - initialSlot.y, initialSlot.height + dy));
-            }
-            if (handle.includes('w')) {
-              const possibleW = initialSlot.width - dx;
-              if (possibleW >= minSize && initialSlot.x + dx >= 0) {
-                newX = initialSlot.x + dx;
-                newW = possibleW;
+          setSlots((prevSlots) =>
+            prevSlots.map((s) => {
+              if (s.id !== initialSlot.id) return s;
+
+              if (actionType === 'move') {
+                let nextX = Math.max(0, Math.min(width - s.width, initialSlot.x + dx));
+                let nextY = Math.max(0, Math.min(height - s.height, initialSlot.y + dy));
+
+                // Snap to Center X
+                const centerX = width / 2;
+                const slotCenterX = nextX + s.width / 2;
+                if (Math.abs(slotCenterX - centerX) <= snapThreshold) {
+                  nextX = centerX - s.width / 2;
+                  activeGuideX = centerX;
+                }
+
+                // Snap to Center Y
+                const centerY = height / 2;
+                const slotCenterY = nextY + s.height / 2;
+                if (Math.abs(slotCenterY - centerY) <= snapThreshold) {
+                  nextY = centerY - s.height / 2;
+                  activeGuideY = centerY;
+                }
+
+                // Snap to edges
+                if (Math.abs(nextX) <= snapThreshold) {
+                  nextX = 0;
+                  activeGuideX = 0;
+                } else if (Math.abs(nextX + s.width - width) <= snapThreshold) {
+                  nextX = width - s.width;
+                  activeGuideX = width;
+                }
+
+                if (Math.abs(nextY) <= snapThreshold) {
+                  nextY = 0;
+                  activeGuideY = 0;
+                } else if (Math.abs(nextY + s.height - height) <= snapThreshold) {
+                  nextY = height - s.height;
+                  activeGuideY = height;
+                }
+
+                return { ...s, x: Math.round(nextX), y: Math.round(nextY) };
               }
-            }
-            if (handle.includes('n')) {
-              const possibleH = initialSlot.height - dy;
-              if (possibleH >= minSize && initialSlot.y + dy >= 0) {
-                newY = initialSlot.y + dy;
-                newH = possibleH;
+
+              if (actionType === 'resize') {
+                let newX = initialSlot.x;
+                let newY = initialSlot.y;
+                let newW = initialSlot.width;
+                let newH = initialSlot.height;
+                const minSize = 40;
+
+                if (handle.includes('e')) {
+                  newW = Math.max(minSize, Math.min(width - initialSlot.x, initialSlot.width + dx));
+                }
+                if (handle.includes('s')) {
+                  newH = Math.max(minSize, Math.min(height - initialSlot.y, initialSlot.height + dy));
+                }
+                if (handle.includes('w')) {
+                  const possibleW = initialSlot.width - dx;
+                  if (possibleW >= minSize && initialSlot.x + dx >= 0) {
+                    newX = initialSlot.x + dx;
+                    newW = possibleW;
+                  }
+                }
+                if (handle.includes('n')) {
+                  const possibleH = initialSlot.height - dy;
+                  if (possibleH >= minSize && initialSlot.y + dy >= 0) {
+                    newY = initialSlot.y + dy;
+                    newH = possibleH;
+                  }
+                }
+
+                return {
+                  ...s,
+                  x: Math.round(newX),
+                  y: Math.round(newY),
+                  width: Math.round(newW),
+                  height: Math.round(newH),
+                };
               }
-            }
 
-            return {
-              ...s,
-              x: Math.round(newX),
-              y: Math.round(newY),
-              width: Math.round(newW),
-              height: Math.round(newH),
-            };
-          }
+              return s;
+            })
+          );
 
-          return s;
-        })
-      );
+          setSnapGuides({ x: activeGuideX, y: activeGuideY });
+        });
+      }
     };
 
-    const handleMouseUp = () => {
-      dragStateRef.current = null;
+    const handlePointerUp = () => {
+      if (dragStateRef.current) {
+        if (rafIdRef.current) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
+        pendingUpdateRef.current = null;
+        dragStateRef.current = null;
+        setIsInteracting(false);
+        setSnapGuides({ x: null, y: null });
+      }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
   }, [width, height]);
 
@@ -374,14 +445,18 @@ ${slots
 
       const json = await res.json();
       if (res.ok && json.success) {
-        showToast?.(`Template "${name}" berhasil disimpan dan disinkronkan ke Kiosk!`);
-        if (onSave) onSave(json.frames);
+        setToastSuccess(`Template "${name}" berhasil disimpan!`);
+        setTimeout(() => {
+          if (onSave) onSave(json.frames);
+        }, 1200);
       } else {
-        alert(json.error || 'Gagal menyimpan template.');
+        setToastError(json.error || 'Gagal menyimpan template.');
+        setTimeout(() => setToastError(null), 4000);
       }
     } catch (err) {
       console.error('[TemplateStudio] Save error:', err);
-      alert('Terjadi kesalahan saat menyimpan template.');
+      setToastError('Terjadi kesalahan saat menyimpan template.');
+      setTimeout(() => setToastError(null), 4000);
     } finally {
       setSaving(false);
     }
@@ -494,6 +569,21 @@ ${slots
         </div>
       )}
 
+      {/* Floating Success Toast Notification (Auto-Dismissing Non-Blocking) */}
+      {toastSuccess && (
+        <div className="fixed top-5 right-5 z-[100] bg-white border border-emerald-300 text-emerald-800 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="text-xs font-bold">{toastSuccess}</span>
+          <button
+            type="button"
+            onClick={() => setToastSuccess(null)}
+            className="p-1 hover:bg-emerald-50 rounded-lg text-emerald-400 hover:text-emerald-600 transition cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* ── Studio Split Layout ──────────────────────────────────────── */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
         
@@ -503,7 +593,7 @@ ${slots
           {/* Visual Canvas Box */}
           <div
             ref={canvasRef}
-            className={`relative rounded-2xl shadow-2xl overflow-hidden transition-all border-4 border-white ${
+            className={`relative rounded-2xl shadow-2xl overflow-hidden border-4 border-white ${
               bgType === 'checkerboard'
                 ? 'bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] bg-slate-100'
                 : bgType === 'white'
@@ -518,6 +608,20 @@ ${slots
               transformOrigin: 'center center',
             }}
           >
+            {/* Magnetic Snap Alignment Guides */}
+            {snapGuides.x !== null && (
+              <div
+                className="absolute top-0 bottom-0 w-px bg-emerald-500 pointer-events-none z-50 border-r border-dashed border-emerald-400"
+                style={{ left: `${(snapGuides.x / width) * 100}%` }}
+              />
+            )}
+            {snapGuides.y !== null && (
+              <div
+                className="absolute left-0 right-0 h-px bg-emerald-500 pointer-events-none z-50 border-b border-dashed border-emerald-400"
+                style={{ top: `${(snapGuides.y / height) * 100}%` }}
+              />
+            )}
+
             {/* Empty Canvas Dropzone (Shown when no background uploaded yet) */}
             {!bgImage && (
               <div
@@ -600,8 +704,10 @@ ${slots
                 return (
                   <div
                     key={`slot-${slot.id}`}
-                    onMouseDown={(e) => handleMouseDownSlot(e, slot, 'move')}
-                    className={`absolute flex flex-col items-center justify-between cursor-move transition-all select-none ${
+                    onPointerDown={(e) => handlePointerDownSlot(e, slot, 'move')}
+                    className={`absolute flex flex-col items-center justify-between select-none ${
+                      isInteracting && isActive ? 'cursor-grabbing' : 'cursor-grab'
+                    } ${
                       isActive
                         ? 'border-2 border-emerald-500 bg-emerald-500/25 shadow-xl z-40 ring-2 ring-emerald-400/40'
                         : 'border border-dashed border-slate-700/80 bg-slate-900/30 hover:border-emerald-500 z-30'
@@ -612,6 +718,9 @@ ${slots
                       width: `${widthPct}%`,
                       height: `${heightPct}%`,
                       transform: `rotate(${slot.rotation || 0}deg)`,
+                      touchAction: 'none',
+                      willChange: 'left, top, width, height',
+                      transition: isInteracting ? 'none' : 'border-color 0.15s, background-color 0.15s, box-shadow 0.15s',
                     }}
                   >
                     {/* Top Stem & Rotation Handle (Active Slot) */}
@@ -655,37 +764,45 @@ ${slots
                       <>
                         {/* 4 Corner Handles */}
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'nw')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 'nw')}
+                          style={{ touchAction: 'none' }}
                           className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nwse-resize shadow-sm"
                         />
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'ne')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 'ne')}
+                          style={{ touchAction: 'none' }}
                           className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nesw-resize shadow-sm"
                         />
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'se')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 'se')}
+                          style={{ touchAction: 'none' }}
                           className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nwse-resize shadow-sm"
                         />
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'sw')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 'sw')}
+                          style={{ touchAction: 'none' }}
                           className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nesw-resize shadow-sm"
                         />
 
                         {/* 4 Edge Handles */}
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'n')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 'n')}
+                          style={{ touchAction: 'none' }}
                           className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-2.5 bg-white border-2 border-emerald-600 rounded-xs cursor-ns-resize"
                         />
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 's')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 's')}
+                          style={{ touchAction: 'none' }}
                           className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-2.5 bg-white border-2 border-emerald-600 rounded-xs cursor-ns-resize"
                         />
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'w')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 'w')}
+                          style={{ touchAction: 'none' }}
                           className="absolute top-1/2 -translate-y-1/2 -left-1.5 w-2.5 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-ew-resize"
                         />
                         <div
-                          onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'e')}
+                          onPointerDown={(e) => handlePointerDownSlot(e, slot, 'resize', 'e')}
+                          style={{ touchAction: 'none' }}
                           className="absolute top-1/2 -translate-y-1/2 -right-1.5 w-2.5 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-ew-resize"
                         />
                       </>

@@ -12,7 +12,6 @@ export default function AddTemplatePage() {
       <TemplateEditorStudio
         onCancel={() => router.push('/admin')}
         onSave={() => router.push('/admin')}
-        showToast={(msg) => alert(msg)}
         adminPin="1234"
       />
     </div>
