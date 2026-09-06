@@ -74,6 +74,8 @@ export default function SoftfileGalleryPage() {
     return `${hours} Jam ${String(minutes).padStart(2, '0')} Menit ${String(seconds).padStart(2, '0')} Detik`;
   };
 
+  const [downloadingAll, setDownloadingAll] = useState(false);
+
   const handleDownload = async (url, filename) => {
     try {
       const response = await fetch(url);
@@ -81,13 +83,40 @@ export default function SoftfileGalleryPage() {
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = filename || 'komvigi-photo.jpg';
+      link.download = filename || 'tarasabooth-photo.jpg';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       window.open(url, '_blank');
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (downloadingAll) return;
+    setDownloadingAll(true);
+    try {
+      const queue = [];
+      if (mainPhotoUrl) {
+        queue.push({ url: mainPhotoUrl, name: `tarasabooth-frame-${sessionId}.jpg` });
+      }
+      if (videoMediaUrl) {
+        queue.push({ url: videoMediaUrl, name: `tarasabooth-video-${sessionId}.mp4` });
+      }
+      singlePhotosList.forEach((item, idx) => {
+        const photoUrl = typeof item === 'string' ? item : (item.publicUrl || item.url || item.filePath);
+        if (photoUrl) {
+          queue.push({ url: photoUrl, name: `tarasabooth-pose-${idx + 1}-${sessionId}.jpg` });
+        }
+      });
+
+      for (let i = 0; i < queue.length; i++) {
+        await handleDownload(queue[i].url, queue[i].name);
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      }
+    } finally {
+      setDownloadingAll(false);
     }
   };
 
@@ -158,6 +187,33 @@ export default function SoftfileGalleryPage() {
         {/* Success State — Clean Cards */}
         {!loading && !expired && data && (
           <>
+            {/* Quick Action: Download All in 1 Click */}
+            <div className="w-full bg-[#E5FD5F] text-[#111111] p-4 sm:p-5 rounded-3xl border-2 border-white shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-3.5">
+              <div className="text-center sm:text-left">
+                <span className="text-xs font-black uppercase tracking-wider block text-[#120CD6]">
+                  ⚡ SIMPAN CEPAT SEKALI KLIK
+                </span>
+                <span className="text-sm sm:text-base font-black uppercase">
+                  Unduh Seluruh File Sesi ({1 + (videoMediaUrl ? 1 : 0) + singlePhotosList.length} File) Sekaligus
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleDownloadAll}
+                disabled={downloadingAll}
+                className="w-full sm:w-auto px-6 py-3.5 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-xl transition cursor-pointer flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 shrink-0"
+              >
+                {downloadingAll ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>MENGUNDUH SEMUA...</span>
+                  </>
+                ) : (
+                  <span>⬇ UNDUH SEMUA KE HP</span>
+                )}
+              </button>
+            </div>
+
             {/* 1. Composed Final Frame Card */}
             {mainPhotoUrl && (
               <section className="w-full bg-white text-[#111111] rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-white flex flex-col items-center gap-5">
@@ -173,7 +229,7 @@ export default function SoftfileGalleryPage() {
                 <div className="relative max-w-md w-full bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm p-1">
                   <img
                     src={mainPhotoUrl}
-                    alt="Hasil Foto KomvigI BOOTH"
+                    alt="Hasil Foto TarasaBooth"
                     className="w-full h-auto object-contain rounded-xl"
                   />
                 </div>
