@@ -18,33 +18,19 @@ import {
   Check,
   Layout,
   RefreshCw,
-  X
+  X,
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 
 const SIZE_PRESETS = {
-  Receipt: {
-    label: 'Receipt (576 × 1600 px)',
-    category: 'Receipt',
-    paperSize: 'thermal_80mm',
-    width: 576,
-    height: 1600,
-    defaultSlots: [
-      { id: 1, x: 38, y: 220, width: 500, height: 345, rotation: 0, zIndex: 1 },
-      { id: 2, x: 38, y: 595, width: 500, height: 345, rotation: 0, zIndex: 2 },
-      { id: 3, x: 38, y: 970, width: 500, height: 345, rotation: 0, zIndex: 3 },
-    ],
-  },
   '2R': {
     label: '2R (1200 × 1800 px)',
     category: '2R',
     paperSize: '2r',
     width: 1200,
     height: 1800,
-    defaultSlots: [
-      { id: 1, x: 100, y: 150, width: 1000, height: 450, rotation: 0, zIndex: 1 },
-      { id: 2, x: 100, y: 650, width: 1000, height: 450, rotation: 0, zIndex: 2 },
-      { id: 3, x: 100, y: 1150, width: 1000, height: 450, rotation: 0, zIndex: 3 },
-    ],
+    defaultSlots: [],
   },
   '4R': {
     label: '4R (1800 × 1200 px)',
@@ -52,12 +38,23 @@ const SIZE_PRESETS = {
     paperSize: '4r',
     width: 1800,
     height: 1200,
-    defaultSlots: [
-      { id: 1, x: 120, y: 120, width: 740, height: 450, rotation: 0, zIndex: 1 },
-      { id: 2, x: 940, y: 120, width: 740, height: 450, rotation: 0, zIndex: 2 },
-      { id: 3, x: 120, y: 630, width: 740, height: 450, rotation: 0, zIndex: 3 },
-      { id: 4, x: 940, y: 630, width: 740, height: 450, rotation: 0, zIndex: 4 },
-    ],
+    defaultSlots: [],
+  },
+  '5R': {
+    label: '5R (1500 × 2100 px)',
+    category: '5R',
+    paperSize: '5r',
+    width: 1500,
+    height: 2100,
+    defaultSlots: [],
+  },
+  Receipt: {
+    label: 'Receipt (576 × 1600 px)',
+    category: 'Receipt',
+    paperSize: 'thermal_80mm',
+    width: 576,
+    height: 1600,
+    defaultSlots: [],
   },
   Photostrip: {
     label: 'Photostrip (600 × 1800 px)',
@@ -65,11 +62,7 @@ const SIZE_PRESETS = {
     paperSize: 'strip_2x6',
     width: 600,
     height: 1800,
-    defaultSlots: [
-      { id: 1, x: 50, y: 120, width: 500, height: 460, rotation: 0, zIndex: 1 },
-      { id: 2, x: 50, y: 640, width: 500, height: 460, rotation: 0, zIndex: 2 },
-      { id: 3, x: 50, y: 1160, width: 500, height: 460, rotation: 0, zIndex: 3 },
-    ],
+    defaultSlots: [],
   },
   Custom: {
     label: 'Custom Size...',
@@ -77,10 +70,7 @@ const SIZE_PRESETS = {
     paperSize: 'standard',
     width: 1200,
     height: 1800,
-    defaultSlots: [
-      { id: 1, x: 100, y: 200, width: 1000, height: 600, rotation: 0, zIndex: 1 },
-      { id: 2, x: 100, y: 880, width: 1000, height: 600, rotation: 0, zIndex: 2 },
-    ],
+    defaultSlots: [],
   },
 };
 
@@ -89,6 +79,7 @@ const KIOSK_CATEGORIES = [
   { id: 'Photostrip', label: 'Photostrip (Format 2x6 Inch)' },
   { id: '2R', label: '2R (Mini Format)' },
   { id: '4R', label: '4R (Postcard Standar)' },
+  { id: '5R', label: '5R (Format Besar)' },
   { id: 'Umum', label: 'Umum / Classic Studio' },
   { id: 'Event', label: 'Event Spesial / Custom' },
 ];
@@ -100,23 +91,23 @@ export default function TemplateEditorStudio({
   showToast,
   adminPin = '1234',
 }) {
-  const [name, setName] = useState(initialTemplate?.name || 'Template Baru Photobooth');
-  const [sizePreset, setSizePreset] = useState(initialTemplate?.size || 'Receipt');
+  const [name, setName] = useState(initialTemplate?.name || '');
+  const [sizePreset, setSizePreset] = useState(initialTemplate?.size || '2R');
   const [category, setCategory] = useState(
-    initialTemplate?.category || (initialTemplate?.size === 'Receipt' ? 'Receipt' : 'Receipt')
+    initialTemplate?.category || (initialTemplate?.size === 'Receipt' ? 'Receipt' : '2R')
   );
-  const [width, setWidth] = useState(Number(initialTemplate?.width) || 576);
-  const [height, setHeight] = useState(Number(initialTemplate?.height) || 1600);
+  const [width, setWidth] = useState(Number(initialTemplate?.width) || 1200);
+  const [height, setHeight] = useState(Number(initialTemplate?.height) || 1800);
   const [rotation, setRotation] = useState(Number(initialTemplate?.rotation) || 0);
-  const [paperSize, setPaperSize] = useState(initialTemplate?.paperSize || 'thermal_80mm');
+  const [paperSize, setPaperSize] = useState(initialTemplate?.paperSize || '2r');
 
   // Slots
   const [slots, setSlots] = useState(
     initialTemplate?.slots?.length > 0
       ? initialTemplate.slots
-      : SIZE_PRESETS.Receipt.defaultSlots
+      : []
   );
-  const [activeSlotId, setActiveSlotId] = useState(slots[0]?.id || 1);
+  const [activeSlotId, setActiveSlotId] = useState(initialTemplate?.slots?.[0]?.id || null);
 
   // Backgrounds & Previews
   const [bgImage, setBgImage] = useState(initialTemplate?.previewUrl || initialTemplate?.imageUrl || null);
@@ -124,6 +115,7 @@ export default function TemplateEditorStudio({
   const [previewMode, setPreviewMode] = useState(false);
   const [viewCode, setViewCode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [toastError, setToastError] = useState(null);
 
   // Canvas Refs & Dragging
   const canvasRef = useRef(null);
@@ -139,7 +131,7 @@ export default function TemplateEditorStudio({
       setHeight(preset.height);
       setCategory(preset.category);
       setPaperSize(preset.paperSize);
-      if (preset.defaultSlots && (!initialTemplate || presetKey !== initialTemplate.size)) {
+      if (preset.defaultSlots && preset.defaultSlots.length > 0 && (!initialTemplate || presetKey !== initialTemplate.size)) {
         setSlots(preset.defaultSlots);
         setActiveSlotId(preset.defaultSlots[0]?.id || 1);
       }
@@ -149,15 +141,27 @@ export default function TemplateEditorStudio({
   // Add new photo slot
   const handleAddSlot = () => {
     const nextId = slots.length > 0 ? Math.max(...slots.map((s) => s.id)) + 1 : 1;
-    const defaultW = Math.round(width * 0.8);
-    const defaultH = Math.round(height * 0.22);
-    const lastSlot = slots[slots.length - 1];
-    const nextY = lastSlot ? Math.min(height - defaultH, lastSlot.y + lastSlot.height + 30) : 100;
+    
+    // Proportional slot size (like in reference video: 120x213 or 3x4 aspect)
+    const defaultW = Math.round(width * 0.28);
+    const defaultH = Math.round(height * 0.24);
+    
+    // Position in grid (3 columns per row)
+    const slotIdx = slots.length;
+    const col = slotIdx % 3;
+    const row = Math.floor(slotIdx / 3);
+    const marginX = Math.round(width * 0.05);
+    const gapX = Math.round(width * 0.035);
+    const marginY = Math.round(height * 0.12);
+    const gapY = Math.round(height * 0.035);
+
+    const nextX = Math.round(marginX + col * (defaultW + gapX));
+    const nextY = Math.round(marginY + row * (defaultH + gapY));
 
     const newSlot = {
       id: nextId,
-      x: Math.round((width - defaultW) / 2),
-      y: nextY,
+      x: Math.min(width - defaultW, Math.max(0, nextX)),
+      y: Math.min(height - defaultH, Math.max(0, nextY)),
       width: defaultW,
       height: defaultH,
       rotation: 0,
@@ -172,14 +176,10 @@ export default function TemplateEditorStudio({
   // Remove slot
   const handleDeleteSlot = (slotId, e) => {
     if (e) e.stopPropagation();
-    if (slots.length <= 1) {
-      alert('Template harus memiliki minimal 1 slot foto.');
-      return;
-    }
     const updated = slots.filter((s) => s.id !== slotId);
     setSlots(updated);
     if (activeSlotId === slotId) {
-      setActiveSlotId(updated[0]?.id || 1);
+      setActiveSlotId(updated[0]?.id || null);
     }
     showToast?.(`Slot foto #${slotId} dihapus`);
   };
@@ -190,10 +190,14 @@ export default function TemplateEditorStudio({
     setRotation(nextRot);
   };
 
-  // Handle PNG upload
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
+  // Process file upload or drag drop
+  const handleProcessFile = (file) => {
     if (!file) return;
+    if (!file.type.includes('png') && !file.type.includes('image')) {
+      setToastError('Format file harus berupa gambar PNG/JPEG.');
+      setTimeout(() => setToastError(null), 4000);
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -201,6 +205,12 @@ export default function TemplateEditorStudio({
       showToast?.('Gambar overlay bingkai berhasil dimuat!');
     };
     reader.readAsDataURL(file);
+  };
+
+  // Handle file input change
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleProcessFile(file);
   };
 
   // ── Drag & Resize Engine ───────────────────────────────────────────────────
@@ -322,11 +332,13 @@ ${slots
   // Save template
   const handleSave = async () => {
     if (!name.trim()) {
-      alert('Silakan masukkan nama template terlebih dahulu.');
+      setToastError('Template name is required');
+      setTimeout(() => setToastError(null), 4000);
       return;
     }
     if (slots.length === 0) {
-      alert('Template harus memiliki minimal 1 slot foto.');
+      setToastError('Template harus memiliki minimal 1 slot foto');
+      setTimeout(() => setToastError(null), 4000);
       return;
     }
 
@@ -467,6 +479,21 @@ ${slots
         </div>
       </header>
 
+      {/* Floating Error Toast Notification (from Reference Video) */}
+      {toastError && (
+        <div className="fixed top-5 right-5 z-[100] bg-white border border-rose-300 text-rose-700 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+          <span className="text-xs font-bold">{toastError}</span>
+          <button
+            type="button"
+            onClick={() => setToastError(null)}
+            className="p-1 hover:bg-rose-50 rounded-lg text-rose-400 hover:text-rose-600 transition cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* ── Studio Split Layout ──────────────────────────────────────── */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
         
@@ -491,6 +518,31 @@ ${slots
               transformOrigin: 'center center',
             }}
           >
+            {/* Empty Canvas Dropzone (Shown when no background uploaded yet) */}
+            {!bgImage && (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleProcessFile(file);
+                }}
+                className="absolute inset-4 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-[#120CD6] hover:text-[#120CD6] transition cursor-pointer bg-white/60 z-20 select-none"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                  <ImageIcon className="w-6 h-6" />
+                </div>
+                <span className="text-sm font-bold text-slate-700">Upload Background</span>
+                <span className="text-xs text-slate-400">Click or drag and drop</span>
+                <span className="text-[11px] font-mono text-slate-400">{width} × {height} px</span>
+              </div>
+            )}
+
             {/* Layer 1: Preview Sample Photo (Visible in Preview Mode) */}
             {previewMode &&
               slots.map((slot) => {
@@ -551,7 +603,7 @@ ${slots
                     onMouseDown={(e) => handleMouseDownSlot(e, slot, 'move')}
                     className={`absolute flex flex-col items-center justify-between cursor-move transition-all select-none ${
                       isActive
-                        ? 'border-2 border-emerald-500 bg-emerald-500/20 shadow-xl z-40 ring-2 ring-emerald-400/40'
+                        ? 'border-2 border-emerald-500 bg-emerald-500/25 shadow-xl z-40 ring-2 ring-emerald-400/40'
                         : 'border border-dashed border-slate-700/80 bg-slate-900/30 hover:border-emerald-500 z-30'
                     }`}
                     style={{
@@ -562,25 +614,41 @@ ${slots
                       transform: `rotate(${slot.rotation || 0}deg)`,
                     }}
                   >
-                    {/* Top Center Slot Number Badge */}
-                    <div className="w-full flex items-center justify-center pt-2 pointer-events-none">
+                    {/* Top Stem & Rotation Handle (Active Slot) */}
+                    {isActive && (
                       <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shadow-md ${
-                          isActive
-                            ? 'bg-emerald-500 text-white scale-110'
-                            : 'bg-black/80 text-white'
-                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSlots((prev) =>
+                            prev.map((s) => (s.id === slot.id ? { ...s, rotation: ((s.rotation || 0) + 90) % 360 } : s))
+                          );
+                        }}
+                        className="absolute -top-7 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer group z-50"
+                        title="Klik untuk memutar slot foto 90°"
                       >
-                        {slot.id}
+                        <div className="w-5 h-5 rounded-full bg-white border border-slate-300 shadow-sm flex items-center justify-center text-slate-600 hover:text-emerald-600 hover:border-emerald-500 transition">
+                          <RotateCw className="w-3 h-3" />
+                        </div>
+                        <div className="w-0.5 h-2 bg-emerald-500" />
                       </div>
-                    </div>
+                    )}
 
-                    {/* Dimension Tag on Active Slot */}
-                    <div className="pb-1.5 pointer-events-none">
-                      <span className="text-[9px] font-black font-mono bg-white/95 text-slate-800 px-2 py-0.5 rounded shadow-sm border border-slate-200">
-                        {slot.width}×{slot.height}
+                    {/* Center Slot Number in Bold White */}
+                    <div className="flex-1 flex items-center justify-center pointer-events-none">
+                      <span className="text-2xl sm:text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                        {slot.id}
                       </span>
                     </div>
+
+                    {/* Dimension Tag with Downward Pointer Triangle (Active Slot) */}
+                    {isActive && (
+                      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-40">
+                        <div className="w-0 h-0 border-x-[4px] border-x-transparent border-t-[4px] border-t-slate-800" />
+                        <span className="text-[9px] font-bold font-mono bg-slate-800 text-white px-2 py-0.5 rounded shadow-sm whitespace-nowrap">
+                          {slot.width}×{slot.height}
+                        </span>
+                      </div>
+                    )}
 
                     {/* 8 Resize Handles (When Slot is Active) */}
                     {isActive && (
@@ -588,37 +656,37 @@ ${slots
                         {/* 4 Corner Handles */}
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'nw')}
-                          className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-xs cursor-nwse-resize shadow-sm"
+                          className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nwse-resize shadow-sm"
                         />
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'ne')}
-                          className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-xs cursor-nesw-resize shadow-sm"
+                          className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nesw-resize shadow-sm"
                         />
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'se')}
-                          className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-xs cursor-nwse-resize shadow-sm"
+                          className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nwse-resize shadow-sm"
                         />
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'sw')}
-                          className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-xs cursor-nesw-resize shadow-sm"
+                          className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-nesw-resize shadow-sm"
                         />
 
                         {/* 4 Edge Handles */}
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'n')}
-                          className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-ns-resize"
+                          className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-2.5 bg-white border-2 border-emerald-600 rounded-xs cursor-ns-resize"
                         />
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 's')}
-                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3.5 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-ns-resize"
+                          className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-2.5 bg-white border-2 border-emerald-600 rounded-xs cursor-ns-resize"
                         />
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'w')}
-                          className="absolute top-1/2 -translate-y-1/2 -left-1.5 w-3 h-3.5 bg-white border-2 border-emerald-600 rounded-xs cursor-ew-resize"
+                          className="absolute top-1/2 -translate-y-1/2 -left-1.5 w-2.5 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-ew-resize"
                         />
                         <div
                           onMouseDown={(e) => handleMouseDownSlot(e, slot, 'resize', 'e')}
-                          className="absolute top-1/2 -translate-y-1/2 -right-1.5 w-3 h-3.5 bg-white border-2 border-emerald-600 rounded-xs cursor-ew-resize"
+                          className="absolute top-1/2 -translate-y-1/2 -right-1.5 w-2.5 h-3 bg-white border-2 border-emerald-600 rounded-xs cursor-ew-resize"
                         />
                       </>
                     )}
@@ -784,64 +852,83 @@ ${slots
                   Photo Slots
                 </h4>
                 <p className="text-[10px] text-slate-400 font-bold">
-                  Photo count in Template: <span className="text-[#120CD6] font-black">{slots.length}</span>
+                  Photo count in Template: <span className="text-slate-800 font-black">{slots.length}</span>
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleAddSlot}
-                className="px-3 py-1 bg-slate-100 hover:bg-[#E5FD5F] hover:text-[#111111] text-slate-700 border border-slate-200 rounded-lg text-[10px] font-black uppercase transition flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add New Photo</span>
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleAddSlot}
+                  className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Plus className="w-3.5 h-3.5 text-slate-600" />
+                  <span>Add New Photo</span>
+                </button>
+                <button
+                  type="button"
+                  className="p-1.5 bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 rounded-xl transition cursor-pointer"
+                  title="Pengaturan Slot"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
-            {/* Slots List Cards */}
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {slots.map((s, idx) => {
-                const isActive = s.id === activeSlotId;
-                return (
-                  <div
-                    key={s.id}
-                    onClick={() => setActiveSlotId(s.id)}
-                    className={`p-2.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
-                      isActive
-                        ? 'bg-emerald-50/70 border-emerald-500 shadow-xs'
-                        : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <GripVertical className="w-3.5 h-3.5 text-slate-400" />
-                      <div
-                        className={`w-6 h-6 rounded-md flex items-center justify-center font-black text-xs ${
-                          isActive ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-700'
-                        }`}
-                      >
-                        {s.id}
-                      </div>
-                      <div>
-                        <p className="font-black text-slate-900 text-xs leading-tight">
-                          Photo {idx + 1}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-mono font-medium">
-                          {s.width}×{s.height} at [{s.x}, {s.y}]
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteSlot(s.id, e)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                      title="Hapus slot ini"
+            {/* Empty State or Slots List Cards (Exact match to Reference Video) */}
+            {slots.length === 0 ? (
+              <div className="border border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-2 bg-slate-50/50">
+                <div className="w-10 h-10 rounded-xl border border-dashed border-slate-300 flex items-center justify-center text-slate-400">
+                  <Layout className="w-5 h-5 text-slate-400" />
+                </div>
+                <p className="text-xs font-bold text-slate-600">No photo slots yet</p>
+                <p className="text-[11px] text-slate-400">Click &quot;Add New Photo&quot; to create a slot</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {slots.map((s) => {
+                  const isActive = s.id === activeSlotId;
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={() => setActiveSlotId(s.id)}
+                      className={`p-3 rounded-2xl border transition-all flex items-center justify-between cursor-pointer ${
+                        isActive
+                          ? 'bg-white border-emerald-500 ring-2 ring-emerald-400/30 shadow-sm'
+                          : 'bg-white hover:border-slate-300 border-slate-200 text-slate-700'
+                      }`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
+                      <div className="flex items-center gap-2.5">
+                        <GripVertical className="w-4 h-4 text-slate-300 cursor-grab shrink-0" />
+                        <div
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+                            isActive ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {s.id}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-800 text-xs leading-tight">
+                            Photo {s.id}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono font-medium mt-0.5">
+                            {s.width}×{s.height} at ({s.x}, {s.y})
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteSlot(s.id, e)}
+                        className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                        title="Hapus slot ini"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* 7. Live XML Code Viewer (When toggled) */}
