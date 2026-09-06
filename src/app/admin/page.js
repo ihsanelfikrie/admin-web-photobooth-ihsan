@@ -2029,35 +2029,42 @@ export default function OnlineAdminPage() {
                       </div>
 
                       {/* Mini Queue Controller */}
-                      <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-200 space-y-2">
+                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-black text-[#120CD6] uppercase">Antrian Terkini</span>
-                          <span className="text-[11px] font-bold text-slate-600">
+                          <span className="text-[11px] font-bold text-slate-500">
                             Menunggu: {queue?.waiting_count || 0}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="font-mono">
-                            <span className="text-slate-500">Kode: </span>
-                            <span className="font-black text-[#111111]">{queue?.current_queue_code || 'Q-1001'}</span>
+                        {queue?.current_queue_code && queue?.current_queue_status !== 'idle' && queue?.current_queue_status !== 'expired' ? (
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="font-mono">
+                              <span className="text-slate-500">Kode: </span>
+                              <span className="font-black text-[#111111]">{queue.current_queue_code}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={handlePromoteQueue}
+                                disabled={actionLoading}
+                                className="px-3 py-1 bg-[#120CD6] text-white rounded-lg text-xs font-black hover:bg-blue-800 cursor-pointer uppercase"
+                              >
+                                Panggil
+                              </button>
+                              <button
+                                onClick={handleReleaseQueue}
+                                disabled={actionLoading}
+                                className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold hover:bg-rose-200 cursor-pointer uppercase"
+                              >
+                                Lepas
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={handlePromoteQueue}
-                              disabled={actionLoading}
-                              className="px-3 py-1 bg-[#120CD6] text-white rounded-lg text-xs font-black hover:bg-blue-800 cursor-pointer uppercase"
-                            >
-                              Panggil
-                            </button>
-                            <button
-                              onClick={handleReleaseQueue}
-                              disabled={actionLoading}
-                              className="px-3 py-1 bg-rose-100 text-rose-700 rounded-lg text-xs font-bold hover:bg-rose-200 cursor-pointer uppercase"
-                            >
-                              Lepas
-                            </button>
+                        ) : (
+                          <div className="flex items-center justify-between text-xs py-1">
+                            <span className="text-slate-400 font-medium italic">Tidak ada antrian aktif</span>
+                            <span className="text-[10px] font-black px-2 py-0.5 bg-slate-200 text-slate-600 rounded-md uppercase">Kosong</span>
                           </div>
-                        </div>
+                        )}
                       </div>
 
                     </div>

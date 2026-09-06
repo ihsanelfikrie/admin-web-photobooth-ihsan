@@ -487,16 +487,13 @@ export async function getQueueStatus() {
 
     if (error || !data) {
       return {
-        current_queue_code: 'Q-1001',
-        current_queue_number: 'A-01',
-        current_queue_name: 'Pengunjung Studio',
-        current_queue_status: 'ready',
-        current_queue_remaining_seconds: 60,
-        waiting_count: 2,
-        waiting_list: [
-          { code: 'Q-1002', number: 'A-02', name: 'Rina & Teman', waiting_since: '5 mnt lalu' },
-          { code: 'Q-1003', number: 'A-03', name: 'Dimas Kurnia', waiting_since: '2 mnt lalu' },
-        ],
+        current_queue_code: null,
+        current_queue_number: null,
+        current_queue_name: null,
+        current_queue_status: 'idle',
+        current_queue_remaining_seconds: 0,
+        waiting_count: 0,
+        waiting_list: [],
       };
     }
 
@@ -504,9 +501,10 @@ export async function getQueueStatus() {
     return JSON.parse(text);
   } catch (_) {
     return {
-      current_queue_code: 'Q-1001',
-      current_queue_number: 'A-01',
-      current_queue_status: 'ready',
+      current_queue_code: null,
+      current_queue_number: null,
+      current_queue_status: 'idle',
+      current_queue_remaining_seconds: 0,
       waiting_count: 0,
       waiting_list: [],
     };
