@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFramesCatalog, saveFramesCatalog } from '@/lib/supabase';
+import { getFramesCatalog, saveFramesCatalog, uploadFrameStorage } from '@/lib/supabase';
 
 export async function GET() {
   try {
@@ -33,23 +33,35 @@ export async function POST(req) {
     }
 
     if (action === 'add' && frame) {
+      const id = frame.id || `frame_${Date.now()}`;
+      let cdnPreviewUrl = frame.previewUrl || null;
+
+      // Upload XML & PNG overlay to Supabase Storage if provided
+      const uploadRes = await uploadFrameStorage(id, frame.xml, frame.pngBase64);
+      if (uploadRes?.previewUrl) {
+        cdnPreviewUrl = uploadRes.previewUrl;
+      }
+
       const newFrame = {
-        id: frame.id || `frame_${Date.now()}`,
+        id,
         name: frame.name || 'Custom Frame',
         size: frame.size || 'Receipt',
-        category: frame.category || 'Receipt Strip',
-        photoCount: Number(frame.photoCount) || 3,
-        width: Number(frame.width) || 576,
-        height: Number(frame.height) || 1200,
+        category: frame.category || (frame.size === 'Receipt' ? 'Receipt' : 'Umum'),
+        paperSize: frame.paperSize || (frame.category === 'Receipt' || frame.size === 'Receipt' ? 'thermal_80mm' : null),
+        photoCount: Number(frame.photoCount) || (frame.slots ? frame.slots.length : 3),
+        width: Number(frame.width) || (frame.size === 'Receipt' ? 576 : 1200),
+        height: Number(frame.height) || (frame.size === 'Receipt' ? 1600 : 1800),
+        rotation: Number(frame.rotation) || 0,
         active: true,
-        source: 'Custom Upload',
+        source: 'Custom Studio',
         userCaptured: 0,
-        previewUrl: frame.previewUrl || 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
+        previewUrl: cdnPreviewUrl || 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets/frames/strip_mono.png',
         xml: frame.xml || '',
+        slots: frame.slots || [],
       };
       const updated = [newFrame, ...catalog.filter(f => f.id !== newFrame.id)];
       await saveFramesCatalog(updated);
-      return NextResponse.json({ success: true, frames: updated });
+      return NextResponse.json({ success: true, frames: updated, frame: newFrame });
     }
 
     if (action === 'delete' && frameId) {

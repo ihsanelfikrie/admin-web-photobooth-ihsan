@@ -706,4 +706,39 @@ export async function getFinancialSummary(filterRange = 'all') {
   };
 }
 
+export async function uploadFrameStorage(frameId, xmlText, pngBase64) {
+  try {
+    let previewUrl = null;
+
+    if (xmlText) {
+      await supabaseAdmin.storage
+        .from(bucketName)
+        .upload(`frames/${frameId}.xml`, Buffer.from(xmlText, 'utf-8'), {
+          contentType: 'application/xml',
+          upsert: true,
+        });
+    }
+
+    if (pngBase64) {
+      const base64Clean = pngBase64.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Clean, 'base64');
+      const { error } = await supabaseAdmin.storage
+        .from(bucketName)
+        .upload(`frames/${frameId}.png`, buffer, {
+          contentType: 'image/png',
+          upsert: true,
+        });
+
+      if (!error) {
+        previewUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/frames/${frameId}.png`;
+      }
+    }
+
+    return { success: true, previewUrl };
+  } catch (err) {
+    console.error('[Supabase] uploadFrameStorage error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
 

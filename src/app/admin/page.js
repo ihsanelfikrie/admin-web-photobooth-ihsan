@@ -52,6 +52,7 @@ import {
   Lock,
   EyeOff
 } from 'lucide-react';
+import TemplateEditorStudio from '@/components/TemplateEditorStudio';
 
 const SUPABASE_CDN_BASE = 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets';
 
@@ -407,7 +408,9 @@ export default function OnlineAdminPage() {
     location: 'Outlet Utama'
   });
 
-  // Template Modal State with XML Parity
+  // Template Visual Studio & Modal State
+  const [isStudioOpen, setIsStudioOpen]               = useState(false);
+  const [studioTemplate, setStudioTemplate]           = useState(null);
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [templateTabMode, setTemplateTabMode]         = useState('xml'); // 'xml' | 'form'
   const [templateForm, setTemplateForm]               = useState({
@@ -2858,9 +2861,26 @@ export default function OnlineAdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 10: TEMPLATES (XML Parity & SANS Styling)
+              VIEW 10: TEMPLATES (Visual Editor Studio & SANS Table)
           ══════════════════════════════════════════════════════════════ */}
           {activeTab === 'templates' && (
+            isStudioOpen ? (
+              <TemplateEditorStudio
+                initialTemplate={studioTemplate}
+                adminPin={currentPin}
+                showToast={showToast}
+                onCancel={() => {
+                  setIsStudioOpen(false);
+                  setStudioTemplate(null);
+                }}
+                onSave={(updatedFrames) => {
+                  setIsStudioOpen(false);
+                  setStudioTemplate(null);
+                  if (updatedFrames) setFrames(updatedFrames);
+                  loadFrames();
+                }}
+              />
+            ) : (
             <div className="space-y-6">
               
               {/* Header + Add Template Button */}
@@ -2870,13 +2890,25 @@ export default function OnlineAdminPage() {
                   <p className="text-xs text-slate-500">Kelola bingkai photobooth untuk format Receipt, 2R, dan 4R</p>
                 </div>
 
-                <button
-                  onClick={() => setIsTemplateModalOpen(true)}
-                  className="px-4 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Add Template</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setStudioTemplate(null);
+                      setIsStudioOpen(true);
+                    }}
+                    className="px-4 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase shadow-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Create New Template</span>
+                  </button>
+                  <button
+                    onClick={() => setIsTemplateModalOpen(true)}
+                    className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    title="Import Preset XML Cepat"
+                  >
+                    <Code className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Table Card */}
@@ -2964,9 +2996,12 @@ export default function OnlineAdminPage() {
                                   {tmpl.active ? 'Active' : 'Off'}
                                 </button>
                                 <button
-                                  onClick={() => setViewingXmlTemplate(tmpl)}
+                                  onClick={() => {
+                                    setStudioTemplate(tmpl);
+                                    setIsStudioOpen(true);
+                                  }}
                                   className="p-1 text-slate-400 hover:text-[#120CD6] rounded transition-colors cursor-pointer"
-                                  title="Edit XML Template"
+                                  title="Edit Template Visual"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
                                 </button>
@@ -2987,6 +3022,7 @@ export default function OnlineAdminPage() {
               </div>
 
             </div>
+            )
           )}
 
           {/* ══════════════════════════════════════════════════════════════
