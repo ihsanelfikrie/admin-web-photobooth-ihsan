@@ -75,13 +75,13 @@ const SIZE_PRESETS = {
 };
 
 const KIOSK_CATEGORIES = [
-  { id: 'Receipt', label: 'Receipt (Printer Kasir / Thermal 80mm)' },
-  { id: 'Photostrip', label: 'Photostrip (Format 2x6 Inch)' },
-  { id: '2R', label: '2R (Mini Format)' },
-  { id: '4R', label: '4R (Postcard Standar)' },
-  { id: '5R', label: '5R (Format Besar)' },
-  { id: 'Umum', label: 'Umum / Classic Studio' },
-  { id: 'Event', label: 'Event Spesial / Custom' },
+  { id: 'Receipt', label: 'Receipt (Thermal 576 × 1600 px)', width: 576, height: 1600, size: 'Receipt', paperSize: 'thermal_80mm' },
+  { id: 'Photostrip', label: 'Photostrip (Format 2x6 / 600 × 1800 px)', width: 600, height: 1800, size: 'Photostrip', paperSize: 'strip_2x6' },
+  { id: '2R', label: '2R (Mini Format 1200 × 1800 px)', width: 1200, height: 1800, size: '2R', paperSize: '2r' },
+  { id: '4R', label: '4R (Postcard Standar 1800 × 1200 px)', width: 1800, height: 1200, size: '4R', paperSize: '4r' },
+  { id: '5R', label: '5R (Format Besar 1500 × 2100 px)', width: 1500, height: 2100, size: '5R', paperSize: '5r' },
+  { id: 'Umum', label: 'Umum / Classic Studio (1800 × 1200 px)', width: 1800, height: 1200, size: '4R', paperSize: '4r' },
+  { id: 'Event', label: 'Event Spesial / Custom (1800 × 1200 px)', width: 1800, height: 1200, size: '4R', paperSize: '4r' },
 ];
 
 export default function TemplateEditorStudio({
@@ -127,19 +127,101 @@ export default function TemplateEditorStudio({
   const pendingUpdateRef = useRef(null);
   const rafIdRef = useRef(null);
 
-  // Switch preset
+  // Auto-dismiss toasts
+  useEffect(() => {
+    if (toastSuccess) {
+      const t = setTimeout(() => setToastSuccess(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [toastSuccess]);
+
+  useEffect(() => {
+    if (toastError) {
+      const t = setTimeout(() => setToastError(null), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [toastError]);
+
+  // Switch category - Automatically syncs width, height, aspect ratio, sizePreset, and paperSize
+  const handleCategoryChange = (newCat) => {
+    setCategory(newCat);
+
+    const catObj = KIOSK_CATEGORIES.find((c) => c.id === newCat);
+    if (catObj && catObj.width && catObj.height) {
+      const oldW = width;
+      const oldH = height;
+      const newW = catObj.width;
+      const newH = catObj.height;
+
+      setWidth(newW);
+      setHeight(newH);
+      setSizePreset(catObj.size || 'Custom');
+      if (catObj.paperSize) setPaperSize(catObj.paperSize);
+
+      // Proportional slot scaling so slots stay inside the new canvas
+      if (slots.length > 0 && oldW && oldH) {
+        const scaleX = newW / oldW;
+        const scaleY = newH / oldH;
+        setSlots((prev) =>
+          prev.map((slot) => {
+            const slotW = Math.max(60, Math.min(newW, Math.round(slot.width * scaleX)));
+            const slotH = Math.max(60, Math.min(newH, Math.round(slot.height * scaleY)));
+            const slotX = Math.max(0, Math.min(newW - slotW, Math.round(slot.x * scaleX)));
+            const slotY = Math.max(0, Math.min(newH - slotH, Math.round(slot.y * scaleY)));
+            return {
+              ...slot,
+              x: slotX,
+              y: slotY,
+              width: slotW,
+              height: slotH,
+            };
+          })
+        );
+      }
+
+      setToastSuccess(`Ukuran kanvas otomatis disesuaikan ke ${newW} × ${newH} px (${newCat})`);
+    }
+  };
+
+  // Switch size preset - Synchronizes width, height, category, and paperSize
   const handleSizePresetChange = (presetKey) => {
     setSizePreset(presetKey);
     const preset = SIZE_PRESETS[presetKey];
     if (preset) {
-      setWidth(preset.width);
-      setHeight(preset.height);
+      const oldW = width;
+      const oldH = height;
+      const newW = preset.width;
+      const newH = preset.height;
+
+      setWidth(newW);
+      setHeight(newH);
       setCategory(preset.category);
       setPaperSize(preset.paperSize);
-      if (preset.defaultSlots && preset.defaultSlots.length > 0 && (!initialTemplate || presetKey !== initialTemplate.size)) {
+
+      if (slots.length > 0 && oldW && oldH) {
+        const scaleX = newW / oldW;
+        const scaleY = newH / oldH;
+        setSlots((prev) =>
+          prev.map((slot) => {
+            const slotW = Math.max(60, Math.min(newW, Math.round(slot.width * scaleX)));
+            const slotH = Math.max(60, Math.min(newH, Math.round(slot.height * scaleY)));
+            const slotX = Math.max(0, Math.min(newW - slotW, Math.round(slot.x * scaleX)));
+            const slotY = Math.max(0, Math.min(newH - slotH, Math.round(slot.y * scaleY)));
+            return {
+              ...slot,
+              x: slotX,
+              y: slotY,
+              width: slotW,
+              height: slotH,
+            };
+          })
+        );
+      } else if (preset.defaultSlots && preset.defaultSlots.length > 0 && (!initialTemplate || presetKey !== initialTemplate.size)) {
         setSlots(preset.defaultSlots);
         setActiveSlotId(preset.defaultSlots[0]?.id || 1);
       }
+
+      setToastSuccess(`Ukuran kanvas otomatis disesuaikan ke ${newW} × ${newH} px (${presetKey})`);
     }
   };
 
@@ -601,9 +683,11 @@ ${slots
                 : 'bg-slate-900'
             }`}
             style={{
-              width: '100%',
-              maxWidth: width > height ? '560px' : '360px',
+              maxHeight: 'min(72vh, 650px)',
+              maxWidth: 'min(92%, 580px)',
               aspectRatio: `${width} / ${height}`,
+              width: width > height ? 'min(560px, 92%)' : 'auto',
+              height: width <= height ? 'min(70vh, 620px)' : 'auto',
               transform: `rotate(${rotation}deg)`,
               transformOrigin: 'center center',
             }}
@@ -860,7 +944,7 @@ ${slots
             </select>
           </div>
 
-          {/* 3. Kategori Kiosk (Direct Connection to Kiosk App) */}
+          {/* 3. Kategori Kiosk (Direct Connection to Kiosk App & Auto-Size) */}
           <div className="space-y-1.5 bg-blue-50/70 p-3 rounded-2xl border border-blue-200">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-black uppercase tracking-wider text-[#120CD6] block">
@@ -872,7 +956,7 @@ ${slots
             </div>
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="w-full p-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#120CD6] cursor-pointer"
             >
               {KIOSK_CATEGORIES.map((cat) => (
@@ -882,8 +966,48 @@ ${slots
               ))}
             </select>
             <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
-              Bingkai ini akan otomatis masuk ke tab <b>{category}</b> pada pilihan bingkai di layar Kiosk photobooth.
+              Memilih kategori akan <b>otomatis menyesuaikan ukuran kanvas</b> ke spesifikasi {category} ({width} × {height} px) dan masuk ke tab Kiosk yang sesuai.
             </p>
+          </div>
+
+          {/* 3b. Dimensi Kanvas Aktif & Penyesuaian Manual */}
+          <div className="space-y-1.5 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
+                Dimensi Kanvas Aktif
+              </label>
+              <span className="px-2 py-0.5 bg-blue-100 text-[#120CD6] rounded text-[10px] font-black font-mono">
+                {width} × {height} px
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <div>
+                <span className="text-[10px] text-slate-500 font-bold block mb-1">Lebar (W px):</span>
+                <input
+                  type="number"
+                  value={width}
+                  onChange={(e) => {
+                    const val = Number(e.target.value) || 100;
+                    setWidth(val);
+                    setSizePreset('Custom');
+                  }}
+                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                />
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 font-bold block mb-1">Tinggi (H px):</span>
+                <input
+                  type="number"
+                  value={height}
+                  onChange={(e) => {
+                    const val = Number(e.target.value) || 100;
+                    setHeight(val);
+                    setSizePreset('Custom');
+                  }}
+                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                />
+              </div>
+            </div>
           </div>
 
           {/* 4. Background Image (PNG Overlay) */}
