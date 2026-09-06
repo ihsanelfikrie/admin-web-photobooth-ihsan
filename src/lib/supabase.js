@@ -619,16 +619,22 @@ export async function getFinancialSummary(filterRange = 'all') {
   const now = Date.now();
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
+  const nowDate = new Date();
+  const startOfMonth = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1).getTime();
+  const startOfDay = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()).getTime();
+
   let filtered = sessions;
   if (filterRange === 'today') {
-    filtered = sessions.filter(s => (now - (s.createdAt || 0)) <= ONE_DAY_MS);
+    filtered = sessions.filter(s => (s.createdAt || 0) >= startOfDay);
   } else if (filterRange === 'week') {
     filtered = sessions.filter(s => (now - (s.createdAt || 0)) <= 7 * ONE_DAY_MS);
   } else if (filterRange === 'month') {
-    filtered = sessions.filter(s => (now - (s.createdAt || 0)) <= 30 * ONE_DAY_MS);
+    filtered = sessions.filter(s => (s.createdAt || 0) >= startOfMonth);
   }
 
   let totalGross = 0;
+  let monthGross = 0;
+  let todayGross = 0;
   let qrisCount = 0;
   let qrisAmount = 0;
   let cashCount = 0;
@@ -636,10 +642,24 @@ export async function getFinancialSummary(filterRange = 'all') {
   let voucherCount = 0;
   let voucherAmount = 0;
 
-  const transactions = filtered.map((s, idx) => {
-    // Estimasi harga sesi jika tidak ada di metadata: Rp 15.000 / Rp 25.000
-    const price = Number(s.price || s.sessionPrice || 15000);
-    const method = (s.paymentMethod || s.paymentMode || (idx % 3 === 0 ? 'qris' : idx % 3 === 1 ? 'cash' : 'voucher')).toLowerCase();
+  // Calculate month and today revenue across all sessions
+  for (const s of sessions) {
+    const sessionTime = s.createdAt || 0;
+    const price = Number(s.price || s.amount || s.sessionPrice || 0);
+    if (sessionTime >= startOfMonth) {
+      monthGross += price;
+    }
+    if (sessionTime >= startOfDay) {
+      todayGross += price;
+    }
+  }
+
+  const transactions = [];
+
+  for (let idx = 0; idx < filtered.length; idx++) {
+    const s = filtered[idx];
+    const price = Number(s.price || s.amount || s.sessionPrice || 0);
+    const method = (s.paymentMethod || s.paymentMode || '').toLowerCase();
 
     if (method.includes('qris')) {
       qrisCount++;
@@ -649,27 +669,36 @@ export async function getFinancialSummary(filterRange = 'all') {
       cashCount++;
       cashAmount += price;
       totalGross += price;
-    } else {
+    } else if (method.includes('voucher')) {
       voucherCount++;
-      voucherAmount += 0; // Voucher bebas bayar
+      voucherAmount += 0;
+    } else if (price > 0) {
+      qrisCount++;
+      qrisAmount += price;
+      totalGross += price;
     }
 
-    return {
-      orderId: s.orderId || `ORD-${s.sessionId?.slice(-8) || idx}`,
-      sessionId: s.sessionId,
-      createdAt: s.createdAt || now,
-      amount: method.includes('voucher') ? 0 : price,
-      originalPrice: price,
-      paymentMethod: method.includes('qris') ? 'QRIS (Midtrans)' : method.includes('cash') ? 'Tunai / Manual' : 'Voucher Free Pass',
-      status: 'PAID',
-    };
-  });
+    if (price > 0 || method) {
+      transactions.push({
+        orderId: s.orderId || `ORD-${s.sessionId?.slice(-8) || idx}`,
+        sessionId: s.sessionId,
+        createdAt: s.createdAt || now,
+        amount: method.includes('voucher') ? 0 : price,
+        originalPrice: price,
+        paymentMethod: method.includes('qris') ? 'QRIS (Midtrans)' : method.includes('cash') ? 'Tunai / Manual' : method.includes('voucher') ? 'Voucher Free Pass' : 'QRIS (Midtrans)',
+        status: s.paymentStatus || 'PAID',
+      });
+    }
+  }
 
   return {
     filterRange,
     totalSessions: filtered.length,
     totalGross,
-    averageOrderValue: filtered.length > 0 ? Math.round(totalGross / Math.max(1, qrisCount + cashCount)) : 0,
+    totalRevenue: totalGross,
+    monthRevenue: monthGross,
+    todayRevenue: todayGross,
+    averageOrderValue: (qrisCount + cashCount) > 0 ? Math.round(totalGross / (qrisCount + cashCount)) : 0,
     breakdown: {
       qris: { count: qrisCount, amount: qrisAmount },
       cash: { count: cashCount, amount: cashAmount },

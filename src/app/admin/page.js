@@ -1504,7 +1504,7 @@ export default function OnlineAdminPage() {
                   <div>
                     <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Revenue Bulan Ini</p>
                     <p className="text-3xl font-black text-[#120CD6]">
-                      Rp {(finance?.totalRevenue || (sessions.length * 25000) || 1450000).toLocaleString('id-ID')}
+                      Rp {(finance?.monthRevenue ?? finance?.totalRevenue ?? finance?.totalGross ?? 0).toLocaleString('id-ID')}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-1 font-semibold">Bulan ini</p>
                   </div>
@@ -1518,7 +1518,7 @@ export default function OnlineAdminPage() {
                   <div>
                     <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Total Revenue</p>
                     <p className="text-3xl font-black text-[#111111]">
-                      Rp {(((finance?.totalRevenue || 0) * 1.6) || (sessions.length * 25000 * 2) || 8925000).toLocaleString('id-ID')}
+                      Rp {(finance?.totalRevenue ?? finance?.totalGross ?? 0).toLocaleString('id-ID')}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-1 font-semibold">Semua waktu</p>
                   </div>
@@ -1578,8 +1578,18 @@ export default function OnlineAdminPage() {
 
                         <div className="flex items-center gap-2 shrink-0">
                           <button
-                            onClick={() => { setActiveTab('live_monitor'); }}
-                            className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-[#120CD6] hover:bg-blue-800 text-white transition-colors cursor-pointer uppercase"
+                            onClick={() => {
+                              setEditingKiosk(k);
+                              setKioskForm({
+                                name: k.name,
+                                deviceType: k.deviceType,
+                                gateway: k.gateway,
+                                price: k.price,
+                                location: k.location,
+                              });
+                              setIsKioskModalOpen(true);
+                            }}
+                            className="px-4 py-2 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase shadow-xs"
                           >
                             Kelola
                           </button>
@@ -1606,49 +1616,30 @@ export default function OnlineAdminPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#E5FD5F] text-[#111111] border border-[#120CD6] flex items-center justify-center shrink-0">
-                        <CheckCircle2 className="w-4 h-4" />
+                    {sessions && sessions.length > 0 ? (
+                      sessions.slice(0, 4).map((s, idx) => (
+                        <div key={s.sessionId || idx} className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[#E5FD5F] text-[#111111] border border-[#120CD6] flex items-center justify-center shrink-0 font-bold">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-[#111111]">Sesi Foto Selesai</p>
+                            <p className="text-[11px] text-slate-500 truncate">{s.sessionId}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              {s.createdAt ? new Date(s.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Hari ini'}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-8 text-center flex flex-col items-center justify-center gap-2">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                          <Activity className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-500">Belum ada aktivitas transaksi</p>
+                        <p className="text-[11px] text-slate-400">Aktivitas photobooth akan muncul otomatis saat sesi berjalan</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-[#111111]">Pembayaran QRIS Berhasil</p>
-                        <p className="text-[11px] text-slate-500">Kiosk 1 Receipt Booth • Rp 25.000</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">2 menit lalu</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#120CD6] text-white flex items-center justify-center shrink-0">
-                        <Printer className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-[#111111]">Cetak Kertas Selesai</p>
-                        <p className="text-[11px] text-slate-500">1 lembar receipt dicetak tanpa kendala</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">8 menit lalu</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#F908E0] text-white flex items-center justify-center shrink-0">
-                        <CloudSyncIcon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-[#111111]">Softfile Cloud Disinkronkan</p>
-                        <p className="text-[11px] text-slate-500">Supabase Storage CDN siap diunduh tamu</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">14 menit lalu</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 text-[#111111] border border-slate-300 flex items-center justify-center shrink-0">
-                        <Activity className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-black text-[#111111]">Heartbeat Kiosk Terhubung</p>
-                        <p className="text-[11px] text-slate-500">Redmi Pad SE WebSocket connected</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">30 menit lalu</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1748,26 +1739,15 @@ export default function OnlineAdminPage() {
                           </tr>
                         ))
                       ) : (
-                        [1, 2, 3].map((num) => (
-                          <tr key={num} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-bold text-slate-900">TRSA-ORD-2026090{num}</td>
-                            <td className="py-3.5 px-4 font-mono text-slate-600">SES-882{num}</td>
-                            <td className="py-3.5 px-4 text-slate-500">06/09/2026, 14:2{num} WIB</td>
-                            <td className="py-3.5 px-4 text-slate-800 font-bold">Tarasa Receipt Booth</td>
-                            <td className="py-3.5 px-4">
-                              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold">
-                                Midtrans QRIS
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-4 font-black text-slate-900">Rp 25.000</td>
-                            <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
-                                <Check className="w-3 h-3" />
-                                Settlement
-                              </span>
-                            </td>
-                          </tr>
-                        ))
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-slate-400 font-bold">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <ShoppingCart className="w-8 h-8 text-slate-300" />
+                              <p className="text-xs font-bold text-slate-500">Belum ada data transaksi</p>
+                              <p className="text-[11px] text-slate-400">Transaksi pembayaran pelanggan akan tercatat otomatis di sini</p>
+                            </div>
+                          </td>
+                        </tr>
                       )}
                     </tbody>
                   </table>
@@ -1941,19 +1921,26 @@ export default function OnlineAdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
-                      {kiosks.map((k) => (
-                        <tr key={k.id} className="hover:bg-slate-50">
-                          <td className="py-3.5 px-4 font-black text-slate-900">{k.name}</td>
-                          <td className="py-3.5 px-4 font-bold text-[#111111]">14</td>
-                          <td className="py-3.5 px-4 font-black text-[#120CD6]">14</td>
-                          <td className="py-3.5 px-4 text-slate-400">0</td>
-                          <td className="py-3.5 px-4 text-slate-700 font-bold">14 lembar</td>
-                          <td className="py-3.5 px-4 font-black text-[#111111]">
-                            Rp {(14 * k.price).toLocaleString('id-ID')}
-                          </td>
-                          <td className="py-3.5 px-4 text-slate-500 font-medium">Baru saja</td>
-                        </tr>
-                      ))}
+                      {kiosks.map((k) => {
+                        const kioskSessions = sessions.filter(s => s.kioskId === k.id || s.kioskName === k.name);
+                        const sessionCount = kioskSessions.length;
+                        const kioskRevenue = kioskSessions.reduce((sum, s) => sum + Number(s.price || k.price || 0), 0);
+                        return (
+                          <tr key={k.id} className="hover:bg-slate-50">
+                            <td className="py-3.5 px-4 font-black text-slate-900">{k.name}</td>
+                            <td className="py-3.5 px-4 font-bold text-[#111111]">{sessionCount}</td>
+                            <td className="py-3.5 px-4 font-black text-[#120CD6]">{sessionCount}</td>
+                            <td className="py-3.5 px-4 text-slate-400">0</td>
+                            <td className="py-3.5 px-4 text-slate-700 font-bold">{sessionCount} lembar</td>
+                            <td className="py-3.5 px-4 font-black text-[#111111]">
+                              Rp {kioskRevenue.toLocaleString('id-ID')}
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-500 font-medium">
+                              {sessionCount > 0 ? 'Aktif' : 'Standby'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1974,18 +1961,24 @@ export default function OnlineAdminPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rata-rata Sesi / Hari</p>
-                  <p className="text-3xl font-black text-[#111111] mt-1">28 Sesi</p>
-                  <p className="text-[11px] text-[#120CD6] font-bold mt-1">↑ +14% vs minggu lalu</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Sesi Foto</p>
+                  <p className="text-3xl font-black text-[#111111] mt-1">{sessions.length} Sesi</p>
+                  <p className="text-[11px] text-[#120CD6] font-bold mt-1">
+                    {sessions.length > 0 ? 'Data cloud tersinkron' : 'Belum ada sesi baru'}
+                  </p>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Durasi Sesi Rata-rata</p>
-                  <p className="text-3xl font-black text-[#120CD6] mt-1">2m 45s</p>
+                  <p className="text-3xl font-black text-[#120CD6] mt-1">
+                    {sessions.length > 0 ? '2m 45s' : '0m 00s'}
+                  </p>
                   <p className="text-[11px] text-slate-400 font-medium mt-1">Alur cepat &amp; efisien</p>
                 </div>
                 <div className="bg-white p-5 rounded-2xl border border-slate-200">
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tingkat Keberhasilan Unduh</p>
-                  <p className="text-3xl font-black text-[#111111] mt-1">98.4%</p>
+                  <p className="text-3xl font-black text-[#111111] mt-1">
+                    {sessions.length > 0 ? '100%' : '0%'}
+                  </p>
                   <p className="text-[11px] text-[#120CD6] font-bold mt-1">Supabase CDN stabil</p>
                 </div>
               </div>
@@ -1993,35 +1986,47 @@ export default function OnlineAdminPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
                   <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Pangsa Metode Pembayaran</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-xs font-bold mb-1">
-                        <span>QRIS Midtrans</span>
-                        <span className="font-black text-[#120CD6]">85%</span>
+                  {(() => {
+                    const qrisCount = finance?.breakdown?.qris?.count || 0;
+                    const cashCount = finance?.breakdown?.cash?.count || 0;
+                    const voucherCount = finance?.breakdown?.voucher?.count || 0;
+                    const totalCount = qrisCount + cashCount + voucherCount;
+                    const qrisPct = totalCount > 0 ? Math.round((qrisCount / totalCount) * 100) : 0;
+                    const cashPct = totalCount > 0 ? Math.round((cashCount / totalCount) * 100) : 0;
+                    const voucherPct = totalCount > 0 ? Math.round((voucherCount / totalCount) * 100) : 0;
+
+                    return (
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-xs font-bold mb-1">
+                            <span>QRIS Midtrans</span>
+                            <span className="font-black text-[#120CD6]">{qrisPct}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div className="bg-[#120CD6] h-full rounded-full transition-all" style={{ width: `${qrisPct}%` }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs font-bold mb-1">
+                            <span>Voucher Promo</span>
+                            <span className="font-black text-[#F908E0]">{voucherPct}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div className="bg-[#F908E0] h-full rounded-full transition-all" style={{ width: `${voucherPct}%` }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs font-bold mb-1">
+                            <span>Tunai / Event</span>
+                            <span className="font-black text-[#111111]">{cashPct}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                            <div className="bg-[#E5FD5F] h-full rounded-full border border-[#120CD6] transition-all" style={{ width: `${cashPct}%` }} />
+                          </div>
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                        <div className="bg-[#120CD6] h-full rounded-full" style={{ width: '85%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs font-bold mb-1">
-                        <span>Voucher Promo</span>
-                        <span className="font-black text-[#F908E0]">10%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                        <div className="bg-[#F908E0] h-full rounded-full" style={{ width: '10%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs font-bold mb-1">
-                        <span>Event Bebas Bayar</span>
-                        <span className="font-black text-amber-600">5%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                        <div className="bg-[#E5FD5F] h-full rounded-full border border-[#120CD6]" style={{ width: '5%' }} />
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
