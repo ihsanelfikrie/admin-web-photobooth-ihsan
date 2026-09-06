@@ -423,6 +423,24 @@ export default function OnlineAdminPage() {
   });
   const [viewingXmlTemplate, setViewingXmlTemplate]   = useState(null);
 
+  // Pricing configuration with localStorage persistence
+  const [pricingConfig, setPricingConfig] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("tarasa_admin_pricing");
+        if (saved) return JSON.parse(saved);
+      } catch (_) {}
+    }
+    return {
+      price_session: 15000,
+      price_extra_photo: 500,
+      price_extra_print: 2000,
+      min_photos: 6,
+      max_photos: 12,
+      print_count: 1,
+    };
+  });
+
   // Kiosks registry with localStorage persistence (100% real data)
   const [kiosks, setKiosks] = useState(() => {
     if (typeof window !== "undefined") {
@@ -2457,6 +2475,151 @@ export default function OnlineAdminPage() {
                   >
                     Tes Ping Koneksi
                   </button>
+                </div>
+              </div>
+
+              {/* Card 2: Pengaturan Tarif & Paket Sesi */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-[#111111] uppercase">Pengaturan Tarif &amp; Paket Sesi Foto</h3>
+                      <p className="text-xs text-slate-400">Atur harga dasar sesi, biaya ekstra foto, dan biaya cetak rangkap</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("tarasa_admin_pricing", JSON.stringify(pricingConfig));
+                      }
+                      showToast('Tarif sesi & paket foto berhasil disimpan!');
+                    }}
+                    className="px-5 py-2.5 bg-[#E5FD5F] hover:bg-[#d8f244] text-[#111111] border-2 border-[#120CD6] rounded-xl font-black text-xs uppercase tracking-wider transition cursor-pointer shadow-sm"
+                  >
+                    💾 Simpan Tarif Sesi
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                  {/* Harga Dasar Sesi */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <label className="font-bold text-slate-700 uppercase block">Harga Paket Dasar (Rp):</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="500"
+                        value={pricingConfig.price_session}
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, price_session: Number(e.target.value) })}
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400">Harga standar awal (default: Rp 15.000).</p>
+                  </div>
+
+                  {/* Tambah 1 Foto */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <label className="font-bold text-slate-700 uppercase block">Biaya Tambah per Foto (Rp):</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={pricingConfig.price_extra_photo}
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, price_extra_photo: Number(e.target.value) })}
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400">Biaya ekstra per 1 foto tambahan (default: +Rp 500).</p>
+                  </div>
+
+                  {/* Tambah 1 Cetak */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <label className="font-bold text-slate-700 uppercase block">Biaya Tambah Cetak / Print (Rp):</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="500"
+                        value={pricingConfig.price_extra_print}
+                        onChange={(e) => setPricingConfig({ ...pricingConfig, price_extra_print: Number(e.target.value) })}
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
+                      />
+                    </div>
+                    <p className="text-[10px] text-slate-400">Biaya cetak rangkap ekstra (default: +Rp 2.000).</p>
+                  </div>
+
+                  {/* Slot Foto Minimum */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <label className="font-bold text-slate-700 uppercase block">Slot Foto Dasar / Minimum:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={pricingConfig.min_photos}
+                      onChange={(e) => setPricingConfig({ ...pricingConfig, min_photos: Number(e.target.value) })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400">Standar kuota foto awal (default: 6 foto).</p>
+                  </div>
+
+                  {/* Slot Foto Maksimal */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <label className="font-bold text-slate-700 uppercase block">Slot Foto Maksimal:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={pricingConfig.max_photos}
+                      onChange={(e) => setPricingConfig({ ...pricingConfig, max_photos: Number(e.target.value) })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400">Batas maksimal slot foto (default: 12 foto).</p>
+                  </div>
+
+                  {/* Jumlah Print Dasar */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                    <label className="font-bold text-slate-700 uppercase block">Jumlah Cetak Dasar:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={pricingConfig.print_count}
+                      onChange={(e) => setPricingConfig({ ...pricingConfig, print_count: Number(e.target.value) })}
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-bold text-slate-900 font-mono focus:border-[#120CD6] focus:outline-none"
+                    />
+                    <p className="text-[10px] text-slate-400">Default lembar cetak fisik (default: 1 lembar).</p>
+                  </div>
+                </div>
+
+                {/* Simulation Box */}
+                <div className="p-4 rounded-xl bg-slate-900 text-white space-y-2 text-xs">
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="text-[#E5FD5F] uppercase">Simulasi Kalkulasi Tagihan Pelanggan:</span>
+                    <span className="text-[10px] text-slate-400 font-mono">Dinamis</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono">
+                    <div className="p-2.5 bg-black/50 rounded-lg border border-slate-800 text-center">
+                      <div className="text-[10px] text-slate-400 font-sans">Paket Standar ({pricingConfig.min_photos} Foto • {pricingConfig.print_count} Print)</div>
+                      <div className="text-white font-bold text-sm mt-0.5">Rp {pricingConfig.price_session.toLocaleString('id-ID')}</div>
+                    </div>
+                    <div className="p-2.5 bg-black/50 rounded-lg border border-slate-800 text-center">
+                      <div className="text-[10px] text-slate-400 font-sans">+2 Foto Tambahan ({pricingConfig.min_photos + 2} Foto)</div>
+                      <div className="text-[#E5FD5F] font-bold text-sm mt-0.5">Rp {(pricingConfig.price_session + (2 * pricingConfig.price_extra_photo)).toLocaleString('id-ID')}</div>
+                    </div>
+                    <div className="p-2.5 bg-black/50 rounded-lg border border-slate-800 text-center">
+                      <div className="text-[10px] text-slate-400 font-sans">+1 Lembar Print Ekstra ({pricingConfig.print_count + 1} Print)</div>
+                      <div className="text-amber-400 font-bold text-sm mt-0.5">Rp {(pricingConfig.price_session + pricingConfig.price_extra_print).toLocaleString('id-ID')}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
