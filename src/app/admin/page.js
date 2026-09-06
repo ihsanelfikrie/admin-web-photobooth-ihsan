@@ -412,35 +412,42 @@ export default function OnlineAdminPage() {
   });
   const [viewingXmlTemplate, setViewingXmlTemplate]   = useState(null);
 
-  // Kiosks registry (persisted or populated)
-  const [kiosks, setKiosks] = useState([
-    {
-      id: 'kiosk-receipt-01',
-      name: 'Tarasa Receipt Booth - Redmi Pad SE',
-      deviceType: 'Tablet Android (Receipt Thermal 58mm)',
-      gateway: 'Midtrans QRIS',
-      price: 25000,
-      licenseKey: 'TRSA-RCPT-8821-X9',
-      status: 'Active',
-      created: '2026-08-15',
-      location: 'Outlet Utama - Booth 1',
-      paperRoll: 92,
-      paperMax: 100,
-    },
-    {
-      id: 'kiosk-studio-01',
-      name: 'Tarasa Booth Studio 1 - Main Photobooth',
-      deviceType: 'Windows PC (DNP 4R Printer)',
-      gateway: 'Midtrans QRIS',
-      price: 35000,
-      licenseKey: 'TRSA-4RCL-1049-M1',
-      status: 'Active',
-      created: '2026-07-20',
-      location: 'Outlet Utama - Studio A',
-      paperRoll: 380,
-      paperMax: 400,
+  // Kiosks registry with localStorage persistence (100% real data)
+  const [kiosks, setKiosks] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("sans_admin_kiosks");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (_) {}
     }
-  ]);
+    return [
+      {
+        id: "kiosk-01",
+        name: "TESTING2",
+        deviceType: "PC / Laptop (Canon DSLR & DNP Printer)",
+        gateway: "Midtrans QRIS",
+        price: 30000,
+        licenseKey: "88Q-TUR-W2G",
+        status: "Active",
+        created: "2026-09-06",
+        location: "Outlet Utama - Booth 1",
+        paperRoll: 500,
+        paperMax: 500,
+      }
+    ];
+  });
+
+  // Automatically persist kiosks to localStorage on change
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sans_admin_kiosks", JSON.stringify(kiosks));
+      } catch (_) {}
+    }
+  }, [kiosks]);
 
   // Form States
   const [announcementInput, setAnnouncementInput] = useState('');
@@ -629,7 +636,7 @@ export default function OnlineAdminPage() {
       const json = await res.json();
       if (json.success) {
         setTelemetry(json.telemetry);
-        setKiosks(prev => prev.map(k => k.id === 'kiosk-receipt-01' ? { ...k, paperRoll: Math.min(k.paperMax, k.paperRoll + qtyToAdd) } : k));
+        setKiosks(prev => prev.map(k => ({ ...k, paperRoll: Math.min(k.paperMax, k.paperRoll + qtyToAdd) })));
         showToast(`Stok kertas berhasil diisi ulang (+${qtyToAdd} lembar).`);
       } else {
         showToast(json.error || 'Gagal mengisi stok kertas', 'error');
@@ -1431,7 +1438,7 @@ export default function OnlineAdminPage() {
               TB
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-xs font-black text-white truncate">admin@tarasabooth.com</p>
+              <p className="text-xs font-black text-white truncate">admin@photobooth.local</p>
               <button
                 onClick={() => setActiveTab('kiosks')}
                 className="text-[10px] text-[#E5FD5F] hover:underline cursor-pointer font-semibold"
@@ -1721,7 +1728,7 @@ export default function OnlineAdminPage() {
                             <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{t.orderId}</td>
                             <td className="py-3.5 px-4 font-mono text-slate-600">{t.sessionId}</td>
                             <td className="py-3.5 px-4 text-slate-500">{new Date(t.createdAt).toLocaleString('id-ID')}</td>
-                            <td className="py-3.5 px-4 text-slate-800 font-bold">Tarasa Receipt Booth</td>
+                            <td className="py-3.5 px-4 text-slate-800 font-bold">{t.kioskName || (kiosks.find(k => k.id === t.kioskId)?.name) || (kiosks[0]?.name || "Photobooth")}</td>
                             <td className="py-3.5 px-4">
                               <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold">
                                 {t.paymentMethod || 'QRIS Midtrans'}
@@ -2353,7 +2360,7 @@ export default function OnlineAdminPage() {
                     <label className="font-bold text-slate-700 uppercase">Keterangan / Event</label>
                     <input
                       type="text"
-                      placeholder="e.g. Promo Grand Opening Tarasa Booth"
+                      placeholder="e.g. Promo Grand Opening"
                       value={voucherDesc}
                       onChange={(e) => setVoucherDesc(e.target.value)}
                       className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium"
@@ -3008,7 +3015,7 @@ export default function OnlineAdminPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Tarasa Receipt Booth 2"
+                  placeholder="e.g. Photobooth Cabang 2"
                   value={kioskForm.name}
                   onChange={(e) => setKioskForm({ ...kioskForm, name: e.target.value })}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
