@@ -742,3 +742,152 @@ export async function uploadFrameStorage(frameId, xmlText, pngBase64) {
 }
 
 
+
+
+// ── Kiosks Cloud Storage Helpers ──────────────────────────────────────────────
+const KIOSKS_PATH = "system/kiosks.json";
+
+const DEFAULT_KIOSKS = [
+  {
+    id: 1,
+    uuid: "7c4861bd-b8b8-4abd-a0eb-536827abaff3",
+    license_key: "88Q-TUR-W2G",
+    name: "TESTING2",
+    pin: "1111",
+    device_id: "fa4eb4cf-62d3-4e09-bd6f-036937babb49",
+    os_platform: "darwin",
+    os_hostname: "Ihsan-Macbook-Pro.local",
+    is_active: true,
+    is_event_mode: false,
+    is_queue_enabled: true,
+    session_duration: 300,
+    countdown_timer: 5,
+    qr_timer: 90,
+    max_photo: 6,
+    max_print: 5,
+    price_per_photo: 30000,
+    price_extra_print: 10000,
+    price_discount: 0,
+    live_photo: true,
+    no_retake_after: 0,
+    paper_management_enabled: true,
+    paper_stock: 496,
+    paper_booked: 0,
+    consent_enabled: true,
+    consent_text: "Apakah anda berkenan foto anda kami unggah di media sosial kami?",
+    consent_text_yes: "Baik/Mengerti",
+    consent_text_no: "Tidak",
+    midtrans_server_key: process.env.MIDTRANS_SERVER_KEY || "",
+    midtrans_client_key: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "",
+    templates_version: "v1.0.0",
+    last_ping_at: new Date().toISOString(),
+    created_at: "2026-09-06T15:35:17.723Z",
+    updated_at: new Date().toISOString()
+  }
+];
+
+export async function getKiosksCloud() {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .download(KIOSKS_PATH);
+
+    if (error || !data) {
+      return DEFAULT_KIOSKS;
+    }
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_KIOSKS;
+  } catch (err) {
+    console.warn("[Supabase] Error reading kiosks cloud:", err.message);
+    return DEFAULT_KIOSKS;
+  }
+}
+
+export async function saveKiosksCloud(kiosks) {
+  try {
+    const jsonString = JSON.stringify(kiosks, null, 2);
+    const { error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(KIOSKS_PATH, Buffer.from(jsonString, "utf-8"), {
+        contentType: "application/json",
+        upsert: true
+      });
+
+    return !error;
+  } catch (err) {
+    console.error("[Supabase] Error saving kiosks cloud:", err.message);
+    return false;
+  }
+}
+
+// ── Categories Cloud Storage Helpers ──────────────────────────────────────────
+const CATEGORIES_PATH = "system/categories.json";
+
+const DEFAULT_CATEGORIES = [
+  {
+    id: 1,
+    kiosk_id: 1,
+    name: "Standard Studio",
+    folder: "studio",
+    slug: "studio",
+    order: 1,
+    is_active: true,
+    created_at: "2026-09-05T18:21:09.041Z"
+  },
+  {
+    id: 2,
+    kiosk_id: 1,
+    name: "Wedding & Formal",
+    folder: "wedding",
+    slug: "wedding",
+    order: 2,
+    is_active: true,
+    created_at: "2026-09-05T18:21:09.041Z"
+  },
+  {
+    id: 3,
+    kiosk_id: 1,
+    name: "Event Strip 2R",
+    folder: "strip",
+    slug: "strip",
+    order: 3,
+    is_active: true,
+    created_at: "2026-09-05T18:21:09.041Z"
+  }
+];
+
+export async function getCategoriesCloud() {
+  try {
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .download(CATEGORIES_PATH);
+
+    if (error || !data) {
+      return DEFAULT_CATEGORIES;
+    }
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_CATEGORIES;
+  } catch (err) {
+    console.warn("[Supabase] Error reading categories cloud:", err.message);
+    return DEFAULT_CATEGORIES;
+  }
+}
+
+export async function saveCategoriesCloud(categories) {
+  try {
+    const jsonString = JSON.stringify(categories, null, 2);
+    const { error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .upload(CATEGORIES_PATH, Buffer.from(jsonString, "utf-8"), {
+        contentType: "application/json",
+        upsert: true
+      });
+
+    return !error;
+  } catch (err) {
+    console.error("[Supabase] Error saving categories cloud:", err.message);
+    return false;
+  }
+}

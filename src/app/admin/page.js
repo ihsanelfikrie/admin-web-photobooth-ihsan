@@ -1,5 +1,7 @@
 'use client';
 
+import KioskConfigEditor from "@/components/admin/KioskConfigEditor";
+
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import QRCode from 'qrcode';
@@ -397,6 +399,7 @@ export default function OnlineAdminPage() {
 
   // Kiosk Modal & Management State
   const [isKioskModalOpen, setIsKioskModalOpen] = useState(false);
+  const [activeKioskForConfig, setActiveKioskForConfig] = useState(null);
   const [editingKiosk, setEditingKiosk]         = useState(null);
   const [kioskForm, setKioskForm]               = useState({
     name: '',
@@ -480,6 +483,33 @@ export default function OnlineAdminPage() {
   }, [kiosks]);
 
   // Form States
+  
+  const fetchKiosksCloud = async () => {
+    try {
+      const res = await fetch("/api/admin/kiosks");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.kiosks) && data.kiosks.length > 0) {
+        setKiosks(data.kiosks.map(k => ({
+          ...k,
+          licenseKey: k.license_key || k.licenseKey || "NDHS-001",
+          deviceType: k.os_platform ? "PC/Laptop (" + k.os_platform + ")" : "Kiosk Photobooth",
+          gateway: "Midtrans QRIS",
+          price: k.price_per_photo || 30000,
+          status: k.is_active ? "Active" : "Inactive",
+          created: k.created_at ? k.created_at.substring(0, 10) : "2026-09-06"
+        })));
+      }
+    } catch (err) {
+      console.warn("Could not fetch kiosks from cloud:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "kiosks") {
+      fetchKiosksCloud();
+    }
+  }, [activeTab]);
+
   const [announcementInput, setAnnouncementInput] = useState('');
   const [announcementActive, setAnnouncementActive] = useState(true);
   const [voucherCode, setVoucherCode]         = useState('');
@@ -2260,7 +2290,22 @@ export default function OnlineAdminPage() {
           {/* ══════════════════════════════════════════════════════════════
               VIEW 5: KIOSK
           ══════════════════════════════════════════════════════════════ */}
-          {activeTab === 'kiosks' && (
+          {activeTab === 'kiosks' && activeKioskForConfig !== null ? (
+            <div className="space-y-4">
+              <KioskConfigEditor
+                kiosk={activeKioskForConfig === 'new' ? null : activeKioskForConfig}
+                onBack={() => {
+                  setActiveKioskForConfig(null);
+                  fetchKiosksCloud();
+                }}
+                onSaveSuccess={() => {
+                  setActiveKioskForConfig(null);
+                  fetchKiosksCloud();
+                  showToast("Konfigurasi Kiosk berhasil disimpan ke Cloud!");
+                }}
+              />
+            </div>
+          ) : activeTab === 'kiosks' && (
             <div className="space-y-6">
               
               {/* Header + Add Button */}
@@ -2272,17 +2317,7 @@ export default function OnlineAdminPage() {
 
                 <button
                   onClick={() => {
-                    setEditingKiosk(null);
-                    setKioskForm({
-                      name: '',
-                      deviceType: 'Tablet Android (Receipt Thermal)',
-                      gateway: 'Midtrans QRIS',
-                      price: 25000,
-                      licenseKey: `TRSA-BOOTH-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-                      status: 'Active',
-                      location: 'Outlet Utama'
-                    });
-                    setIsKioskModalOpen(true);
+                    setActiveKioskForConfig('new');
                   }}
                   className="px-4 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
                 >
@@ -2362,22 +2397,13 @@ export default function OnlineAdminPage() {
                               <div className="flex items-center justify-center gap-2">
                                 <button
                                   onClick={() => {
-                                    setEditingKiosk(k);
-                                    setKioskForm({
-                                      name: k.name,
-                                      deviceType: k.deviceType,
-                                      gateway: k.gateway,
-                                      price: k.price,
-                                      licenseKey: k.licenseKey,
-                                      status: k.status,
-                                      location: k.location
-                                    });
-                                    setIsKioskModalOpen(true);
+                                    setActiveKioskForConfig(k);
                                   }}
-                                  className="p-1.5 text-slate-500 hover:text-[#120CD6] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                                  title="Edit Kiosk"
+                                  className="px-2.5 py-1.5 bg-[#120CD6]/10 text-[#120CD6] hover:bg-[#120CD6] hover:text-white rounded-lg transition-colors cursor-pointer text-[11px] font-black flex items-center gap-1"
+                                  title="Konfigurasi Lengkap Kiosk"
                                 >
-                                  <Edit2 className="w-3.5 h-3.5" />
+                                  <Sliders className="w-3.5 h-3.5" />
+                                  <span>Konfigurasi</span>
                                 </button>
                                 <button
                                   onClick={() => handleDeleteKiosk(k.id)}
