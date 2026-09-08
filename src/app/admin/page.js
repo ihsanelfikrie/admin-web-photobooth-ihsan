@@ -1020,7 +1020,7 @@ export default function OnlineAdminPage() {
     const domain = typeof window !== 'undefined' ? window.location.origin : 'https://admin-web-photobooth-ihsan.vercel.app';
     const softfileUrl = `${domain}/softfile/${session.sessionId}`;
     try {
-      const dataUrl = await QRCode.toDataURL(softfileUrl, { width: 350, margin: 2, color: { dark: '#0F172A', light: '#FFFFFF' } });
+      const dataUrl = await QRCode.toDataURL(softfileUrl, { width: 350, margin: 2, color: { dark: '#120CD6', light: '#FFFFFF' } });
       setQrDataUrl(dataUrl);
     } catch (_) {
       setQrDataUrl(null);
@@ -1516,39 +1516,35 @@ export default function OnlineAdminPage() {
   // ── SANS Signature Login Screen (Electric Blue #120CD6) ──────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#070A12] text-white flex items-center justify-center p-4 select-none font-sans relative overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px] pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/20 rounded-full blur-[128px] pointer-events-none" />
-
-        <div className="w-full max-w-md p-8 md:p-10 bg-slate-900/90 border border-slate-800 text-white rounded-3xl shadow-2xl backdrop-blur-xl flex flex-col items-center gap-6 relative z-10">
+      <div className="min-h-screen bg-[#120CD6] text-white flex items-center justify-center p-4 select-none font-sans selection:bg-[#E5FD5F] selection:text-[#111111]">
+        <div className="w-full max-w-md p-8 md:p-10 bg-white text-[#111111] rounded-3xl shadow-2xl flex flex-col items-center gap-6 border-4 border-white">
           {/* Brand Tag */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-500/10 text-indigo-400 rounded-full text-xs font-bold uppercase tracking-wider border border-indigo-500/30">
-            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
-            NADHISAN STUDIO CLOUD
+          <div className="flex items-center gap-2 px-4 py-1.5 bg-[#120CD6] text-[#E5FD5F] rounded-full text-xs font-black uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-[#E5FD5F] animate-ping" />
+            ✳ NADHISAN STUDIO CLOUD
           </div>
 
           <div className="text-center space-y-1">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 text-white flex items-center justify-center mx-auto mb-2 shadow-lg shadow-indigo-500/30 ring-1 ring-white/20">
-              <Camera className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-[#E5FD5F] text-[#111111] border-2 border-[#120CD6] flex items-center justify-center mx-auto mb-2 font-black shadow-md">
+              <Camera className="w-6 h-6 text-[#111111]" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-black text-[#120CD6] uppercase tracking-tight">
               Nadhisan Studio
             </h1>
-            <p className="text-xs text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
               Pusat Kendali Cloud &amp; Manajemen Photobooth
             </p>
           </div>
 
           {/* Login Method Toggle */}
-          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-800/80 rounded-xl w-full border border-slate-700/80">
+          <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-2xl w-full border-2 border-slate-200">
             <button
               type="button"
               onClick={() => { setLoginMethod('credentials'); setAuthError(''); }}
-              className={`py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+              className={`py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
                 loginMethod === 'credentials'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#120CD6] text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Email &amp; Sandi
@@ -1556,10 +1552,10 @@ export default function OnlineAdminPage() {
             <button
               type="button"
               onClick={() => { setLoginMethod('pin'); setAuthError(''); }}
-              className={`py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
+              className={`py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
                 loginMethod === 'pin'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#120CD6] text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               PIN Kiosk
@@ -1567,8 +1563,8 @@ export default function OnlineAdminPage() {
           </div>
 
           {authError && (
-            <div className="w-full p-3.5 bg-rose-500/10 border border-rose-500/50 text-rose-400 rounded-xl text-xs font-bold flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+            <div className="w-full p-3.5 bg-rose-50 border-2 border-rose-500 text-rose-700 rounded-2xl text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{authError}</span>
             </div>
           )}
@@ -1576,11 +1572,11 @@ export default function OnlineAdminPage() {
           {loginMethod === 'credentials' ? (
             <form onSubmit={handleCredentialLogin} className="w-full space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
                   Email Akun Admin
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     required
@@ -1590,17 +1586,17 @@ export default function OnlineAdminPage() {
                       setAuthError('');
                     }}
                     placeholder="admin@nadhisanbooth.com"
-                    className="w-full pl-10 pr-3.5 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-sm font-semibold text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#120CD6] transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
                   Kata Sandi
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
@@ -1610,12 +1606,12 @@ export default function OnlineAdminPage() {
                       setAuthError('');
                     }}
                     placeholder="••••••••••••"
-                    className="w-full pl-10 pr-10 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-sm font-semibold text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border-2 border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#120CD6] transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -1625,7 +1621,7 @@ export default function OnlineAdminPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-indigo-600/30 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02]"
               >
                 {loading ? (
                   <>
@@ -1643,7 +1639,7 @@ export default function OnlineAdminPage() {
           ) : (
             <form onSubmit={handlePinLogin} className="w-full space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block text-center">
+                <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block text-center">
                   Masukkan PIN Akses (4-8 Digit)
                 </label>
                 <input
@@ -1655,7 +1651,7 @@ export default function OnlineAdminPage() {
                     setAuthError('');
                   }}
                   placeholder="••••"
-                  className="w-full text-center tracking-widest text-3xl font-mono py-3.5 bg-slate-800/80 border border-slate-700 rounded-2xl text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-600"
+                  className="w-full text-center tracking-widest text-3xl font-mono py-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl text-slate-900 focus:outline-none focus:border-[#120CD6] transition-colors"
                   autoFocus
                 />
               </div>
@@ -1663,7 +1659,7 @@ export default function OnlineAdminPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg shadow-indigo-600/30 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-2xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02]"
               >
                 {loading ? (
                   <>
@@ -1680,8 +1676,8 @@ export default function OnlineAdminPage() {
             </form>
           )}
 
-          <p className="text-[11px] text-slate-500 text-center font-medium">
-            Nadhisan Studio OS • Cloud Booth Engine
+          <p className="text-[11px] text-slate-500 text-center font-bold">
+            SANS Design • Nadhisan Studio Cloud OS
           </p>
         </div>
       </div>
@@ -1728,16 +1724,16 @@ export default function OnlineAdminPage() {
 
   // ── Main Authenticated Layout (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F, White #FFFFFF) ───────────────────
   return (
-    <div className="min-h-screen bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row antialiased selection:bg-indigo-600 selection:text-white">
+    <div className="min-h-screen bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row antialiased selection:bg-[#E5FD5F] selection:text-[#111111]">
       
       {/* Toast Alert */}
       {toastMessage && (
         <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 border-2 transition-all ${
           toastMessage.type === 'error'
             ? 'bg-rose-600 text-white border-white'
-            : 'bg-slate-900 text-white border-slate-700 shadow-2xl'
+            : 'bg-[#120CD6] text-white border-2 border-[#E5FD5F] shadow-2xl'
         }`}>
-          {toastMessage.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+          {toastMessage.type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4 text-[#E5FD5F]" />}
           <span>{toastMessage.text}</span>
         </div>
       )}
@@ -1750,25 +1746,25 @@ export default function OnlineAdminPage() {
         />
       )}
 
-      {/* ── Left Sidebar (Modern Dark Obsidian Studio) ────────────────── */}
-      <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-[#0B0F19] border-r border-slate-800/80 text-white flex flex-col z-50 transition-transform duration-200 shrink-0 ${
+      {/* ── Left Sidebar (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F) ── */}
+      <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-[#120CD6] text-white flex flex-col z-50 transition-transform duration-200 shrink-0 ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         
         {/* Brand Header */}
-        <div className="p-5 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-slate-950/40">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-cyan-400 text-white flex items-center justify-center font-black shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
-              <Camera className="w-5 h-5 text-white" />
+        <div className="p-5 border-b border-white/15 flex items-center justify-between shrink-0 bg-[#0E09A8]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center font-black shadow-sm shrink-0">
+              <Camera className="w-5 h-5 text-[#111111]" />
             </div>
             <div>
               <h2 className="text-base font-black text-white tracking-tight uppercase leading-tight">
                 Nadhisan Studio
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <p className="text-[10px] text-slate-400 font-semibold tracking-wide">
-                  Cloud Photobooth OS
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E5FD5F] animate-ping" />
+                <p className="text-[10px] text-[#E5FD5F] font-black uppercase tracking-wider">
+                  Cloud Photobooth
                 </p>
               </div>
             </div>
@@ -1776,7 +1772,7 @@ export default function OnlineAdminPage() {
           
           <button 
             onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden text-slate-400 hover:text-white p-1 cursor-pointer"
+            className="md:hidden text-white/80 hover:text-white p-1 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1786,8 +1782,9 @@ export default function OnlineAdminPage() {
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
           {menuGroups.map((group) => (
             <div key={group.groupTitle} className="space-y-1">
-              <div className="px-3 pb-1 text-[10px] font-black tracking-widest text-slate-500 uppercase select-none">
-                {group.groupTitle}
+              <div className="px-3 pb-1 text-[10px] font-black tracking-widest text-[#E5FD5F] uppercase select-none flex items-center gap-1">
+                <span>✳</span>
+                <span>{group.groupTitle}</span>
               </div>
               
               {group.items.map((item) => {
@@ -1805,13 +1802,13 @@ export default function OnlineAdminPage() {
                       if (item.id === 'templates') loadFrames();
                       if (item.id === 'gallery') loadSessions();
                     }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all text-left cursor-pointer ${
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-blue-600 text-white font-bold shadow-lg shadow-indigo-600/30 border border-indigo-400/20'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                        ? 'bg-[#E5FD5F] text-[#111111] border-2 border-white shadow-md'
+                        : 'text-white/85 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#111111]' : 'text-white/70'}`} />
                     <span className="truncate">{item.label}</span>
                   </button>
                 );
@@ -1821,16 +1818,16 @@ export default function OnlineAdminPage() {
         </div>
 
         {/* Sidebar Footer User Info */}
-        <div className="p-3.5 border-t border-slate-800/80 bg-slate-900/60 shrink-0">
+        <div className="p-3.5 border-t border-white/15 bg-[#0D099E] shrink-0">
           <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-500 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-sm shadow-indigo-500/20">
+            <div className="w-9 h-9 rounded-full bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center text-xs font-black shrink-0">
               NS
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-xs font-bold text-slate-200 truncate" title={currentUser?.email || 'admin@nadhisanbooth.com'}>
+              <p className="text-xs font-black text-white truncate" title={currentUser?.email || 'admin@nadhisanbooth.com'}>
                 {currentUser?.email || 'admin@nadhisanbooth.com'}
               </p>
-              <span className="text-[10px] text-indigo-400 font-semibold block">
+              <span className="text-[10px] text-[#E5FD5F] font-bold block">
                 👑 Super Administrator
               </span>
             </div>
@@ -1838,7 +1835,7 @@ export default function OnlineAdminPage() {
           
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-slate-300 bg-slate-800/90 hover:bg-rose-500/20 hover:text-rose-300 border border-slate-700/60 transition-colors cursor-pointer uppercase"
+            className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl text-xs font-black text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer uppercase shadow-xs"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Logout</span>
@@ -1849,30 +1846,30 @@ export default function OnlineAdminPage() {
       {/* ── Main Workspace Area ───────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Top Header Bar (Modern Clean Studio) */}
-        <header className="h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
+        {/* Top Header Bar (SANS Studio Breadcrumb) */}
+        <header className="h-16 bg-white border-b-2 border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 cursor-pointer"
+              className="md:hidden p-2 text-slate-700 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2 text-xs md:text-sm">
-              <span className="text-slate-400 font-medium">Studio Hub</span>
-              <span className="text-slate-300">/</span>
-              <h1 className="font-black text-slate-900 tracking-tight uppercase">
+              <span className="text-slate-400 font-bold uppercase tracking-wider">Studio Hub</span>
+              <span className="text-slate-300 font-black">/</span>
+              <h1 className="text-base md:text-lg font-black text-[#120CD6] tracking-tight uppercase">
                 {activeItemLabel}
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Supabase Cloud Sync</span>
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E5FD5F] text-[#111111] border-2 border-[#120CD6] text-xs font-black">
+              <span className="w-2 h-2 rounded-full bg-[#120CD6] animate-ping" />
+              <span>CLOUD SYNC AKTIF</span>
             </div>
-            <span className="px-3.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl border border-slate-200 text-xs font-semibold">
+            <span className="px-3.5 py-1.5 bg-slate-100 text-slate-800 rounded-full border border-slate-200 text-xs font-bold">
               {currentDateIndo}
             </span>
           </div>
@@ -1897,7 +1894,7 @@ export default function OnlineAdminPage() {
                     <p className="text-3xl font-black text-[#111111]">{kiosks.length}</p>
                     <p className="text-[11px] text-slate-400 mt-1 font-semibold">kiosk aktif</p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-[#120CD6] text-white flex items-center justify-center shrink-0 shadow-xs">
                     <Zap className="w-6 h-6 fill-white" />
                   </div>
                 </div>
@@ -1906,7 +1903,7 @@ export default function OnlineAdminPage() {
                 <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center justify-between">
                   <div>
                     <p className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Revenue Bulan Ini</p>
-                    <p className="text-3xl font-black text-indigo-600">
+                    <p className="text-3xl font-black text-[#120CD6]">
                       Rp {(finance?.monthRevenue ?? finance?.totalRevenue ?? finance?.totalGross ?? 0).toLocaleString('id-ID')}
                     </p>
                     <p className="text-[11px] text-slate-400 mt-1 font-semibold">Bulan ini</p>
@@ -1925,7 +1922,7 @@ export default function OnlineAdminPage() {
                     </p>
                     <p className="text-[11px] text-slate-400 mt-1 font-semibold">Semua waktu</p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border-2 border-indigo-600 flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border-2 border-[#120CD6] flex items-center justify-center shrink-0 shadow-xs">
                     <TrendingUp className="w-6 h-6" />
                   </div>
                 </div>
@@ -1943,7 +1940,7 @@ export default function OnlineAdminPage() {
                     </div>
                     <button
                       onClick={() => setActiveTab('live_monitor')}
-                      className="text-xs font-black text-indigo-600 hover:underline flex items-center gap-1 cursor-pointer uppercase"
+                      className="text-xs font-black text-[#120CD6] hover:underline flex items-center gap-1 cursor-pointer uppercase"
                     >
                       <span>Lihat Live Monitor</span>
                       <ChevronRight className="w-3.5 h-3.5" />
@@ -1965,7 +1962,7 @@ export default function OnlineAdminPage() {
                           className="p-4 rounded-xl border border-slate-200 bg-[#F5F5F5] hover:bg-slate-100 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-white border-2 border-indigo-600 flex items-center justify-center text-indigo-600 shrink-0 font-black">
+                            <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#120CD6] flex items-center justify-center text-[#120CD6] shrink-0 font-black">
                               <Store className="w-5 h-5" />
                             </div>
                             <div>
@@ -1984,7 +1981,7 @@ export default function OnlineAdminPage() {
                               <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-slate-500 mt-2 font-bold">
                                 <span>Kertas: <strong className="text-slate-900">{paperVal} lbr ({pct}%)</strong></span>
                                 <span>•</span>
-                                <span>Koneksi: <strong className="text-indigo-600">{pingLabel}</strong></span>
+                                <span>Koneksi: <strong className="text-[#120CD6]">{pingLabel}</strong></span>
                                 <span>•</span>
                                 <span>Tarif: <strong className="text-slate-900">Rp {k.price.toLocaleString("id-ID")}</strong></span>
                               </div>
@@ -1997,7 +1994,7 @@ export default function OnlineAdminPage() {
                                 setActiveKioskForConfig(k);
                                 setActiveTab("kiosks");
                               }}
-                              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase shadow-xs flex items-center gap-1.5"
+                              className="px-4 py-2 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase shadow-xs flex items-center gap-1.5"
                               title="Buka Konfigurasi Lengkap Kiosk Ini"
                             >
                               <Sliders className="w-3.5 h-3.5" />
@@ -2019,7 +2016,7 @@ export default function OnlineAdminPage() {
                     </div>
                     <button
                       onClick={loadSessions}
-                      className="text-xs text-slate-500 hover:text-indigo-600 p-1 cursor-pointer"
+                      className="text-xs text-slate-500 hover:text-[#120CD6] p-1 cursor-pointer"
                       title="Refresh Aktivitas"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
@@ -2030,7 +2027,7 @@ export default function OnlineAdminPage() {
                     {sessions && sessions.length > 0 ? (
                       sessions.slice(0, 4).map((s, idx) => (
                         <div key={s.sessionId || idx} className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-indigo-600 flex items-center justify-center shrink-0 font-bold">
+                          <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6] flex items-center justify-center shrink-0 font-bold">
                             <CheckCircle2 className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -2075,7 +2072,7 @@ export default function OnlineAdminPage() {
                         key={range}
                         onClick={() => { setFinanceRange(range); loadFinance(range); }}
                         className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer uppercase ${
-                          financeRange === range ? 'bg-indigo-600 text-white font-black' : 'text-slate-600 hover:text-slate-900'
+                          financeRange === range ? 'bg-[#120CD6] text-white font-black' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         {range === 'all' ? 'Semua' : range === 'today' ? 'Hari Ini' : range === 'week' ? '7 Hari' : 'Bulan Ini'}
@@ -2087,7 +2084,7 @@ export default function OnlineAdminPage() {
                   <select
                     value={transactionKioskFilter}
                     onChange={(e) => setTransactionKioskFilter(e.target.value)}
-                    className="px-3 py-2 bg-white border-2 border-slate-200 rounded-xl text-xs font-black text-slate-800 focus:outline-none focus:border-indigo-600 cursor-pointer uppercase"
+                    className="px-3 py-2 bg-white border-2 border-slate-200 rounded-xl text-xs font-black text-slate-800 focus:outline-none focus:border-[#120CD6] cursor-pointer uppercase"
                   >
                     <option value="all">Semua Kiosk</option>
                     {kiosks.map(k => (
@@ -2097,7 +2094,7 @@ export default function OnlineAdminPage() {
 
                   <button
                     onClick={handleExportCsv}
-                    className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-md shadow-indigo-500/20 flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
+                    className="px-4 py-2 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white shadow-md shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Export CSV</span>
@@ -2115,12 +2112,12 @@ export default function OnlineAdminPage() {
                       placeholder="Cari order ID atau ID sesi..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-indigo-600"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
 
                   <div className="text-xs text-slate-500 font-bold">
-                    Total: <span className="font-black text-indigo-600">{displayedTransactions.length}</span> transaksi {transactionKioskFilter !== "all" ? "(Kiosk Terfilter)" : ""}
+                    Total: <span className="font-black text-[#120CD6]">{displayedTransactions.length}</span> transaksi {transactionKioskFilter !== "all" ? "(Kiosk Terfilter)" : ""}
                   </div>
                 </div>
 
@@ -2154,7 +2151,7 @@ export default function OnlineAdminPage() {
                               Rp {Number(t.amount || 25000).toLocaleString('id-ID')}
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-indigo-600">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6]">
                                 <Check className="w-3 h-3" />
                                 Settlement
                               </span>
@@ -2193,8 +2190,8 @@ export default function OnlineAdminPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border-2 border-indigo-600 text-[#111111] text-xs font-black">
-                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border-2 border-[#120CD6] text-[#111111] text-xs font-black">
+                    <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
                     <span>WebSocket Live</span>
                   </div>
 
@@ -2219,8 +2216,8 @@ export default function OnlineAdminPage() {
                       {/* Card Top */}
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-50 text-indigo-600 flex items-center justify-center font-bold">
-                            <Radio className="w-5 h-5 text-indigo-600" />
+                          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
+                            <Radio className="w-5 h-5 text-[#120CD6]" />
                           </div>
                           <div>
                             <h4 className="text-sm font-black text-[#111111]">{k.name}</h4>
@@ -2256,7 +2253,7 @@ export default function OnlineAdminPage() {
                             <div className="grid grid-cols-2 gap-3 pt-2">
                               <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
                                 <p className="text-[11px] text-slate-500 font-bold uppercase">Koneksi Mesin</p>
-                                <p className="text-xs font-black text-indigo-600 mt-0.5">{pingLabel}</p>
+                                <p className="text-xs font-black text-[#120CD6] mt-0.5">{pingLabel}</p>
                               </div>
 
                               <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
@@ -2275,7 +2272,7 @@ export default function OnlineAdminPage() {
                               </div>
                               <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                                 <div
-                                  className={`h-full rounded-full transition-all ${pct < 20 ? "bg-rose-500" : "bg-indigo-600"}`}
+                                  className={`h-full rounded-full transition-all ${pct < 20 ? "bg-rose-500" : "bg-[#120CD6]"}`}
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
@@ -2309,7 +2306,7 @@ export default function OnlineAdminPage() {
                                 className={`px-3 py-1.5 rounded-xl text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase ${
                                   k.is_event_mode
                                     ? "bg-[#F908E0] text-white"
-                                    : "bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-indigo-600"
+                                    : "bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6]"
                                 }`}
                               >
                                 <Sliders className="w-3.5 h-3.5" />
@@ -2318,7 +2315,7 @@ export default function OnlineAdminPage() {
 
                               <button
                                 onClick={() => { setActiveKioskForConfig(k); setActiveTab('kiosks'); }}
-                                className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-indigo-600 text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase border border-blue-200"
+                                className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#120CD6] text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase border border-blue-200"
                               >
                                 <Sliders className="w-3.5 h-3.5" />
                                 <span>Edit 11-Tab</span>
@@ -2330,7 +2327,7 @@ export default function OnlineAdminPage() {
                       {/* Mini Queue Controller */}
                       <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-black text-indigo-600 uppercase">Antrian Terkini</span>
+                          <span className="text-xs font-black text-[#120CD6] uppercase">Antrian Terkini</span>
                           <span className="text-[11px] font-bold text-slate-500">
                             Menunggu: {queue?.waiting_count || 0}
                           </span>
@@ -2345,7 +2342,7 @@ export default function OnlineAdminPage() {
                               <button
                                 onClick={handlePromoteQueue}
                                 disabled={actionLoading}
-                                className="px-3 py-1 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 cursor-pointer uppercase"
+                                className="px-3 py-1 bg-[#120CD6] text-white rounded-lg text-xs font-black hover:bg-indigo-700 cursor-pointer uppercase"
                               >
                                 Panggil
                               </button>
@@ -2398,7 +2395,7 @@ export default function OnlineAdminPage() {
                           <tr key={k.id} className="hover:bg-slate-50">
                             <td className="py-3.5 px-4 font-black text-slate-900">{k.name}</td>
                             <td className="py-3.5 px-4 font-bold text-[#111111]">{sessionCount}</td>
-                            <td className="py-3.5 px-4 font-black text-indigo-600">{sessionCount}</td>
+                            <td className="py-3.5 px-4 font-black text-[#120CD6]">{sessionCount}</td>
                             <td className="py-3.5 px-4 text-slate-400">0</td>
                             <td className="py-3.5 px-4 text-slate-700 font-bold">{sessionCount} lembar</td>
                             <td className="py-3.5 px-4 font-black text-[#111111]">
@@ -2484,7 +2481,7 @@ export default function OnlineAdminPage() {
                   onClick={() => {
                     setActiveKioskForConfig('new');
                   }}
-                  className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
+                  className="px-4 py-2.5 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
                 >
                   <Plus className="w-4 h-4" />
                   <span>+ Add Kiosk</span>
@@ -2499,7 +2496,7 @@ export default function OnlineAdminPage() {
                       onClick={() => setKioskModeFilter('all')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                         kioskModeFilter === 'all'
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -2509,7 +2506,7 @@ export default function OnlineAdminPage() {
                       onClick={() => setKioskModeFilter('regular')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                         kioskModeFilter === 'regular'
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -2522,7 +2519,7 @@ export default function OnlineAdminPage() {
                       onClick={() => setKioskModeFilter('receipt')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                         kioskModeFilter === 'receipt'
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -2535,7 +2532,7 @@ export default function OnlineAdminPage() {
                       onClick={() => setKioskModeFilter('event')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                         kioskModeFilter === 'event'
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -2553,7 +2550,7 @@ export default function OnlineAdminPage() {
                       placeholder="Search kiosk..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-indigo-600"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
                 </div>
@@ -2653,7 +2650,7 @@ export default function OnlineAdminPage() {
                                 )}
                                 <button
                                   onClick={() => setActiveKioskForConfig('new')}
-                                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-indigo-700 transition shadow"
+                                  className="px-4 py-2 bg-[#120CD6] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-indigo-700 transition shadow"
                                 >
                                   + Tambah Kiosk Baru
                                 </button>
@@ -2730,7 +2727,7 @@ export default function OnlineAdminPage() {
                                     ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
                                     : (k.kiosk_mode || (k.is_event_mode ? 'event' : 'regular')) === 'event'
                                     ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
-                                    : 'bg-blue-50 text-indigo-600 border-blue-300 hover:bg-blue-100'
+                                    : 'bg-blue-50 text-[#120CD6] border-blue-300 hover:bg-blue-100'
                                 }`}
                               >
                                 <option value="regular">📸 REGULER (2R/4R)</option>
@@ -2762,7 +2759,7 @@ export default function OnlineAdminPage() {
                                     navigator.clipboard.writeText(k.licenseKey);
                                     showToast('License Key disalin ke clipboard');
                                   }}
-                                  className="text-slate-400 hover:text-indigo-600"
+                                  className="text-slate-400 hover:text-[#120CD6]"
                                   title="Salin Key"
                                 >
                                   <Copy className="w-3 h-3" />
@@ -2770,8 +2767,8 @@ export default function OnlineAdminPage() {
                               </div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-indigo-600">
-                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#120CD6]" />
                                 {k.status}
                               </span>
                             </td>
@@ -2782,7 +2779,7 @@ export default function OnlineAdminPage() {
                                   onClick={() => {
                                     setActiveKioskForConfig(k);
                                   }}
-                                  className="px-2.5 py-1.5 bg-indigo-600/10 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors cursor-pointer text-[11px] font-black flex items-center gap-1"
+                                  className="px-2.5 py-1.5 bg-[#120CD6]/10 text-[#120CD6] hover:bg-[#120CD6] hover:text-white rounded-lg transition-colors cursor-pointer text-[11px] font-black flex items-center gap-1"
                                   title="Konfigurasi Lengkap Kiosk"
                                 >
                                   <Sliders className="w-3.5 h-3.5" />
@@ -2876,7 +2873,7 @@ export default function OnlineAdminPage() {
                         setBulkCopied(false);
                         setShowBulkModal(true);
                       }}
-                      className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-emerald-600/20 transition-all cursor-pointer uppercase tracking-tight"
+                      className="px-4 py-2.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-sm transition-all cursor-pointer uppercase tracking-tight"
                     >
                       <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300 animate-pulse" />
                       <span>⚡ Generate 100 Voucher Cash Sekaligus</span>
@@ -2890,7 +2887,7 @@ export default function OnlineAdminPage() {
                     <button
                       onClick={() => setVoucherFilterTab('all')}
                       className={`px-3 py-1.5 rounded-xl text-xs font-black transition-colors cursor-pointer uppercase ${
-                        voucherFilterTab === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        voucherFilterTab === 'all' ? 'bg-[#120CD6] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
                       Semua ({vouchers.length})
@@ -2906,7 +2903,7 @@ export default function OnlineAdminPage() {
                     <button
                       onClick={() => setVoucherFilterTab('promo')}
                       className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase ${
-                        voucherFilterTab === 'promo' ? 'bg-[#F908E0] text-white' : 'bg-blue-50 text-indigo-600 hover:bg-blue-100 border border-blue-200'
+                        voucherFilterTab === 'promo' ? 'bg-[#F908E0] text-white' : 'bg-blue-50 text-[#120CD6] hover:bg-blue-100 border border-blue-200'
                       }`}
                     >
                       <span>🎟️ Voucher Promo ({promoCount})</span>
@@ -2920,7 +2917,7 @@ export default function OnlineAdminPage() {
                       placeholder="Cari kode / event voucher..."
                       value={voucherSearchQuery}
                       onChange={(e) => setVoucherSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-indigo-600"
+                      className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
                 </div>
@@ -2960,7 +2957,7 @@ export default function OnlineAdminPage() {
                           setVoucherDesc('Promo Diskon Khusus');
                         }}
                         className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                          voucherCategory === 'promo' ? 'bg-indigo-600 text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                          voucherCategory === 'promo' ? 'bg-[#120CD6] text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         🎟️ Promo / Diskon
@@ -2976,7 +2973,7 @@ export default function OnlineAdminPage() {
                         placeholder={voucherCategory === 'cash' ? 'e.g. CSH-88A72K' : 'e.g. DISKON50'}
                         value={voucherCode}
                         onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-black text-indigo-600"
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-black text-[#120CD6]"
                       />
                     </div>
 
@@ -3052,7 +3049,7 @@ export default function OnlineAdminPage() {
                     <div className="flex items-end">
                       <button
                         type="submit"
-                        className="w-full py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
+                        className="w-full py-2 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
                       >
                         + Simpan
                       </button>
@@ -3083,7 +3080,7 @@ export default function OnlineAdminPage() {
                             const isUsed = v.usedCount >= v.maxUses;
                             return (
                               <tr key={v.code} className="hover:bg-slate-50 transition-colors">
-                                <td className="py-3.5 px-4 font-mono font-black text-indigo-600 flex items-center gap-1.5">
+                                <td className="py-3.5 px-4 font-mono font-black text-[#120CD6] flex items-center gap-1.5">
                                   <span>{v.code}</span>
                                   <button
                                     onClick={() => {
@@ -3102,7 +3099,7 @@ export default function OnlineAdminPage() {
                                       💵 BAYAR CASH (BARISTA)
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-indigo-600 border border-blue-200">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#120CD6] border border-blue-200">
                                       🎟️ PROMO DISKON
                                     </span>
                                   )}
@@ -3146,7 +3143,7 @@ export default function OnlineAdminPage() {
                                         🖥️ {targetKiosk.name}
                                       </span>
                                     ) : (
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-indigo-600 border border-blue-200">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-[#120CD6] border border-blue-200">
                                         🌐 Semua Kiosk
                                       </span>
                                     );
@@ -3156,7 +3153,7 @@ export default function OnlineAdminPage() {
                                   <button
                                     onClick={() => handleToggleVoucher(v)}
                                     className={`px-2.5 py-0.5 rounded-full text-[11px] font-black cursor-pointer transition-colors ${
-                                      v.active !== false ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-indigo-600' : 'bg-slate-100 text-slate-500'
+                                      v.active !== false ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6]' : 'bg-slate-100 text-slate-500'
                                     }`}
                                   >
                                     {v.active !== false ? 'Aktif' : 'Nonaktif'}
@@ -3191,7 +3188,7 @@ export default function OnlineAdminPage() {
                   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                       {/* Modal Header */}
-                      <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+                      <div className="p-6 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] text-white flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-yellow-300">
                             <Zap className="w-6 h-6 fill-yellow-300" />
@@ -3248,7 +3245,7 @@ export default function OnlineAdminPage() {
                                   value={bulkPrefix}
                                   onChange={(e) => setBulkPrefix(e.target.value.toUpperCase().slice(0, 4))}
                                   placeholder="CSH"
-                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-indigo-600 text-sm uppercase"
+                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-[#120CD6] text-sm uppercase"
                                 />
                                 <p className="text-[10px] text-slate-400">Contoh format hasil: <strong>{bulkPrefix || 'CSH'}-7K9X2B</strong></p>
                               </div>
@@ -3372,7 +3369,7 @@ export default function OnlineAdminPage() {
                               type="button"
                               disabled={bulkIsGenerating}
                               onClick={handleGenerateBulkCashVouchers}
-                              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-emerald-600/20 transition-all cursor-pointer uppercase disabled:opacity-50"
+                              className="px-5 py-2.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-sm transition-all cursor-pointer uppercase disabled:opacity-50"
                             >
                               {bulkIsGenerating ? (
                                 <>
@@ -3394,7 +3391,7 @@ export default function OnlineAdminPage() {
                               setShowBulkModal(false);
                               setVoucherFilterTab('cash');
                             }}
-                            className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
+                            className="px-5 py-2 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
                           >
                             ✓ Selesai &amp; Lihat di Tabel
                           </button>
@@ -3446,7 +3443,7 @@ export default function OnlineAdminPage() {
                   <Link
                     href="/"
                     target="_blank"
-                    className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer uppercase"
+                    className="px-4 py-2 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer uppercase"
                   >
                     <span>Buka Portal Tamu</span>
                     <Globe className="w-3.5 h-3.5" />
@@ -3457,7 +3454,7 @@ export default function OnlineAdminPage() {
                   <div className="p-4 bg-[#F5F5F5] rounded-xl border border-slate-200 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="font-black text-[#111111] uppercase">Kebijakan Retensi Supabase (24 Jam)</span>
-                      <span className="text-[#111111] font-black bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-600">
+                      <span className="text-[#111111] font-black bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-[#120CD6]">
                         Auto-Cleanup Active
                       </span>
                     </div>
@@ -3516,7 +3513,7 @@ export default function OnlineAdminPage() {
                       setStudioTemplate(null);
                       setIsStudioOpen(true);
                     }}
-                    className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase shadow-sm"
+                    className="px-4 py-2.5 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase shadow-sm"
                   >
                     <Plus className="w-4 h-4" />
                     <span>+ Create New Template</span>
@@ -3539,7 +3536,7 @@ export default function OnlineAdminPage() {
                       onClick={() => setTemplateCategoryFilter('all')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                         templateCategoryFilter === 'all'
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -3549,7 +3546,7 @@ export default function OnlineAdminPage() {
                       onClick={() => setTemplateCategoryFilter('regular')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                         templateCategoryFilter === 'regular'
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -3562,7 +3559,7 @@ export default function OnlineAdminPage() {
                       onClick={() => setTemplateCategoryFilter('receipt')}
                       className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                         templateCategoryFilter === 'receipt'
-                          ? 'bg-indigo-600 text-white shadow-xs'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -3580,7 +3577,7 @@ export default function OnlineAdminPage() {
                       placeholder="Search template..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-indigo-600"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
                     />
                   </div>
                 </div>
@@ -3618,7 +3615,7 @@ export default function OnlineAdminPage() {
                                   🧾 Receipt
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-indigo-600 border border-blue-300">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#120CD6] border border-blue-300">
                                   📸 Reguler
                                 </span>
                               )}
@@ -3626,9 +3623,9 @@ export default function OnlineAdminPage() {
                             <td className="py-3.5 px-4">
                               <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black ${
                                 tmpl.size === '58mm' || tmpl.size === '80mm' || tmpl.size === 'Receipt'
-                                  ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-indigo-600'
+                                  ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6]'
                                   : tmpl.size === '2R'
-                                  ? 'bg-blue-100 text-indigo-600 border border-blue-300'
+                                  ? 'bg-blue-100 text-[#120CD6] border border-blue-300'
                                   : 'bg-purple-100 text-[#F908E0] border border-purple-300'
                               }`}>
                                 {tmpl.size}
@@ -3646,14 +3643,14 @@ export default function OnlineAdminPage() {
                               <div className="flex items-center justify-center gap-1.5">
                                 <button
                                   onClick={() => setPreviewModalImg(tmpl.previewUrl)}
-                                  className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                  className="p-1.5 text-slate-600 hover:text-[#120CD6] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                   title="Lihat Pratinjau Gambar"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => setViewingXmlTemplate(tmpl)}
-                                  className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                  className="p-1.5 text-slate-600 hover:text-[#120CD6] hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                                   title="Lihat &amp; Salin Kode XML"
                                 >
                                   <Code className="w-4 h-4" />
@@ -3665,7 +3662,7 @@ export default function OnlineAdminPage() {
                                 <button
                                   onClick={() => handleToggleFrame(tmpl.id)}
                                   className={`px-2 py-0.5 rounded-full text-[10px] font-black cursor-pointer transition-colors ${
-                                    tmpl.active ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-indigo-600' : 'bg-slate-100 text-slate-500'
+                                    tmpl.active ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6]' : 'bg-slate-100 text-slate-500'
                                   }`}
                                 >
                                   {tmpl.active ? 'Active' : 'Off'}
@@ -3675,7 +3672,7 @@ export default function OnlineAdminPage() {
                                     setStudioTemplate(tmpl);
                                     setIsStudioOpen(true);
                                   }}
-                                  className="p-1 text-slate-400 hover:text-indigo-600 rounded transition-colors cursor-pointer"
+                                  className="p-1 text-slate-400 hover:text-[#120CD6] rounded transition-colors cursor-pointer"
                                   title="Edit Template Visual"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
@@ -3714,26 +3711,26 @@ export default function OnlineAdminPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-indigo-600 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
                     <Printer className="w-5 h-5" />
                   </div>
                   <h3 className="text-sm font-black text-[#111111] uppercase">Receipt Strip (Thermal)</h3>
                   <p className="text-xs text-slate-500 font-medium">Kertas thermal roll 58mm / 80mm monokrom vintage.</p>
                   {(() => {
                     const count = allTemplates.filter(t => t.size === "Receipt" || (t.category || "").includes("Receipt")).length;
-                    return <p className="text-xs font-black text-indigo-600">{count} Template Aktif</p>;
+                    return <p className="text-xs font-black text-[#120CD6]">{count} Template Aktif</p>;
                   })()}
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-indigo-600 flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
                     <Layers className="w-5 h-5" />
                   </div>
                   <h3 className="text-sm font-black text-[#111111] uppercase">Photostrip 2R</h3>
                   <p className="text-xs text-slate-500 font-medium">Ukuran 2x6 strip vertikal dengan 3 atau 4 slot foto.</p>
                   {(() => {
                     const count = allTemplates.filter(t => t.size === "2R" || (t.category || "").includes("2R")).length;
-                    return <p className="text-xs font-black text-indigo-600">{count} Template Aktif</p>;
+                    return <p className="text-xs font-black text-[#120CD6]">{count} Template Aktif</p>;
                   })()}
                 </div>
 
@@ -3769,23 +3766,23 @@ export default function OnlineAdminPage() {
         {/* SANS Creative Signature Footer (agent nya sans design.md Section 11.3) */}
         <footer className="mt-auto border-t-2 border-slate-200 bg-white px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-slate-600">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-            <span className="font-bold text-slate-900 uppercase tracking-wide">NADHISAN STUDIO</span>
-            <span className="text-slate-400">• Cloud Photobooth OS</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#120CD6]" />
+            <span className="font-black text-[#120CD6] uppercase tracking-wide">SANS Creative</span>
+            <span className="text-slate-500 font-bold">• Nadhisan Studio Cloud OS</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] md:text-xs">
             <a 
               href="https://instagram.com/Ihsanelfikrie_" 
               target="_blank" 
               rel="noreferrer" 
-              className="hover:text-indigo-600 transition-colors"
+              className="hover:text-[#120CD6] transition-colors"
             >
               Instagram: <strong className="text-[#111111]">@Ihsanelfikrie_</strong>
             </a>
             <span className="text-slate-300">•</span>
             <a 
               href="mailto:ihsanelfikrie134@gmail.com" 
-              className="hover:text-indigo-600 transition-colors"
+              className="hover:text-[#120CD6] transition-colors"
             >
               Email: <strong className="text-[#111111]">ihsanelfikrie134@gmail.com</strong>
             </a>
@@ -3794,7 +3791,7 @@ export default function OnlineAdminPage() {
               href="https://wa.me/6285822713356" 
               target="_blank" 
               rel="noreferrer" 
-              className="hover:text-indigo-600 transition-colors"
+              className="hover:text-[#120CD6] transition-colors"
             >
               WhatsApp: <strong className="text-[#111111]">+62 858-2271-3356</strong>
             </a>
@@ -3810,10 +3807,10 @@ export default function OnlineAdminPage() {
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
           onClick={() => setPreviewModalImg(null)}
         >
-          <div className="relative max-w-xl max-h-[90vh] bg-white rounded-2xl p-2 shadow-2xl border-4 border-indigo-600" onClick={e => e.stopPropagation()}>
+          <div className="relative max-w-xl max-h-[90vh] bg-white rounded-2xl p-2 shadow-2xl border-4 border-[#120CD6]" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setPreviewModalImg(null)}
-              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 cursor-pointer shadow-lg font-black"
+              className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-[#120CD6] text-white flex items-center justify-center hover:bg-indigo-700 cursor-pointer shadow-lg font-black"
             >
               <X className="w-4 h-4" />
             </button>
@@ -3833,11 +3830,11 @@ export default function OnlineAdminPage() {
           onClick={() => setQrModalSession(null)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-indigo-600"
+            className="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border-2 border-[#120CD6]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <span className="text-xs font-black text-indigo-600 uppercase tracking-wider">QR Softfile Tamu</span>
+              <span className="text-xs font-black text-[#120CD6] uppercase tracking-wider">QR Softfile Tamu</span>
               <button 
                 onClick={() => setQrModalSession(null)}
                 className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
@@ -3846,7 +3843,7 @@ export default function OnlineAdminPage() {
               </button>
             </div>
 
-            <div className="p-3 bg-[#F5F5F5] rounded-2xl border-2 border-indigo-600 inline-block mx-auto">
+            <div className="p-3 bg-[#F5F5F5] rounded-2xl border-2 border-[#120CD6] inline-block mx-auto">
               {qrDataUrl ? (
                 <img src={qrDataUrl} alt="QR Code" className="w-56 h-56 mx-auto rounded-xl" />
               ) : (
@@ -3864,7 +3861,7 @@ export default function OnlineAdminPage() {
             <div className="pt-2">
               <button
                 onClick={() => copySoftfileLink(qrModalSession.sessionId)}
-                className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase"
+                className="w-full py-2.5 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase"
               >
                 Salin Link Softfile
               </button>
@@ -3883,16 +3880,16 @@ export default function OnlineAdminPage() {
           onClick={() => setIsTemplateModalOpen(false)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-2xl w-full space-y-4 shadow-2xl border-2 border-indigo-600 max-h-[92vh] flex flex-col"
+            className="bg-white rounded-3xl p-6 max-w-2xl w-full space-y-4 shadow-2xl border-2 border-[#120CD6] max-h-[92vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 text-indigo-600 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#120CD6] flex items-center justify-center font-bold">
                   <Layout className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-indigo-600 uppercase tracking-tight">Tambah Template Frame</h3>
+                  <h3 className="text-sm font-black text-[#120CD6] uppercase tracking-tight">Tambah Template Frame</h3>
                   <p className="text-[11px] text-slate-400">Konfigurasi struktur koordinat slot foto &amp; XML</p>
                 </div>
               </div>
@@ -3910,7 +3907,7 @@ export default function OnlineAdminPage() {
                 type="button"
                 onClick={() => setTemplateTabMode('xml')}
                 className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  templateTabMode === 'xml' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  templateTabMode === 'xml' ? 'bg-[#120CD6] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Code className="w-3.5 h-3.5" />
@@ -3920,7 +3917,7 @@ export default function OnlineAdminPage() {
                 type="button"
                 onClick={() => setTemplateTabMode('form')}
                 className={`flex-1 py-1.5 rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                  templateTabMode === 'form' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                  templateTabMode === 'form' ? 'bg-[#120CD6] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Sliders className="w-3.5 h-3.5" />
@@ -3962,7 +3959,7 @@ export default function OnlineAdminPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="font-black text-slate-700 uppercase">Kode Konfigurasi Frame XML:</label>
-                    <span className="text-[11px] text-[#111111] font-black bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-indigo-600">
+                    <span className="text-[11px] text-[#111111] font-black bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full border border-[#120CD6]">
                       Format Kompatibel dengan Kiosk Offline
                     </span>
                   </div>
@@ -3978,7 +3975,7 @@ export default function OnlineAdminPage() {
                       }
                     }}
                     placeholder="<frame> ... </frame>"
-                    className="w-full p-3 font-mono text-[11px] bg-[#111111] text-[#E5FD5F] rounded-xl border-2 border-slate-700 focus:border-indigo-600 focus:outline-none leading-relaxed font-bold"
+                    className="w-full p-3 font-mono text-[11px] bg-[#111111] text-[#E5FD5F] rounded-xl border-2 border-slate-700 focus:border-[#120CD6] focus:outline-none leading-relaxed font-bold"
                   />
                   <p className="text-[11px] text-slate-500 font-medium">
                     💡 Anda bisa langsung salin (copy) kode XML dari panel admin offline dan tempelkan di sini.
@@ -4061,7 +4058,7 @@ export default function OnlineAdminPage() {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-black rounded-xl cursor-pointer disabled:opacity-50 uppercase"
+                  className="flex-1 py-2.5 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black rounded-xl cursor-pointer disabled:opacity-50 uppercase"
                 >
                   {actionLoading ? 'Menyimpan...' : 'Simpan Template XML'}
                 </button>
@@ -4078,12 +4075,12 @@ export default function OnlineAdminPage() {
           onClick={() => setViewingXmlTemplate(null)}
         >
           <div 
-            className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl border-2 border-indigo-600"
+            className="bg-white rounded-3xl p-6 max-w-xl w-full space-y-4 shadow-2xl border-2 border-[#120CD6]"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-black text-indigo-600 uppercase tracking-tight">{viewingXmlTemplate.name}</h3>
+                <h3 className="text-sm font-black text-[#120CD6] uppercase tracking-tight">{viewingXmlTemplate.name}</h3>
                 <p className="text-[11px] text-slate-400 font-semibold">Kode XML Slot &amp; Layout Template</p>
               </div>
               <button 
@@ -4108,7 +4105,7 @@ export default function OnlineAdminPage() {
                   navigator.clipboard.writeText(xmlContent);
                   showToast('Kode XML berhasil disalin ke clipboard!');
                 }}
-                className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-md shadow-indigo-500/20 border-2 border-indigo-600 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer uppercase"
+                className="flex-1 py-2.5 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white shadow-md shadow-sm border-2 border-[#120CD6] font-black rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer uppercase"
               >
                 <Copy className="w-3.5 h-3.5" />
                 <span>Salin Kode XML</span>

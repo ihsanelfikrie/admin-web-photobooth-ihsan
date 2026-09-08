@@ -585,13 +585,13 @@ ${slots
           <button
             type="button"
             onClick={onCancel}
-            className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-indigo-600 rounded-xl transition cursor-pointer flex items-center gap-1 text-xs font-black uppercase"
+            className="p-1.5 hover:bg-slate-100 text-slate-600 hover:text-[#120CD6] rounded-xl transition cursor-pointer flex items-center gap-1 text-xs font-black uppercase"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Kembali ke Daftar</span>
           </button>
           <span className="text-slate-300">|</span>
-          <h2 className="text-sm md:text-base font-black text-indigo-600 uppercase tracking-tight flex items-center gap-2">
+          <h2 className="text-sm md:text-base font-black text-[#120CD6] uppercase tracking-tight flex items-center gap-2">
             <Layout className="w-4 h-4" />
             <span>{initialTemplate ? 'Edit Template' : 'Create New Template'}</span>
           </h2>
@@ -622,7 +622,7 @@ ${slots
             onClick={() => setPreviewMode(!previewMode)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border ${
               previewMode
-                ? 'bg-indigo-600 text-white border-indigo-600'
+                ? 'bg-indigo-600 text-white border-[#120CD6]'
                 : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
             }`}
           >
@@ -650,7 +650,7 @@ ${slots
             type="button"
             disabled={saving}
             onClick={handleSave}
-            className="px-5 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-sm border-2 border-indigo-600 font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+            className="px-5 py-1.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-sm disabled:opacity-50"
           >
             {saving ? (
               <>
@@ -690,7 +690,7 @@ ${slots
           <button
             type="button"
             onClick={() => setToastSuccess(null)}
-            className="p-1 hover:bg-emerald-50 rounded-lg text-emerald-400 hover:text-emerald-600 transition cursor-pointer"
+            className="p-1 hover:bg-emerald-50 rounded-lg text-[#E5FD5F] hover:text-emerald-600 transition cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -751,7 +751,7 @@ ${slots
                   const file = e.dataTransfer.files?.[0];
                   if (file) handleProcessFile(file);
                 }}
-                className="absolute inset-4 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-indigo-600 hover:text-indigo-600 transition cursor-pointer bg-white/60 z-20 select-none"
+                className="absolute inset-4 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-[#120CD6] hover:text-[#120CD6] transition cursor-pointer bg-white/60 z-20 select-none"
               >
                 <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
                   <ImageIcon className="w-6 h-6" />
@@ -933,7 +933,7 @@ ${slots
             <span className="w-1 h-1 rounded-full bg-slate-300" />
             <div className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-full border border-slate-200 text-slate-700 shadow-2xs">
               <span className="text-slate-400 font-mono">📐</span>
-              <span className="font-black text-indigo-600">{sizePreset}</span>
+              <span className="font-black text-[#120CD6]">{sizePreset}</span>
               <span className="text-slate-400">|</span>
               <span className="font-mono text-[11px]">{width}×{height}px</span>
             </div>
@@ -953,7 +953,7 @@ ${slots
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter template name..."
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-indigo-600"
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#120CD6]"
             />
           </div>
 
@@ -974,7 +974,7 @@ ${slots
                 onClick={() => handleTemplateTypeChange('regular')}
                 className={`flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all cursor-pointer text-center ${
                   templateType === 'regular'
-                    ? 'border-indigo-600 bg-blue-50/90 text-indigo-600 shadow-sm font-black ring-1 ring-indigo-500/20'
+                    ? 'border-[#120CD6] bg-blue-50/90 text-[#120CD6] shadow-sm font-black ring-1 ring-[#120CD6]/20'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 font-bold'
                 }`}
               >
@@ -988,7 +988,7 @@ ${slots
                 onClick={() => handleTemplateTypeChange('receipt')}
                 className={`flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all cursor-pointer text-center ${
                   templateType === 'receipt'
-                    ? 'border-indigo-600 bg-amber-50 text-[#111111] shadow-sm font-black ring-1 ring-indigo-500/20'
+                    ? 'border-[#120CD6] bg-amber-50 text-[#111111] shadow-sm font-black ring-1 ring-[#120CD6]/20'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 font-bold'
                 }`}
               >
@@ -1017,7 +1017,7 @@ ${slots
             <select
               value={sizePreset}
               onChange={(e) => handleSizePresetChange(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-indigo-600 cursor-pointer"
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#120CD6] cursor-pointer"
             >
               {Object.entries(SIZE_PRESETS)
                 .filter(([_, p]) => p.categoryType === templateType)
@@ -1048,7 +1048,7 @@ ${slots
               <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
                 Dimensi Kanvas Aktif
               </label>
-              <span className="px-2 py-0.5 bg-blue-100 text-indigo-600 rounded text-[10px] font-black font-mono">
+              <span className="px-2 py-0.5 bg-blue-100 text-[#120CD6] rounded text-[10px] font-black font-mono">
                 {width} × {height} px
               </span>
             </div>
@@ -1063,7 +1063,7 @@ ${slots
                     setWidth(val);
                     setSizePreset('Custom');
                   }}
-                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:outline-none focus:border-indigo-600"
+                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:outline-none focus:border-[#120CD6]"
                 />
               </div>
               <div>
@@ -1076,7 +1076,7 @@ ${slots
                     setHeight(val);
                     setSizePreset('Custom');
                   }}
-                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:outline-none focus:border-indigo-600"
+                  className="w-full p-2 bg-white border border-slate-200 rounded-xl text-xs font-black font-mono text-slate-900 focus:outline-none focus:border-[#120CD6]"
                 />
               </div>
             </div>
@@ -1123,7 +1123,7 @@ ${slots
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 bg-slate-50 hover:bg-slate-100 border-2 border-dashed border-slate-300 hover:border-indigo-600 rounded-xl flex items-center justify-center gap-2 text-slate-600 font-bold transition cursor-pointer"
+                className="w-full py-3 bg-slate-50 hover:bg-slate-100 border-2 border-dashed border-slate-300 hover:border-[#120CD6] rounded-xl flex items-center justify-center gap-2 text-slate-600 font-bold transition cursor-pointer"
               >
                 <Upload className="w-4 h-4 text-slate-400" />
                 <span>Unggah Overlay PNG Frame</span>
@@ -1249,9 +1249,9 @@ ${slots
             <div className="space-y-1.5 bg-[#111111] p-3 rounded-2xl border border-slate-700 text-[10px]">
               <div className="flex items-center justify-between text-white font-mono font-bold pb-1 border-b border-slate-800">
                 <span>generated_template.xml</span>
-                <span className="text-emerald-400">LIVE</span>
+                <span className="text-[#E5FD5F]">LIVE</span>
               </div>
-              <pre className="text-emerald-400 font-mono leading-relaxed overflow-x-auto max-h-40">
+              <pre className="text-[#E5FD5F] font-mono leading-relaxed overflow-x-auto max-h-40">
                 {generatedXml}
               </pre>
             </div>
@@ -1264,7 +1264,7 @@ ${slots
               onClick={() => setPreviewMode(!previewMode)}
               className="w-full py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
             >
-              <Eye className="w-3.5 h-3.5 text-indigo-600" />
+              <Eye className="w-3.5 h-3.5 text-[#120CD6]" />
               <span>{previewMode ? 'Kembali ke Mode Edit' : 'Preview Mode (Foto Sampel)'}</span>
             </button>
 
@@ -1272,7 +1272,7 @@ ${slots
               type="button"
               disabled={saving}
               onClick={handleSave}
-              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 active:bg-[#F908E0] text-white font-black rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+              className="w-full py-3 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black rounded-xl text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -1281,7 +1281,7 @@ ${slots
                 </>
               ) : (
                 <>
-                  <Check className="w-4 h-4 text-emerald-400" />
+                  <Check className="w-4 h-4 text-[#E5FD5F]" />
                   <span>Save Template</span>
                 </>
               )}
