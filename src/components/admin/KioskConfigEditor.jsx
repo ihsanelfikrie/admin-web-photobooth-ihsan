@@ -473,7 +473,7 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleChange('name', e.target.value)}
-                    placeholder="Contoh: Tegoersapa X NoLima"
+                    placeholder="Contoh: Nadhisan Booth Mall A"
                     className="w-full px-3.5 py-2.5 bg-white border border-zinc-300 rounded-lg text-xs text-zinc-900 focus:outline-none focus:border-emerald-500 transition shadow-sm"
                   />
                 </div>

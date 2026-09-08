@@ -39,6 +39,7 @@ export async function POST(req) {
       usedCount: existingIdx >= 0 ? (vouchers[existingIdx].usedCount || 0) : 0,
       active: voucher.active !== undefined ? voucher.active : true,
       description: voucher.description || 'Kode Voucher Photobooth',
+      kiosk_id: voucher.kiosk_id || null,
       createdAt: existingIdx >= 0 ? vouchers[existingIdx].createdAt : new Date().toISOString(),
     };
 

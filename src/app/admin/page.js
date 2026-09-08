@@ -397,6 +397,8 @@ export default function OnlineAdminPage() {
   const [previewModalImg, setPreviewModalImg] = useState(null);
   const [activeGalleryKiosk, setActiveGalleryKiosk] = useState(null);
   const [transactionKioskFilter, setTransactionKioskFilter] = useState('all');
+  const [statsKioskFilter, setStatsKioskFilter] = useState('all');
+  const [voucherKioskTarget, setVoucherKioskTarget] = useState('all');
 
   // Kiosk Modal & Management State
   const [isKioskModalOpen, setIsKioskModalOpen] = useState(false);
@@ -1033,6 +1035,7 @@ export default function OnlineAdminPage() {
             value: voucherValue,
             maxUses: voucherMaxUses,
             description: voucherDesc || 'Voucher Spesial NadhisanBooth',
+            kiosk_id: voucherKioskTarget === 'all' ? null : voucherKioskTarget,
           },
         }),
       });
@@ -1996,7 +1999,7 @@ export default function OnlineAdminPage() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center text-slate-400 font-bold">
+                          <td colSpan={8} className="py-12 text-center text-slate-400 font-bold">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <ShoppingCart className="w-8 h-8 text-slate-300" />
                               <p className="text-xs font-bold text-slate-500">Belum ada data transaksi</p>
@@ -2150,7 +2153,7 @@ export default function OnlineAdminPage() {
                               </button>
 
                               <button
-                                onClick={() => setActiveKioskForConfig(k)}
+                                onClick={() => { setActiveKioskForConfig(k); setActiveTab('kiosks'); }}
                                 className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#120CD6] text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase border border-blue-200"
                               >
                                 <Sliders className="w-3.5 h-3.5" />
@@ -2254,36 +2257,90 @@ export default function OnlineAdminPage() {
           {/* ══════════════════════════════════════════════════════════════
               VIEW 4: STATISTICS
           ══════════════════════════════════════════════════════════════ */}
-          {activeTab === 'statistics' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Statistik &amp; Analisis Performa</h2>
-                <p className="text-xs text-slate-500">Wawasan analitik penggunaan photobooth dan konversi pendapatan</p>
-              </div>
+          {activeTab === 'statistics' && (() => {
+            const statsSessions = statsKioskFilter === 'all'
+              ? sessions
+              : sessions.filter(s => {
+                  const targetK = kiosks.find(k => String(k.id) === String(statsKioskFilter));
+                  const targetLicense = (targetK?.licenseKey || targetK?.license_key || "").trim().toUpperCase();
+                  const targetName = (targetK?.name || "").toLowerCase();
+                  return (s.kioskId && String(s.kioskId) === String(statsKioskFilter)) ||
+                         (targetLicense && s.licenseKey && s.licenseKey.trim().toUpperCase() === targetLicense) ||
+                         (targetName && s.kioskName && s.kioskName.toLowerCase() === targetName);
+                });
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Sesi Foto</p>
-                  <p className="text-3xl font-black text-[#111111] mt-1">{sessions.length} Sesi</p>
-                  <p className="text-[11px] text-[#120CD6] font-bold mt-1">
-                    {sessions.length > 0 ? 'Data cloud tersinkron' : 'Belum ada sesi baru'}
-                  </p>
+            const allTx = finance?.transactions || [];
+            const statsTransactions = statsKioskFilter === 'all'
+              ? allTx
+              : allTx.filter(t => {
+                  const targetK = kiosks.find(k => String(k.id) === String(statsKioskFilter));
+                  const targetLicense = (targetK?.licenseKey || targetK?.license_key || "").trim().toUpperCase();
+                  const targetName = (targetK?.name || "").toLowerCase();
+                  return (t.kioskId && String(t.kioskId) === String(statsKioskFilter)) ||
+                         (targetLicense && t.licenseKey && t.licenseKey.trim().toUpperCase() === targetLicense) ||
+                         (targetName && t.kioskName && t.kioskName.toLowerCase() === targetName);
+                });
+
+            const totalRevenue = statsTransactions.reduce((acc, t) => {
+              const st = (t.status || '').toLowerCase();
+              if (st === 'success' || st === 'settlement' || st === 'capture' || st === 'paid') {
+                return acc + (Number(t.amount) || Number(t.gross_amount) || 0);
+              }
+              return acc;
+            }, 0);
+
+            return (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Statistik &amp; Analisis Performa</h2>
+                    <p className="text-xs text-slate-500">Wawasan analitik penggunaan photobooth dan konversi pendapatan</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-600 uppercase">Unit Kiosk:</span>
+                    <select
+                      value={statsKioskFilter}
+                      onChange={(e) => setStatsKioskFilter(e.target.value)}
+                      className="p-2 bg-white border-2 border-slate-200 rounded-xl font-black text-xs text-[#111111] cursor-pointer"
+                    >
+                      <option value="all">🌐 Semua Kiosk (Global)</option>
+                      {kiosks.map(k => (
+                        <option key={k.id} value={k.id}>
+                          🖥️ {k.name} ({k.licenseKey})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Durasi Sesi Rata-rata</p>
-                  <p className="text-3xl font-black text-[#120CD6] mt-1">
-                    {sessions.length > 0 ? '2m 45s' : '0m 00s'}
-                  </p>
-                  <p className="text-[11px] text-slate-400 font-medium mt-1">Alur cepat &amp; efisien</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Sesi Foto</p>
+                    <p className="text-3xl font-black text-[#111111] mt-1">{statsSessions.length} Sesi</p>
+                    <p className="text-[11px] text-[#120CD6] font-bold mt-1">
+                      {statsSessions.length > 0 ? 'Data terfilter sinkron' : 'Belum ada sesi baru'}
+                    </p>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Omzet</p>
+                    <p className="text-3xl font-black text-[#120CD6] mt-1">{formatRupiah(totalRevenue)}</p>
+                    <p className="text-[11px] text-emerald-600 font-bold mt-1">{statsTransactions.length} Transaksi</p>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Durasi Rata-rata</p>
+                    <p className="text-3xl font-black text-slate-800 mt-1">
+                      {statsSessions.length > 0 ? '2m 45s' : '0m 00s'}
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-medium mt-1">Alur cepat &amp; efisien</p>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tingkat Unduh</p>
+                    <p className="text-3xl font-black text-[#111111] mt-1">
+                      {statsSessions.length > 0 ? '100%' : '0%'}
+                    </p>
+                    <p className="text-[11px] text-[#120CD6] font-bold mt-1">Supabase CDN stabil</p>
+                  </div>
                 </div>
-                <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tingkat Keberhasilan Unduh</p>
-                  <p className="text-3xl font-black text-[#111111] mt-1">
-                    {sessions.length > 0 ? '100%' : '0%'}
-                  </p>
-                  <p className="text-[11px] text-[#120CD6] font-bold mt-1">Supabase CDN stabil</p>
-                </div>
-              </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
@@ -2365,7 +2422,8 @@ export default function OnlineAdminPage() {
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* ══════════════════════════════════════════════════════════════
               VIEW 5: KIOSK
@@ -2596,12 +2654,12 @@ export default function OnlineAdminPage() {
                       <input
                         type="text"
                         readOnly
-                        value="https://admin-web-photobooth-ihsan.vercel.app/api/payment/webhook"
+                        value={typeof window !== "undefined" ? `${window.location.origin}/api/payment/webhook` : "https://admin-web-photobooth-ihsan.vercel.app/api/payment/webhook"}
                         className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-700 font-bold"
                       />
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText("https://admin-web-photobooth-ihsan.vercel.app/api/payment/webhook");
+                          const wUrl = typeof window !== "undefined" ? `${window.location.origin}/api/payment/webhook` : "https://admin-web-photobooth-ihsan.vercel.app/api/payment/webhook"; navigator.clipboard.writeText(wUrl);
                           showToast('URL Webhook disalin ke clipboard');
                         }}
                         className="px-4 py-2.5 bg-[#120CD6] text-white rounded-xl font-black text-xs shrink-0 cursor-pointer uppercase"
@@ -2617,7 +2675,20 @@ export default function OnlineAdminPage() {
 
                 <div className="pt-3 flex justify-end">
                   <button
-                    onClick={() => showToast('Koneksi Midtrans QRIS berhasil diverifikasi!')}
+                    onClick={async () => {
+                    const t0 = performance.now();
+                    try {
+                      const res = await fetch('/api/finance', { cache: 'no-store' });
+                      const lat = Math.round(performance.now() - t0);
+                      if (res.ok) {
+                        showToast(`✅ Koneksi Midtrans & Database Cloud Aktif (${lat}ms)!`);
+                      } else {
+                        showToast(`⚠️ Server respons HTTP ${res.status} (${lat}ms)`);
+                      }
+                    } catch (err) {
+                      showToast(`❌ Gagal terhubung: ${err.message}`);
+                    }
+                  }}
                     className="px-4 py-2 bg-[#E5FD5F] hover:bg-[#d8f244] text-[#111111] border-2 border-[#120CD6] rounded-xl font-black text-xs transition-colors cursor-pointer uppercase"
                   >
                     Tes Ping Koneksi
@@ -2846,7 +2917,7 @@ export default function OnlineAdminPage() {
                     />
                   </div>
 
-                  <div className="sm:col-span-2 md:col-span-3 space-y-1">
+                  <div className="sm:col-span-2 space-y-1">
                     <label className="font-bold text-slate-700 uppercase">Keterangan / Event</label>
                     <input
                       type="text"
@@ -2855,6 +2926,20 @@ export default function OnlineAdminPage() {
                       onChange={(e) => setVoucherDesc(e.target.value)}
                       className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium"
                     />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="font-bold text-slate-700 uppercase">Berlaku Untuk</label>
+                    <select
+                      value={voucherKioskTarget}
+                      onChange={(e) => setVoucherKioskTarget(e.target.value)}
+                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                    >
+                      <option value="all">🌐 Semua Kiosk</option>
+                      {kiosks.map(k => (
+                        <option key={k.id} value={k.id}>🖥️ {k.name}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="flex items-end">
@@ -2879,6 +2964,7 @@ export default function OnlineAdminPage() {
                         <th className="py-3.5 px-4">Nilai</th>
                         <th className="py-3.5 px-4">Kuota Terpakai</th>
                         <th className="py-3.5 px-4">Keterangan</th>
+                        <th className="py-3.5 px-4">Berlaku Di</th>
                         <th className="py-3.5 px-4">Status</th>
                         <th className="py-3.5 px-4 text-center">Aksi</th>
                       </tr>
@@ -2896,6 +2982,20 @@ export default function OnlineAdminPage() {
                               {v.usedCount || 0} / {v.maxUses || '∞'}
                             </td>
                             <td className="py-3.5 px-4 text-slate-500">{v.description || '-'}</td>
+                            <td className="py-3.5 px-4">
+                              {(() => {
+                                const targetKiosk = v.kiosk_id ? kiosks.find(k => String(k.id) === String(v.kiosk_id)) : null;
+                                return targetKiosk ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    🖥️ {targetKiosk.name}
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-[#120CD6] border border-blue-200">
+                                    🌐 Semua Kiosk
+                                  </span>
+                                );
+                              })()}
+                            </td>
                             <td className="py-3.5 px-4">
                               <button
                                 onClick={() => handleToggleVoucher(v)}

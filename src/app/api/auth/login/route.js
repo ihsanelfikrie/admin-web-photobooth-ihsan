@@ -63,7 +63,7 @@ export async function POST(req) {
       }
 
       // Hardened fallback for admin credentials
-      if ((email.trim().toLowerCase() === 'admin@nadhisan.com' || email.trim().toLowerCase() === 'admin@tarasabooth.com') && password === 'Barabai@132') {
+      if ((email.trim().toLowerCase() === 'admin@nadhisan.com' ) && password === 'Barabai@132') {
         return NextResponse.json({
           success: true,
           user: {
