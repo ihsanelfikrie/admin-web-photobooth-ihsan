@@ -55,6 +55,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import TemplateEditorStudio from '@/components/TemplateEditorStudio';
+import KioskGalleryView from '@/components/KioskGalleryView';
 
 const SUPABASE_CDN_BASE = 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets';
 
@@ -3645,257 +3646,23 @@ export default function OnlineAdminPage() {
           })()}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 8: GALLERY
+              VIEW 8: GALLERY (Kiosk Gallery, Filters & Real Consent Badges)
           ══════════════════════════════════════════════════════════════ */}
           {activeTab === 'gallery' && (
-            <div className="space-y-6">
-              
-              {/* Header */}
-              <div>
-                <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Kiosk Galleries</h2>
-                <p className="text-xs text-slate-500">Daftar galeri dan sesi foto berdasarkan kiosk</p>
-              </div>
-
-              {/* Kiosks Summary Table */}
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100">
-                  <div className="relative w-full sm:w-72">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="Search kiosk..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
-                    />
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
-                      <tr>
-                        <th className="py-3.5 px-4">Kiosk Name</th>
-                        <th className="py-3.5 px-4">Sesi Hari Ini</th>
-                        <th className="py-3.5 px-4">Softfile Hari Ini</th>
-                        <th className="py-3.5 px-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {kiosks.map((k) => {
-                        const kioskSessions = sessions.filter(s => {
-                          const targetKey = (k.licenseKey || k.license_key || "").trim().toUpperCase();
-                          const sessKey = (s.licenseKey || s.license_key || "").trim().toUpperCase();
-                          return (targetKey && sessKey === targetKey) ||
-                            (s.kioskId && String(s.kioskId) === String(k.id)) ||
-                            (s.kioskName && s.kioskName.toLowerCase() === (k.name || "").toLowerCase()) ||
-                            (kiosks.length === 1);
-                        });
-                        const isSelected = activeGalleryKiosk?.id === k.id;
-
-                        return (
-                          <tr key={k.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}>
-                            <td className="py-4 px-4">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${isSelected ? "bg-[#F908E0]" : "bg-[#120CD6]"}`} />
-                                <span className="font-black text-[#111111]">{k.name}</span>
-                                <span className="text-[11px] text-[#111111] font-black bg-[#E5FD5F] px-2.5 py-0.5 rounded-full border border-[#120CD6]">
-                                  {k.licenseKey}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-4 font-black text-[#120CD6]">
-                              {kioskSessions.length} Sesi
-                            </td>
-                            <td className="py-4 px-4 font-black text-slate-800">
-                              {kioskSessions.length} Softfile
-                            </td>
-                            <td className="py-4 px-4 text-right">
-                              <button
-                                onClick={() => {
-                                  if (isSelected) setActiveGalleryKiosk(null);
-                                  else setActiveGalleryKiosk(k);
-                                }}
-                                className={`px-4 py-2 rounded-xl font-black text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer uppercase shadow-xs ${
-                                  isSelected
-                                    ? "bg-[#F908E0] text-white hover:bg-pink-700"
-                                    : "bg-[#120CD6] hover:bg-blue-800 text-white"
-                                }`}
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                <span>{isSelected ? "Filter Aktif ✓" : "View Gallery"}</span>
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Sub-section: Detailed Gallery Sessions Viewer */}
-              <div className="space-y-4 pt-4">
-                {activeGalleryKiosk && (
-                  <div className="p-4 bg-blue-50 border-2 border-[#120CD6] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-3 h-3 rounded-full bg-[#120CD6] animate-ping shrink-0" />
-                      <div>
-                        <p className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
-                          Galeri Khusus: {activeGalleryKiosk.name} ({activeGalleryKiosk.licenseKey})
-                        </p>
-                        <p className="text-[11px] text-slate-500 font-bold">
-                          Hanya menampilkan {filteredSessions.length} sesi foto dari unit kiosk ini
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setActiveGalleryKiosk(null)}
-                      className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-xl text-xs font-black cursor-pointer uppercase shadow-xs self-start sm:self-auto"
-                    >
-                      ✕ Tampilkan Semua Unit
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">
-                      {activeGalleryKiosk ? `Sesi Galeri - ${activeGalleryKiosk.name}` : "Semua Sesi Galeri"} ({filteredSessions.length})
-                    </h3>
-                    <p className="text-xs text-slate-400">Softfile foto &amp; video tersinkronisasi di cloud storage</p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <select
-                      value={activeGalleryKiosk ? activeGalleryKiosk.id : "all"}
-                      onChange={(e) => {
-                        if (e.target.value === "all") setActiveGalleryKiosk(null);
-                        else setActiveGalleryKiosk(kiosks.find(k => String(k.id) === String(e.target.value)) || null);
-                      }}
-                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-800 cursor-pointer uppercase"
-                    >
-                      <option value="all">Semua Kiosk</option>
-                      {kiosks.map(k => (
-                        <option key={k.id} value={k.id}>{k.name}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => setStatusFilter('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-black cursor-pointer uppercase ${
-                        statusFilter === 'all' ? 'bg-[#120CD6] text-white' : 'bg-white border border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      Semua
-                    </button>
-                    <button
-                      onClick={() => setStatusFilter('active')}
-                      className={`px-3 py-1 rounded-lg text-xs font-black cursor-pointer uppercase ${
-                        statusFilter === 'active' ? 'bg-[#120CD6] text-white' : 'bg-white border border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      Aktif ({stats.activeCount})
-                    </button>
-                    <button
-                      onClick={() => setStatusFilter('expired')}
-                      className={`px-3 py-1 rounded-lg text-xs font-black cursor-pointer uppercase ${
-                        statusFilter === 'expired' ? 'bg-[#120CD6] text-white' : 'bg-white border border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      Kedaluwarsa ({stats.expiredCount})
-                    </button>
-                  </div>
-                </div>
-
-                {filteredSessions.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredSessions.map((session) => {
-                      const compUrl = getDisplayCdnUrl(session.cdnCompositeUrl || session.compositeUrl);
-                      const isExpired = (now - (session.createdAt || 0)) > TWENTY_FOUR_HOURS_MS;
-
-                      return (
-                        <div key={session.sessionId} className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-                          {/* Image preview */}
-                          <div
-                            onClick={() => compUrl && setPreviewModalImg(compUrl)}
-                            className="h-44 bg-slate-100 relative overflow-hidden group cursor-pointer"
-                          >
-                            {compUrl ? (
-                              <img
-                                src={compUrl}
-                                alt={session.sessionId}
-                                className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-bold">
-                                No preview available
-                              </div>
-                            )}
-                            <div className="absolute top-2.5 right-2.5">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
-                                isExpired ? 'bg-slate-900 text-white' : 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]'
-                              }`}>
-                                {isExpired ? 'Expired' : 'Aktif'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Session Info & Actions */}
-                          <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
-                            <div>
-                              <p className="font-mono font-black text-xs text-[#120CD6]">{session.sessionId}</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5 font-bold">
-                                {new Date(session.createdAt || Date.now()).toLocaleString('id-ID')}
-                              </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-1.5 pt-1">
-                              <button
-                                onClick={() => handleDownloadZip(session)}
-                                disabled={zipping}
-                                className="px-2.5 py-1.5 rounded-lg bg-[#120CD6] hover:bg-blue-800 text-white text-[11px] font-black flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
-                              >
-                                <Download className="w-3 h-3" />
-                                <span>ZIP</span>
-                              </button>
-
-                              <button
-                                onClick={() => openQrModal(session)}
-                                className="px-2.5 py-1.5 rounded-lg bg-[#E5FD5F] hover:bg-[#d8f244] text-[#111111] border border-[#120CD6] text-[11px] font-black flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
-                              >
-                                <Share2 className="w-3 h-3" />
-                                <span>QR</span>
-                              </button>
-
-                              <button
-                                onClick={() => copySoftfileLink(session.sessionId)}
-                                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
-                              >
-                                <Copy className="w-3 h-3" />
-                                <span>Link</span>
-                              </button>
-
-                              <button
-                                onClick={() => handleDeleteSession(session.sessionId)}
-                                className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer uppercase"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                <span>Hapus</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 text-slate-400 text-xs font-bold">
-                    Belum ada sesi foto yang tersimpan di cloud storage.
-                  </div>
-                )}
-              </div>
-
-            </div>
+            <KioskGalleryView
+              sessions={sessions}
+              kiosks={kiosks}
+              activeGalleryKiosk={activeGalleryKiosk}
+              setActiveGalleryKiosk={setActiveGalleryKiosk}
+              onRefresh={loadSessions}
+              refreshing={loading}
+              onOpenQrModal={openQrModal}
+              onDownloadZip={handleDownloadZip}
+              onCopyLink={copySoftfileLink}
+              onDeleteSession={handleDeleteSession}
+              showToast={showToast}
+              templates={allTemplates}
+            />
           )}
 
           {/* ══════════════════════════════════════════════════════════════

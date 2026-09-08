@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 import { listAllSessions, saveSessionMetadata, deleteSessionFiles } from '@/lib/supabase';
 
 export async function GET(req) {
@@ -14,7 +16,22 @@ export async function GET(req) {
       return NextResponse.json({ success: false, error: 'Unauthorized: Invalid Admin PIN' }, { status: 401 });
     }
 
-    const sessions = await listAllSessions();
+    let sessions = await listAllSessions();
+    if (!sessions || sessions.length === 0) {
+      const fallbackPaths = [
+        path.join(process.cwd(), "..", "photobooth-monochrome", "public", "assets", "captures", "sessions_metadata.json"),
+        path.join(process.cwd(), "public", "assets", "captures", "sessions_metadata.json"),
+      ];
+      for (const p of fallbackPaths) {
+        if (fs.existsSync(p)) {
+          try {
+            const raw = JSON.parse(fs.readFileSync(p, "utf8"));
+            sessions = Object.values(raw);
+            if (sessions.length > 0) break;
+          } catch (_) {}
+        }
+      }
+    }
     return NextResponse.json({
       success: true,
       total: sessions.length,
