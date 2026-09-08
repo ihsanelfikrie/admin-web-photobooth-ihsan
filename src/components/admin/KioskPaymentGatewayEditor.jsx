@@ -224,7 +224,7 @@ export default function KioskPaymentGatewayEditor({
       <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#04442A] text-white flex items-center justify-center font-bold shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold shadow-xs">
               <Store className="w-5 h-5" />
             </div>
             <div>
@@ -241,7 +241,7 @@ export default function KioskPaymentGatewayEditor({
             <select
               value={selectedKioskId}
               onChange={(e) => setSelectedKioskId(Number(e.target.value) || e.target.value)}
-              className="px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 cursor-pointer focus:outline-none focus:border-[#04442A] shadow-xs"
+              className="px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 cursor-pointer focus:outline-none focus:border-blue-600 shadow-xs"
             >
               {kiosks.map((k) => {
                 const mode = k.kiosk_mode || (k.is_event_mode ? 'event' : 'regular');
@@ -307,7 +307,7 @@ export default function KioskPaymentGatewayEditor({
                 type="checkbox"
                 checked={form.midtrans_enabled}
                 onChange={(e) => setForm({ ...form, midtrans_enabled: e.target.checked })}
-                className="w-4 h-4 rounded text-[#04442A] focus:ring-[#04442A] cursor-pointer"
+                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-600 cursor-pointer"
               />
               <span>Aktifkan Gateway</span>
             </label>
@@ -324,7 +324,7 @@ export default function KioskPaymentGatewayEditor({
             <select
               value={form.midtrans_environment}
               onChange={(e) => setForm({ ...form, midtrans_environment: e.target.value })}
-              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-[#04442A]"
+              className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-blue-600"
             >
               <option value="production">Production (Transaksi Nyata / Live Midtrans)</option>
               <option value="sandbox">Sandbox (Pengujian / Simulasi QRIS)</option>
@@ -345,7 +345,7 @@ export default function KioskPaymentGatewayEditor({
               placeholder="Contoh: G123456789"
               value={form.midtrans_merchant_id}
               onChange={(e) => setForm({ ...form, midtrans_merchant_id: e.target.value })}
-              className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-xs text-slate-800 font-bold focus:outline-none focus:border-[#04442A]"
+              className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-600"
             />
             <p className="text-[10px] text-slate-400">Nomor identitas merchant dari dashboard Midtrans.</p>
           </div>
@@ -372,7 +372,7 @@ export default function KioskPaymentGatewayEditor({
                 placeholder="Mid-server-xxxxxxxxxxxxxx atau SB-Mid-server-xxxxxxxxxxxxxx"
                 value={form.midtrans_server_key}
                 onChange={(e) => setForm({ ...form, midtrans_server_key: e.target.value })}
-                className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-xs text-slate-800 font-bold focus:outline-none focus:border-[#04442A]"
+                className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-600"
               />
             </div>
             <p className="text-[11px] text-slate-400">
@@ -392,7 +392,7 @@ export default function KioskPaymentGatewayEditor({
                 placeholder="Mid-client-xxxxxxxxxxxxxx atau SB-Mid-client-xxxxxxxxxxxxxx"
                 value={form.midtrans_client_key}
                 onChange={(e) => setForm({ ...form, midtrans_client_key: e.target.value })}
-                className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-xs text-slate-800 font-bold focus:outline-none focus:border-[#04442A]"
+                className="w-full p-2.5 bg-white border border-slate-300 rounded-xl font-mono text-xs text-slate-800 font-bold focus:outline-none focus:border-blue-600"
               />
               <button
                 type="button"
@@ -424,7 +424,7 @@ export default function KioskPaymentGatewayEditor({
               <button
                 type="button"
                 onClick={() => handleCopy(webhookUrl, 'webhook')}
-                className="px-4 py-2.5 bg-[#04442A] hover:bg-[#064E3B] text-white rounded-xl font-black text-xs shrink-0 cursor-pointer uppercase shadow-xs transition-all"
+                className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-black text-xs shrink-0 cursor-pointer uppercase shadow-xs transition-all"
               >
                 {copiedWebhook ? 'Tersalin ✓' : 'Salin URL'}
               </button>
@@ -446,7 +446,7 @@ export default function KioskPaymentGatewayEditor({
             disabled={testingConnection || !form.midtrans_server_key}
             className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center gap-2 disabled:opacity-40"
           >
-            <RotateCw className={`w-3.5 h-3.5 ${testingConnection ? 'animate-spin text-[#04442A]' : ''}`} />
+            <RotateCw className={`w-3.5 h-3.5 ${testingConnection ? 'animate-spin text-blue-600' : ''}`} />
             <span>{testingConnection ? 'Memverifikasi...' : 'Tes Koneksi Midtrans'}</span>
           </button>
         </div>
@@ -484,7 +484,7 @@ export default function KioskPaymentGatewayEditor({
                 step="1000"
                 value={form.price_per_photo}
                 onChange={(e) => setForm({ ...form, price_per_photo: Number(e.target.value) })}
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
               />
             </div>
             <p className="text-[10px] text-slate-400">Tarif standar 1 sesi foto (contoh: 25.000 / 30.000).</p>
@@ -503,7 +503,7 @@ export default function KioskPaymentGatewayEditor({
                 step="1000"
                 value={form.price_extra_print}
                 onChange={(e) => setForm({ ...form, price_extra_print: Number(e.target.value) })}
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
               />
             </div>
             <p className="text-[10px] text-slate-400">Biaya ekstra cetak rangkap kedua dst (contoh: 10.000).</p>
@@ -522,7 +522,7 @@ export default function KioskPaymentGatewayEditor({
                 step="500"
                 value={form.price_discount}
                 onChange={(e) => setForm({ ...form, price_discount: Number(e.target.value) })}
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
               />
             </div>
             <p className="text-[10px] text-slate-400">Potongan harga otomatis (0 jika tanpa promo).</p>
@@ -539,7 +539,7 @@ export default function KioskPaymentGatewayEditor({
               max="20"
               value={form.max_photo}
               onChange={(e) => setForm({ ...form, max_photo: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
             />
             <p className="text-[10px] text-slate-400">Total jepretan kamera sebelum pemilihan foto (standar: 6 pose).</p>
           </div>
@@ -555,7 +555,7 @@ export default function KioskPaymentGatewayEditor({
               max="10"
               value={form.max_print}
               onChange={(e) => setForm({ ...form, max_print: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
             />
             <p className="text-[10px] text-slate-400">Batas maksimal lembar cetak per transaksi (standar: 5).</p>
           </div>
@@ -572,7 +572,7 @@ export default function KioskPaymentGatewayEditor({
               step="30"
               value={form.session_duration}
               onChange={(e) => setForm({ ...form, session_duration: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
             />
             <p className="text-[10px] text-slate-400">Batas waktu sebelum auto-reset ke layar awal (standar: 180s = 3 mnt).</p>
           </div>
@@ -588,7 +588,7 @@ export default function KioskPaymentGatewayEditor({
               max="15"
               value={form.countdown_timer}
               onChange={(e) => setForm({ ...form, countdown_timer: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
             />
             <p className="text-[10px] text-slate-400">Waktu persiapan pose sebelum jepret (standar: 5 detik).</p>
           </div>
@@ -605,7 +605,7 @@ export default function KioskPaymentGatewayEditor({
               step="15"
               value={form.qr_timer}
               onChange={(e) => setForm({ ...form, qr_timer: Number(e.target.value) })}
-              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-[#04442A] focus:outline-none"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl font-bold text-slate-900 font-mono focus:border-blue-600 focus:outline-none"
             />
             <p className="text-[10px] text-slate-400">Waktu pelanggan memindai QR code sebelum selesai (standar: 90 detik).</p>
           </div>
@@ -624,7 +624,7 @@ export default function KioskPaymentGatewayEditor({
                 onClick={() => setForm({ ...form, live_photo: !form.live_photo })}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   form.live_photo
-                    ? 'bg-[#04442A] text-white shadow-xs'
+                    ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-slate-200 text-slate-700'
                 }`}
               >
@@ -645,7 +645,7 @@ export default function KioskPaymentGatewayEditor({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-3 bg-[#04442A] hover:bg-[#064E3B] text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+            className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{saving ? 'Menyimpan...' : `Simpan Tarif & Kunci API (${activeKiosk.name})`}</span>

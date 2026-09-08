@@ -237,7 +237,7 @@ export default function KioskStatisticsView({
           revenue: 0,
         };
       }
-      const price = Number(s.price || s.amount || s.sessionPrice || 0) || 30000;
+      const price = Number(s.price || s.amount || s.sessionPrice || 0);
       counts[tplName].sessions += 1;
       counts[tplName].revenue += price;
       totalTemplateSessions += 1;
@@ -290,10 +290,10 @@ export default function KioskStatisticsView({
           (k.licenseKey && s.licenseKey?.toUpperCase() === (k.licenseKey || k.license_key || '').toUpperCase()) ||
           (k.name && s.kioskName?.toLowerCase() === k.name.toLowerCase());
         if (match) {
-          const d = new Date(s.createdAt || Date.now());
+          const d = parseTimestamp(s.createdAt) || new Date();
           const dayIdx = d.getDate() - 1;
           if (points[dayIdx]) {
-            points[dayIdx].revenue += Number(s.price || s.amount || s.sessionPrice || 0) || 30000;
+            points[dayIdx].revenue += Number(s.price || s.amount || s.sessionPrice || 0);
           }
         }
       });
@@ -335,7 +335,7 @@ export default function KioskStatisticsView({
     });
 
     const totalRevenue = kioskSessions.reduce((acc, s) => {
-      return acc + (Number(s.price || s.amount || s.sessionPrice || 0) || 30000);
+      return acc + Number(s.price || s.amount || s.sessionPrice || 0);
     }, 0);
 
     const totalSesi = kioskSessions.length;
@@ -351,10 +351,10 @@ export default function KioskStatisticsView({
     }));
 
     kioskSessions.forEach((s) => {
-      const d = new Date(s.createdAt || Date.now());
+      const d = parseTimestamp(s.createdAt) || new Date();
       const dayIdx = d.getDate() - 1;
       if (points[dayIdx]) {
-        points[dayIdx].revenue += Number(s.price || s.amount || s.sessionPrice || 0) || 30000;
+        points[dayIdx].revenue += Number(s.price || s.amount || s.sessionPrice || 0);
       }
     });
 
@@ -384,7 +384,7 @@ export default function KioskStatisticsView({
       });
 
       const revenue = kSessions.reduce((acc, s) => {
-        return acc + (Number(s.price || s.amount || s.sessionPrice || 0) || 30000);
+        return acc + Number(s.price || s.amount || s.sessionPrice || 0);
       }, 0);
 
       const voucherCount = kSessions.filter((s) => s.voucherCode || s.isCashVoucher).length;
@@ -565,7 +565,7 @@ export default function KioskStatisticsView({
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-[#04442A]"
+                className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-blue-600"
               />
             </div>
           </div>
@@ -577,7 +577,7 @@ export default function KioskStatisticsView({
             <span className="text-[11px] font-bold text-emerald-800 uppercase block">
               Total Pendapatan
             </span>
-            <span className="text-xl sm:text-2xl font-black text-[#04442A] mt-1 block">
+            <span className="text-xl sm:text-2xl font-black text-emerald-700 mt-1 block">
               {formatRupiah(overallData.totalRevenue)}
             </span>
           </div>
@@ -681,7 +681,7 @@ export default function KioskStatisticsView({
             <select
               value={templateKioskFilter}
               onChange={(e) => setTemplateKioskFilter(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-[#04442A]"
+              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-blue-600"
             >
               <option value="all">Semua Kiosk</option>
               {kiosks.map((k) => (
@@ -1048,7 +1048,7 @@ export default function KioskStatisticsView({
               <select
                 value={detailKioskId}
                 onChange={(e) => setDetailKioskId(Number(e.target.value) || e.target.value)}
-                className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-[#04442A]"
+                className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-blue-600"
               >
                 {kiosks.map((k) => (
                   <option key={k.id} value={k.id}>
@@ -1397,7 +1397,7 @@ export default function KioskStatisticsView({
             <select
               value={heatmapKioskFilter}
               onChange={(e) => setHeatmapKioskFilter(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-[#04442A]"
+              className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-xs cursor-pointer focus:outline-none focus:border-blue-600"
             >
               <option value="all">Semua Kiosk</option>
               {kiosks.map((k) => (

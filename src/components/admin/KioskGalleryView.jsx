@@ -205,13 +205,13 @@ export default function KioskGalleryView({
                 placeholder="Cari kiosk..."
                 value={kioskSearchQuery}
                 onChange={(e) => setKioskSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#04442A] shadow-xs"
+                className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-slate-900 shadow-xs"
               />
             </div>
 
             <button
               onClick={() => setActiveGalleryKiosk({ id: 'all', name: 'Semua Kiosk', licenseKey: 'ALL' })}
-              className="px-4 py-2 bg-[#04442A] hover:bg-[#064E3B] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
+              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer shrink-0"
             >
               Semua Kiosk ({sessions.length})
             </button>
@@ -253,12 +253,12 @@ export default function KioskGalleryView({
               <div
                 key={k.id}
                 onClick={() => setActiveGalleryKiosk(k)}
-                className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-[#04442A] transition-all cursor-pointer flex flex-col justify-between group"
+                className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-slate-400 transition-all cursor-pointer flex flex-col justify-between group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <h3 className="text-base font-black text-slate-900 group-hover:text-[#04442A] transition-colors">
+                      <h3 className="text-base font-black text-slate-900 group-hover:text-blue-600 transition-colors">
                         {k.name}
                       </h3>
                       <p className="text-[11px] text-slate-400 font-mono mt-0.5">
@@ -305,7 +305,7 @@ export default function KioskGalleryView({
                   <div className="grid grid-cols-2 gap-2 text-center text-xs py-2 border-t border-slate-100">
                     <div className="bg-slate-50 rounded-xl p-2">
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Hari Ini</span>
-                      <span className="text-sm font-black text-[#04442A]">{todayKioskCount} Sesi</span>
+                      <span className="text-sm font-black text-slate-900">{todayKioskCount} Sesi</span>
                     </div>
                     <div className="bg-slate-50 rounded-xl p-2">
                       <span className="text-[10px] text-slate-400 font-bold block uppercase">Total Softfile</span>
@@ -314,7 +314,7 @@ export default function KioskGalleryView({
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#04442A] group-hover:underline">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-600 group-hover:underline">
                   <span>Buka Gallery Kiosk</span>
                   <span>→</span>
                 </div>
@@ -329,7 +329,7 @@ export default function KioskGalleryView({
   // ──────────────────────────────────────────────────────────────────────────
   // VIEW 2: KIOSK SPECIFIC GALLERY (Exact match with reference screenshot!)
   // ──────────────────────────────────────────────────────────────────────────
-  const kioskTitle = activeGalleryKiosk.name || 'Tegoersapa X NoLima';
+  const kioskTitle = activeGalleryKiosk.name || 'Galeri Kiosk';
 
   return (
     <div className="space-y-6">
@@ -354,7 +354,7 @@ export default function KioskGalleryView({
           onClick={() => setGallerySubTab('photos')}
           className={`pb-3 text-sm font-bold transition-all cursor-pointer relative ${
             gallerySubTab === 'photos'
-              ? 'text-[#04442A] border-b-2 border-[#04442A]'
+              ? 'text-slate-900 border-b-2 border-slate-900'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -364,7 +364,7 @@ export default function KioskGalleryView({
           onClick={() => setGallerySubTab('templates')}
           className={`pb-3 text-sm font-bold transition-all cursor-pointer relative ${
             gallerySubTab === 'templates'
-              ? 'text-[#04442A] border-b-2 border-[#04442A]'
+              ? 'text-slate-900 border-b-2 border-slate-900'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -387,7 +387,7 @@ export default function KioskGalleryView({
                 }}
                 className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   timeRange === 'today' && !specificDate
-                    ? 'bg-[#04442A] text-white shadow-xs'
+                    ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -401,7 +401,7 @@ export default function KioskGalleryView({
                 }}
                 className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   timeRange === '7days' && !specificDate
-                    ? 'bg-[#04442A] text-white shadow-xs'
+                    ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -415,7 +415,7 @@ export default function KioskGalleryView({
                 }}
                 className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   timeRange === '30days' && !specificDate
-                    ? 'bg-[#04442A] text-white shadow-xs'
+                    ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -429,7 +429,7 @@ export default function KioskGalleryView({
                 }}
                 className={`px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   timeRange === 'all' && !specificDate
-                    ? 'bg-[#04442A] text-white shadow-xs'
+                    ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
@@ -481,7 +481,7 @@ export default function KioskGalleryView({
                     value={specificDate}
                     onChange={(e) => setSpecificDate(e.target.value)}
                     placeholder="dd/mm/yyyy"
-                    className="pl-3 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-[#04442A] shadow-xs font-medium cursor-pointer"
+                    className="pl-3 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:border-slate-900 shadow-xs font-medium cursor-pointer"
                   />
                 </div>
                 {specificDate && (
@@ -505,7 +505,7 @@ export default function KioskGalleryView({
                   className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
                   title="Segarkan Foto Galeri"
                 >
-                  <RotateCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-[#04442A]' : ''}`} />
+                  <RotateCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-slate-900' : ''}`} />
                 </button>
               </div>
             </div>
@@ -527,7 +527,7 @@ export default function KioskGalleryView({
                     {/* Photostrip preview */}
                     <div
                       onClick={() => setSelectedSessionModal(session)}
-                      className="relative aspect-[2/3] w-full bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center p-1.5 cursor-pointer mb-2.5 group-hover:border-[#04442A] transition-colors"
+                      className="relative aspect-[2/3] w-full bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center p-1.5 cursor-pointer mb-2.5 group-hover:border-blue-600 transition-colors"
                     >
                       {compUrl ? (
                         <img
@@ -605,7 +605,7 @@ export default function KioskGalleryView({
                   setSpecificDate('');
                   setConsentFilter('all');
                 }}
-                className="px-4 py-2 bg-[#04442A] hover:bg-[#064E3B] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 Tampilkan Semua Foto
               </button>
@@ -743,7 +743,7 @@ export default function KioskGalleryView({
               <button
                 type="button"
                 onClick={() => onDownloadZip && onDownloadZip(selectedSessionModal)}
-                className="px-3 py-2 bg-[#04442A] hover:bg-[#064E3B] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Unduh ZIP</span>

@@ -2612,7 +2612,7 @@ export default function OnlineAdminPage() {
                                         showToast('Gagal: ' + err.message, 'error');
                                       }
                                     }}
-                                    className="px-4 py-2 bg-[#04442A] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-[#064E3B] transition shadow"
+                                    className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-800 transition shadow"
                                   >
                                     ⚡ Ubah "${kiosks[0].name}" ke Mode ${kioskModeFilter === 'receipt' ? 'Receipt (58/80mm)' : 'Event (Free)'}
                                   </button>
