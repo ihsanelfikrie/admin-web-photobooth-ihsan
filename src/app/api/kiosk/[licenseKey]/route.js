@@ -76,6 +76,7 @@ export async function GET(req, { params }) {
         os_platform: kiosk.os_platform || null,
         is_active: kiosk.is_active,
         is_testing_mode: kiosk.is_testing_mode ?? false,
+        kiosk_mode: kiosk.kiosk_mode || (kiosk.is_event_mode ? "event" : "regular"),
         is_event_mode: kiosk.is_event_mode ?? false,
         event_name: kiosk.event_name || "",
         is_queue_enabled: kiosk.is_queue_enabled ?? false,

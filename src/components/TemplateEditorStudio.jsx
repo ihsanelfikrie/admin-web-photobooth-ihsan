@@ -49,7 +49,11 @@ export const SIZE_PRESETS = {
     paperSize: '2r',
     width: 1200,
     height: 1800,
-    defaultSlots: [],
+    defaultSlots: [
+      { id: 1, x: 120, y: 140, width: 960, height: 460, rotation: 0, zIndex: 1 },
+      { id: 2, x: 120, y: 640, width: 960, height: 460, rotation: 0, zIndex: 2 },
+      { id: 3, x: 120, y: 1140, width: 960, height: 460, rotation: 0, zIndex: 3 },
+    ],
   },
   '4R': {
     label: '4R (1800 × 1200 px) - Postcard Standar',
@@ -58,7 +62,12 @@ export const SIZE_PRESETS = {
     paperSize: '4r',
     width: 1800,
     height: 1200,
-    defaultSlots: [],
+    defaultSlots: [
+      { id: 1, x: 80, y: 80, width: 780, height: 480, rotation: 0, zIndex: 1 },
+      { id: 2, x: 940, y: 80, width: 780, height: 480, rotation: 0, zIndex: 2 },
+      { id: 3, x: 80, y: 620, width: 780, height: 480, rotation: 0, zIndex: 3 },
+      { id: 4, x: 940, y: 620, width: 780, height: 480, rotation: 0, zIndex: 4 },
+    ],
   },
 
   // ── Receipt Photobooth (58mm & 80mm Saja) ───────
@@ -69,7 +78,11 @@ export const SIZE_PRESETS = {
     paperSize: 'thermal_58mm',
     width: 384,
     height: 1200,
-    defaultSlots: [],
+    defaultSlots: [
+      { id: 1, x: 24, y: 100, width: 336, height: 260, rotation: 0, zIndex: 1 },
+      { id: 2, x: 24, y: 400, width: 336, height: 260, rotation: 0, zIndex: 2 },
+      { id: 3, x: 24, y: 700, width: 336, height: 260, rotation: 0, zIndex: 3 },
+    ],
   },
   '80mm': {
     label: '80mm Thermal (576 × 1600 px)',
@@ -78,7 +91,11 @@ export const SIZE_PRESETS = {
     paperSize: 'thermal_80mm',
     width: 576,
     height: 1600,
-    defaultSlots: [],
+    defaultSlots: [
+      { id: 1, x: 38, y: 120, width: 500, height: 380, rotation: 0, zIndex: 1 },
+      { id: 2, x: 38, y: 540, width: 500, height: 380, rotation: 0, zIndex: 2 },
+      { id: 3, x: 38, y: 960, width: 500, height: 380, rotation: 0, zIndex: 3 },
+    ],
   },
 };
 
@@ -142,9 +159,11 @@ export default function TemplateEditorStudio({
   const [slots, setSlots] = useState(
     initialTemplate?.slots?.length > 0
       ? initialTemplate.slots
-      : []
+      : SIZE_PRESETS[initialSizeKey]?.defaultSlots || []
   );
-  const [activeSlotId, setActiveSlotId] = useState(initialTemplate?.slots?.[0]?.id || null);
+  const [activeSlotId, setActiveSlotId] = useState(
+    initialTemplate?.slots?.[0]?.id || SIZE_PRESETS[initialSizeKey]?.defaultSlots?.[0]?.id || null
+  );
 
   // Backgrounds & Previews
   const [bgImage, setBgImage] = useState(initialTemplate?.previewUrl || initialTemplate?.imageUrl || null);
@@ -224,7 +243,7 @@ export default function TemplateEditorStudio({
             };
           })
         );
-      } else if (preset.defaultSlots && preset.defaultSlots.length > 0 && (!initialTemplate || presetKey !== initialTemplate.size)) {
+      } else if (preset.defaultSlots && preset.defaultSlots.length > 0) {
         setSlots(preset.defaultSlots);
         setActiveSlotId(preset.defaultSlots[0]?.id || 1);
       }
@@ -236,18 +255,31 @@ export default function TemplateEditorStudio({
   // Add new photo slot
   const handleAddSlot = () => {
     const nextId = slots.length > 0 ? Math.max(...slots.map((s) => s.id)) + 1 : 1;
-    const defaultW = Math.round(width * 0.42);
-    const defaultH = Math.round(height * 0.28);
+    const isNarrowStrip = width <= 700 && height > width * 1.5;
 
-    const row = (nextId - 1) % 4;
-    const col = Math.floor((nextId - 1) / 4);
-    const marginX = Math.round(width * 0.08);
-    const gapX = Math.round(width * 0.04);
-    const marginY = Math.round(height * 0.12);
-    const gapY = Math.round(height * 0.035);
+    let defaultW, defaultH, nextX, nextY;
 
-    const nextX = Math.round(marginX + col * (defaultW + gapX));
-    const nextY = Math.round(marginY + row * (defaultH + gapY));
+    if (isNarrowStrip) {
+      defaultW = Math.round(width * 0.86);
+      defaultH = Math.round(defaultW * 0.72);
+      nextX = Math.round((width - defaultW) / 2);
+      const lastSlot = slots[slots.length - 1];
+      const gapY = Math.round(height * 0.025);
+      nextY = lastSlot
+        ? Math.min(height - defaultH - 20, lastSlot.y + lastSlot.height + gapY)
+        : Math.round(height * 0.08);
+    } else {
+      defaultW = Math.round(width * 0.42);
+      defaultH = Math.round(height * 0.28);
+      const row = (nextId - 1) % 4;
+      const col = Math.floor((nextId - 1) / 4);
+      const marginX = Math.round(width * 0.08);
+      const gapX = Math.round(width * 0.04);
+      const marginY = Math.round(height * 0.12);
+      const gapY = Math.round(height * 0.035);
+      nextX = Math.round(marginX + col * (defaultW + gapX));
+      nextY = Math.round(marginY + row * (defaultH + gapY));
+    }
 
     const newSlot = {
       id: nextId,
@@ -261,6 +293,7 @@ export default function TemplateEditorStudio({
 
     setSlots((prev) => [...prev, newSlot]);
     setActiveSlotId(nextId);
+    setToastSuccess(`Slot foto #${nextId} berhasil ditambahkan`);
   };
 
   // Remove slot
