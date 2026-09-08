@@ -2213,7 +2213,7 @@ export default function OnlineAdminPage() {
                                 <span>•</span>
                                 <span>Koneksi: <strong className="text-[#120CD6]">{pingLabel}</strong></span>
                                 <span>•</span>
-                                <span>Tarif: <strong className="text-slate-900">Rp {k.price.toLocaleString("id-ID")}</strong></span>
+                                <span>Tarif: <strong className="text-slate-900">Rp {Number(k.price || 0).toLocaleString("id-ID")}</strong></span>
                               </div>
                             </div>
                           </div>
@@ -2978,7 +2978,7 @@ export default function OnlineAdminPage() {
                               {k.is_event_mode || k.kiosk_mode === 'event' ? (
                                 <span className="text-emerald-600 font-black">GRATIS</span>
                               ) : (
-                                `Rp ${k.price.toLocaleString('id-ID')}`
+                                `Rp ${Number(k.price || 0).toLocaleString('id-ID')}`
                               )}
                             </td>
                             <td className="py-3.5 px-4">
