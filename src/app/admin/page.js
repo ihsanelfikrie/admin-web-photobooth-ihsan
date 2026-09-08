@@ -37,6 +37,7 @@ import {
   Share2,
   Zap,
   DollarSign,
+  Coffee,
   TrendingUp,
   Check,
   Copy,
@@ -417,6 +418,57 @@ export default function OnlineAdminPage() {
   const [previewModalImg, setPreviewModalImg] = useState(null);
   const [activeGalleryKiosk, setActiveGalleryKiosk] = useState(null);
   const [transactionKioskFilter, setTransactionKioskFilter] = useState('all');
+
+  // Configurable Profit Sharing & Operational Rates
+  const [venueSplitRate, setVenueSplitRate] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nadhisan_venue_split');
+      if (saved && !isNaN(Number(saved))) return Number(saved);
+    }
+    return 5000;
+  });
+  const [operationalRate, setOperationalRate] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nadhisan_op_split');
+      if (saved && !isNaN(Number(saved))) return Number(saved);
+    }
+    return 2500;
+  });
+  const [showRateSettings, setShowRateSettings] = useState(false);
+  const [tempVenueSplit, setTempVenueSplit]     = useState('5000');
+  const [tempOperational, setTempOperational]   = useState('2500');
+
+  useEffect(() => {
+    setTempVenueSplit(String(venueSplitRate));
+    setTempOperational(String(operationalRate));
+  }, [venueSplitRate, operationalRate]);
+
+  const handleSaveRates = (e) => {
+    if (e) e.preventDefault();
+    const v = Math.max(0, Number(tempVenueSplit) || 0);
+    const o = Math.max(0, Number(tempOperational) || 0);
+    setVenueSplitRate(v);
+    setOperationalRate(o);
+    try {
+      localStorage.setItem('nadhisan_venue_split', String(v));
+      localStorage.setItem('nadhisan_op_split', String(o));
+    } catch (_) {}
+    setShowRateSettings(false);
+    showToast('Tarif bagi hasil & biaya operasional berhasil disimpan!');
+  };
+
+  const handleResetRates = () => {
+    setVenueSplitRate(5000);
+    setOperationalRate(2500);
+    setTempVenueSplit('5000');
+    setTempOperational('2500');
+    try {
+      localStorage.setItem('nadhisan_venue_split', '5000');
+      localStorage.setItem('nadhisan_op_split', '2500');
+    } catch (_) {}
+    setShowRateSettings(false);
+    showToast('Tarif berhasil direset ke default (Rp 5.000 & Rp 2.500)!');
+  };
   const [statsKioskFilter, setStatsKioskFilter] = useState('all');
   const [voucherKioskTarget, setVoucherKioskTarget] = useState('all');
 
@@ -1188,35 +1240,61 @@ export default function OnlineAdminPage() {
     }
   };
 
-  // Export Financial CSV
+  // Export Financial CSV with Profit Sharing Breakdown
   const handleExportCsv = () => {
-    if (!finance?.transactions || finance.transactions.length === 0) {
+    const list = displayedTransactions && displayedTransactions.length > 0 ? displayedTransactions : (finance?.transactions || []);
+    if (list.length === 0) {
       showToast('Tidak ada data transaksi untuk diekspor', 'error');
       return;
     }
 
-    const headers = ['Order ID', 'ID Sesi', 'Waktu Transaksi', 'Metode Pembayaran', 'Harga Asli (Rp)', 'Total Bayar (Rp)', 'Status'];
-    const rows = finance.transactions.map(t => [
-      `"${t.orderId}"`,
-      `"${t.sessionId}"`,
-      `"${new Date(t.createdAt).toLocaleString('id-ID')}"`,
-      `"${t.paymentMethod}"`,
-      t.originalPrice,
-      t.amount,
-      `"${t.status}"`,
-    ]);
+    const headers = [
+      'Order ID',
+      'ID Sesi',
+      'Waktu Transaksi',
+      'Kiosk',
+      'Metode Pembayaran',
+      'Total Bayar (Rp)',
+      'Bagi Hasil Venue (Rp)',
+      'Biaya Operasional (Rp)',
+      'Laba Bersih Pemilik (Rp)',
+      'Status'
+    ];
+
+    const rows = list.map(t => {
+      const amount = Number(t.amount || t.originalPrice || 15000);
+      const st = (t.status || '').toLowerCase();
+      const isSuccess = st === 'success' || st === 'settlement' || st === 'capture' || st === 'paid' || !t.status;
+      const venueAmount = isSuccess ? venueSplitRate : 0;
+      const opAmount = isSuccess ? operationalRate : 0;
+      const netAmount = isSuccess ? (amount - venueAmount - opAmount) : 0;
+
+      return [
+        `"${t.orderId}"`,
+        `"${t.sessionId || ''}"`,
+        `"${new Date(t.createdAt).toLocaleString('id-ID')}"`,
+        `"${t.kioskName || (kiosks.find(k => k.id === t.kioskId)?.name) || 'Photobooth'}"`,
+        `"${t.paymentMethod || 'QRIS Midtrans'}"`,
+        amount,
+        venueAmount,
+        opAmount,
+        netAmount,
+        `"${t.status || 'success'}"`,
+      ];
+    });
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `nadhisanbooth-laporan-keuangan-${financeRange}-${Date.now()}.csv`);
+    const kioskSuffix = transactionKioskFilter !== 'all' ? `-${transactionKioskFilter}` : '';
+    link.setAttribute('download', `nadhisanbooth-laporan-keuangan${kioskSuffix}-${financeRange}-${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    showToast('Laporan CSV berhasil diunduh!');
+    showToast('Laporan CSV Keuangan berhasil diunduh!');
   };
 
   // One-Click Session ZIP Downloader (JSZip)
@@ -1735,6 +1813,33 @@ export default function OnlineAdminPage() {
       return true;
     });
   }, [finance?.transactions, transactionKioskFilter, searchQuery]);
+
+  // Live Summary of Gross, Venue Split, Operations, and Net Profit
+  const transactionSummary = useMemo(() => {
+    let grossTotal = 0;
+    let successfulCount = 0;
+
+    displayedTransactions.forEach((t) => {
+      const st = (t.status || '').toLowerCase();
+      const isSuccess = st === 'success' || st === 'settlement' || st === 'capture' || st === 'paid' || !t.status;
+      if (isSuccess) {
+        successfulCount += 1;
+        grossTotal += Number(t.amount || t.originalPrice || 15000);
+      }
+    });
+
+    const venueTotal = successfulCount * venueSplitRate;
+    const opTotal = successfulCount * operationalRate;
+    const netProfitTotal = grossTotal - venueTotal - opTotal;
+
+    return {
+      grossTotal,
+      successfulCount,
+      venueTotal,
+      opTotal,
+      netProfitTotal,
+    };
+  }, [displayedTransactions, venueSplitRate, operationalRate]);
 
   // Combined Templates Catalog for Display
   const allTemplates = useMemo(() => {
@@ -2411,11 +2516,31 @@ export default function OnlineAdminPage() {
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Daftar Transaksi</h2>
-                  <p className="text-xs text-slate-500">Riwayat transaksi pembayaran pelanggan di setiap kiosk</p>
+                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight flex items-center gap-2">
+                    <span>Daftar Transaksi &amp; Keuangan</span>
+                    {transactionKioskFilter !== 'all' && (
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#120CD6] text-white text-[10px] font-black uppercase">
+                        {(kiosks.find(k => String(k.id) === String(transactionKioskFilter))?.name) || 'Kiosk Terfilter'}
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-xs text-slate-500">Riwayat transaksi pembayaran pelanggan &amp; rincian bagi hasil venue</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Button to toggle rate settings */}
+                  <button
+                    type="button"
+                    onClick={() => setShowRateSettings(prev => !prev)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 border cursor-pointer ${
+                      showRateSettings
+                        ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-md'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span>Atur Tarif Bagi Hasil</span>
+                  </button>
                   <div className="bg-white border-2 border-slate-200 rounded-xl p-1 flex items-center text-xs font-bold">
                     {['all', 'today', 'week', 'month'].map((range) => (
                       <button
@@ -2452,8 +2577,157 @@ export default function OnlineAdminPage() {
                 </div>
               </div>
 
+              {/* Configurable Rate Panel (Collapsible) */}
+              {showRateSettings && (
+                <div className="p-5 rounded-2xl bg-amber-50/80 border-2 border-amber-300 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-black text-amber-950 uppercase tracking-tight flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-amber-700" />
+                        <span>Kustomisasi Tarif Bagi Hasil &amp; Operasional</span>
+                      </h3>
+                      <p className="text-xs text-amber-800">
+                        Ubah nominal kapan saja. Pengaturan ini tersimpan otomatis di browser Anda dan langsung mengalkulasi seluruh transaksi.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowRateSettings(false)}
+                      className="text-xs font-bold text-amber-800 hover:text-amber-950 px-2 py-1 rounded cursor-pointer"
+                    >
+                      ✕ Tutup
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSaveRates} className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-black uppercase text-amber-900 tracking-wider">
+                        Bagi Hasil Cafe / Venue (Rp / Sesi)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-amber-700">Rp</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="500"
+                          value={tempVenueSplit}
+                          onChange={(e) => setTempVenueSplit(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          placeholder="5000"
+                        />
+                      </div>
+                      <span className="text-[10px] text-amber-700 font-medium">Hak pemilik tempat (misal Warkop Sekahandak)</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-black uppercase text-amber-900 tracking-wider">
+                        Biaya Operasional &amp; Midtrans (Rp / Sesi)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-amber-700">Rp</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="500"
+                          value={tempOperational}
+                          onChange={(e) => setTempOperational(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                          placeholder="2500"
+                        />
+                      </div>
+                      <span className="text-[10px] text-amber-700 font-medium">Kertas thermal, fee QRIS (~0,7%), &amp; cadangan kas</span>
+                    </div>
+
+                    <div className="flex items-end gap-2">
+                      <button
+                        type="submit"
+                        className="flex-1 py-2 px-4 bg-[#120CD6] hover:bg-blue-800 text-white font-black text-xs uppercase rounded-xl transition-all shadow-md cursor-pointer h-[38px] flex items-center justify-center gap-1.5"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Simpan Tarif</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleResetRates}
+                        className="py-2 px-3 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs uppercase rounded-xl transition-all cursor-pointer h-[38px]"
+                        title="Reset ke default Rp 5.000 & Rp 2.500"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* 4 Financial & Profit Sharing Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Card 1: Omset Kotor */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Total Omset Kotor</span>
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+                      <DollarSign className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-slate-900 font-mono">
+                    Rp {transactionSummary.grossTotal.toLocaleString('id-ID')}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1 font-bold">
+                    {transactionSummary.successfulCount} sesi sukses ({financeRange === 'all' ? 'semua waktu' : financeRange === 'today' ? 'hari ini' : financeRange === 'week' ? '7 hari' : 'bulan ini'})
+                  </div>
+                </div>
+
+                {/* Card 2: Bagi Hasil Cafe */}
+                <div className="bg-white p-5 rounded-2xl border-2 border-amber-300/80 shadow-sm relative overflow-hidden bg-gradient-to-br from-amber-50/50 to-white">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-amber-800 uppercase tracking-wider">Bagi Hasil Cafe/Venue</span>
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700">
+                      <Coffee className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-amber-700 font-mono">
+                    Rp {transactionSummary.venueTotal.toLocaleString('id-ID')}
+                  </div>
+                  <div className="text-[11px] text-amber-800 font-semibold mt-1">
+                    Rp {venueSplitRate.toLocaleString('id-ID')} × {transactionSummary.successfulCount} sesi
+                  </div>
+                </div>
+
+                {/* Card 3: Biaya Operasional & Midtrans */}
+                <div className="bg-white p-5 rounded-2xl border border-blue-200 shadow-sm relative overflow-hidden bg-gradient-to-br from-blue-50/50 to-white">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-blue-800 uppercase tracking-wider">Operasional &amp; Midtrans</span>
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700">
+                      <Sliders className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-blue-800 font-mono">
+                    Rp {transactionSummary.opTotal.toLocaleString('id-ID')}
+                  </div>
+                  <div className="text-[11px] text-blue-700 font-semibold mt-1">
+                    Rp {operationalRate.toLocaleString('id-ID')} × {transactionSummary.successfulCount} sesi
+                  </div>
+                </div>
+
+                {/* Card 4: Laba Bersih Pemilik */}
+                <div className="bg-white p-5 rounded-2xl border-2 border-emerald-400 shadow-sm relative overflow-hidden bg-gradient-to-br from-emerald-50/60 to-white">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider">Laba Bersih Pemilik</span>
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700">
+                      <TrendingUp className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-2xl font-black text-emerald-600 font-mono">
+                    Rp {transactionSummary.netProfitTotal.toLocaleString('id-ID')}
+                  </div>
+                  <div className="text-[11px] text-emerald-700 font-bold mt-1">
+                    {transactionSummary.grossTotal > 0 ? Math.round((transactionSummary.netProfitTotal / transactionSummary.grossTotal) * 100) : 50}% margin bersih riil
+                  </div>
+                </div>
+              </div>
+
               {/* Transactions Table Card */}
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="relative w-full sm:w-72">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -2475,13 +2749,16 @@ export default function OnlineAdminPage() {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
-                        <th className="py-3.5 px-4">Order ID</th>
-                        <th className="py-3.5 px-4">ID Sesi</th>
-                        <th className="py-3.5 px-4">Waktu</th>
-                        <th className="py-3.5 px-4">Kiosk</th>
-                        <th className="py-3.5 px-4">Metode</th>
-                        <th className="py-3.5 px-4">Total Bayar</th>
-                        <th className="py-3.5 px-4">Status</th>
+                        <th className="py-3.5 px-3">Order ID</th>
+                        <th className="py-3.5 px-3">ID Sesi</th>
+                        <th className="py-3.5 px-3">Waktu</th>
+                        <th className="py-3.5 px-3">Kiosk</th>
+                        <th className="py-3.5 px-3">Metode</th>
+                        <th className="py-3.5 px-3">Total Bayar</th>
+                        <th className="py-3.5 px-3 text-amber-800 bg-amber-50/50">Hak Cafe</th>
+                        <th className="py-3.5 px-3 text-blue-800 bg-blue-50/50">Operasional</th>
+                        <th className="py-3.5 px-3 text-emerald-800 bg-emerald-50/50">Laba Bersih</th>
+                        <th className="py-3.5 px-3">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
@@ -2497,11 +2774,20 @@ export default function OnlineAdminPage() {
                                 {t.paymentMethod || 'QRIS Midtrans'}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 font-black text-slate-900">
-                              Rp {Number(t.amount || 25000).toLocaleString('id-ID')}
+                            <td className="py-3.5 px-3 font-black text-slate-900">
+                              Rp {Number(t.amount || 15000).toLocaleString('id-ID')}
                             </td>
-                            <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 border border-[#120CD6]">
+                            <td className="py-3.5 px-3 font-bold text-amber-700 font-mono bg-amber-50/30">
+                              Rp {venueSplitRate.toLocaleString('id-ID')}
+                            </td>
+                            <td className="py-3.5 px-3 font-bold text-blue-700 font-mono bg-blue-50/30">
+                              Rp {operationalRate.toLocaleString('id-ID')}
+                            </td>
+                            <td className="py-3.5 px-3 font-black text-emerald-600 font-mono bg-emerald-50/30">
+                              Rp {(Math.max(0, Number(t.amount || 15000) - venueSplitRate - operationalRate)).toLocaleString('id-ID')}
+                            </td>
+                            <td className="py-3.5 px-3">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
                                 <Check className="w-3 h-3" />
                                 Settlement
                               </span>
