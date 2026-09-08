@@ -91,7 +91,7 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
     release_channel: kiosk?.release_channel || 'stable',
 
     // Custom Filters
-    allowed_filters: kiosk?.allowed_filters || ['bw', 'bw_high', 'soft_glam', 'sepia', 'vintage', 'film_grain', 'none'],
+    allowed_filters: kiosk?.allowed_filters || ['bw', 'bw_high', 'fisheye', 'fisheye_bw', 'soft_glam', 'sepia', 'vintage', 'film_grain', 'none'],
   }));
 
   const [isDirty, setIsDirty] = useState(isNewKiosk);
@@ -1178,6 +1178,8 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                 {[
                   { id: 'bw', name: 'Monochrome Classic (Standard B&W)' },
                   { id: 'bw_high', name: 'High Contrast HD B&W' },
+                  { id: 'fisheye', name: 'Y2K Fisheye Lens (Lensa Cembung)' },
+                  { id: 'fisheye_bw', name: 'Monochrome Fisheye (B&W Cembung)' },
                   { id: 'soft_glam', name: 'Soft Glam Studio (Beauty)' },
                   { id: 'sepia', name: 'Vintage Classic (Warm Sepia)' },
                   { id: 'vintage', name: 'Warm Soft Studio (Editorial)' },
