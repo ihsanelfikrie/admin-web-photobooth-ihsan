@@ -1721,6 +1721,65 @@ export default function OnlineAdminPage() {
     });
   }, [frames]);
 
+  // ── Navigation Menu Definitions (Modern Studio Redesign) ─────────────
+  const menuGroups = useMemo(() => [
+    {
+      groupTitle: 'MONITOR & INSIGHTS',
+      items: [
+        { id: 'dashboard', label: 'Command Center', icon: LayoutGrid },
+        { id: 'transactions', label: 'Sesi Transaksi', icon: Receipt },
+        { id: 'live_monitor', label: 'Bilik Realtime', icon: Radio },
+        { id: 'statistics', label: 'Laporan & Finansial', icon: LineChart },
+      ],
+    },
+    {
+      groupTitle: 'UNIT KIOSK & PAYMENT',
+      items: [
+        { id: 'kiosks', label: 'Kelola Bilik Kiosk', icon: MonitorPlay },
+        { id: 'payment_gateway', label: 'Payment Gateway', icon: WalletCards },
+        { id: 'vouchers', label: 'Voucher Kasir / Tunai', icon: TicketPercent },
+      ],
+    },
+    {
+      groupTitle: 'STUDIO & TEMPLATE',
+      items: [
+        { id: 'templates', label: 'Frame Studio', icon: Palette },
+        { id: 'template_categories', label: 'Kategori Frame', icon: Boxes },
+        { id: 'gallery', label: 'Galeri Foto Sesi', icon: Images },
+        { id: 'public_gallery', label: 'Portal Softfile Tamu', icon: QrCode },
+      ],
+    },
+    {
+      groupTitle: 'ADMINISTRASI & STAFF',
+      items: [
+        { id: 'staff', label: 'Staff Management', icon: UserCheck },
+      ],
+    },
+  ], []);
+
+  // Filter accessible menus if logged in as staff
+  const accessibleMenuGroups = useMemo(() => {
+    if (!currentUser || currentUser.role === 'admin' || !Array.isArray(currentUser.allowed_menus)) {
+      return menuGroups;
+    }
+    return menuGroups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item =>
+          currentUser.allowed_menus.includes('all') || currentUser.allowed_menus.includes(item.id)
+        ),
+      }))
+      .filter(group => group.items.length > 0);
+  }, [currentUser, menuGroups]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const activeItemLabel = useMemo(() => {
+    for (const group of menuGroups) {
+      const found = group.items.find(item => item.id === activeTab);
+      if (found) return found.label;
+    }
+    return 'Command Center';
+  }, [activeTab]);
+
   // ── SANS Signature Login Screen (Electric Blue #120CD6) ──────────────────────────
   if (!isAuthenticated) {
     return (
@@ -1891,65 +1950,6 @@ export default function OnlineAdminPage() {
       </div>
     );
   }
-
-  // ── Navigation Menu Definitions (Modern Studio Redesign) ─────────────
-  const menuGroups = useMemo(() => [
-    {
-      groupTitle: 'MONITOR & INSIGHTS',
-      items: [
-        { id: 'dashboard', label: 'Command Center', icon: LayoutGrid },
-        { id: 'transactions', label: 'Sesi Transaksi', icon: Receipt },
-        { id: 'live_monitor', label: 'Bilik Realtime', icon: Radio },
-        { id: 'statistics', label: 'Laporan & Finansial', icon: LineChart },
-      ],
-    },
-    {
-      groupTitle: 'UNIT KIOSK & PAYMENT',
-      items: [
-        { id: 'kiosks', label: 'Kelola Bilik Kiosk', icon: MonitorPlay },
-        { id: 'payment_gateway', label: 'Payment Gateway', icon: WalletCards },
-        { id: 'vouchers', label: 'Voucher Kasir / Tunai', icon: TicketPercent },
-      ],
-    },
-    {
-      groupTitle: 'STUDIO & TEMPLATE',
-      items: [
-        { id: 'templates', label: 'Frame Studio', icon: Palette },
-        { id: 'template_categories', label: 'Kategori Frame', icon: Boxes },
-        { id: 'gallery', label: 'Galeri Foto Sesi', icon: Images },
-        { id: 'public_gallery', label: 'Portal Softfile Tamu', icon: QrCode },
-      ],
-    },
-    {
-      groupTitle: 'ADMINISTRASI & STAFF',
-      items: [
-        { id: 'staff', label: 'Staff Management', icon: UserCheck },
-      ],
-    },
-  ], []);
-
-  // Filter accessible menus if logged in as staff
-  const accessibleMenuGroups = useMemo(() => {
-    if (!currentUser || currentUser.role === 'admin' || !Array.isArray(currentUser.allowed_menus)) {
-      return menuGroups;
-    }
-    return menuGroups
-      .map(group => ({
-        ...group,
-        items: group.items.filter(item =>
-          currentUser.allowed_menus.includes('all') || currentUser.allowed_menus.includes(item.id)
-        ),
-      }))
-      .filter(group => group.items.length > 0);
-  }, [currentUser, menuGroups]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const activeItemLabel = useMemo(() => {
-    for (const group of menuGroups) {
-      const found = group.items.find(item => item.id === activeTab);
-      if (found) return found.label;
-    }
-    return 'Command Center';
-  }, [activeTab]);
 
   // ── Main Authenticated Layout (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F, White #FFFFFF) ───────────────────
   return (
