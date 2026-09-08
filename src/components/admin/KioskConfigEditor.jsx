@@ -1358,7 +1358,7 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                   type="text"
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
-                  placeholder="Contoh: NoLima / Event Strip"
+                  placeholder="Contoh: Classic 4R / Studio Strip"
                   className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-xs"
                   required
                   autoFocus

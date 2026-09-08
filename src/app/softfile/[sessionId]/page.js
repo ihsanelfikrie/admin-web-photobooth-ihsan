@@ -132,13 +132,13 @@ export default function SoftfileGalleryPage() {
       {/* Top Banner Header */}
       <header className="w-full max-w-3xl flex flex-col items-center text-center py-6 border-b border-white/20 mb-6">
         <span className="px-4 py-1.5 bg-[#E5FD5F] text-[#111111] text-xs font-black rounded-full uppercase tracking-wider mb-3 shadow-md">
-          NADHISANBOOTH • SELF-SERVICE PHOTOBOOTH STUDIO
+          NADHISAN STUDIO • VISUAL PHOTO EXPERIENCE
         </span>
         <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-          NadhisanBooth
+          Nadhisan Studio
         </h1>
         <p className="text-xs md:text-sm text-white/80 font-bold mt-1 uppercase tracking-wider">
-          GALERI RESMI PENGUNDUHAN SOFTFILE DIGITAL
+          ARSIP DIGITAL & SOFTFILE RESMI STUDIO
         </p>
 
         {/* 24-Hour Expiry Alert */}
@@ -171,7 +171,7 @@ export default function SoftfileGalleryPage() {
           <div className="w-full p-8 bg-white text-[#111111] border-2 border-rose-500 rounded-3xl text-center space-y-3 shadow-xl max-w-lg">
             <div className="text-3xl font-black text-rose-600">MASA AKTIF BERAKHIR</div>
             <p className="text-xs font-medium text-slate-600 leading-relaxed">
-              Sesuai kebijakan privasi kampus, file foto digital di server cloud otomatis dibersihkan setelah 24 jam.
+              Sesuai kebijakan privasi studio otomatis, softfile foto dan video di cloud gallery akan dibersihkan setelah 24 jam.
             </p>
           </div>
         )}
@@ -229,13 +229,13 @@ export default function SoftfileGalleryPage() {
                 <div className="relative max-w-md w-full bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm p-1">
                   <img
                     src={mainPhotoUrl}
-                    alt="Hasil Foto NadhisanBooth"
+                    alt="Hasil Foto Nadhisan Studio"
                     className="w-full h-auto object-contain rounded-xl"
                   />
                 </div>
 
                 <button
-                  onClick={() => handleDownload(mainPhotoUrl, `komvigi-booth-${sessionId}.jpg`)}
+                  onClick={() => handleDownload(mainPhotoUrl, `nadhisan-studio-${sessionId}.jpg`)}
                   className="w-full max-w-md py-4 bg-[#E5FD5F] hover:bg-[#d6f046] active:bg-[#F908E0] active:text-white text-[#111111] font-black rounded-full transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-[#120CD6]"
                 >
                   <span>⬇ UNDUH FOTO BINGKAI UTAMA HD</span>
@@ -268,7 +268,7 @@ export default function SoftfileGalleryPage() {
                 </div>
 
                 <button
-                  onClick={() => handleDownload(videoMediaUrl, `komvigi-reel-${sessionId}.mp4`)}
+                  onClick={() => handleDownload(videoMediaUrl, `nadhisan-reel-${sessionId}.mp4`)}
                   className="w-full max-w-md py-4 bg-[#120CD6] hover:bg-blue-800 active:bg-[#F908E0] text-white font-black rounded-full transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98] text-sm uppercase tracking-wider flex items-center justify-center gap-2"
                 >
                   <span>⬇ UNDUH VIDEO REEL MP4</span>
@@ -327,10 +327,10 @@ export default function SoftfileGalleryPage() {
       {/* Footer */}
       <footer className="w-full max-w-3xl flex flex-col sm:flex-row justify-between items-center text-xs text-white/80 py-4 border-t border-white/20 gap-2 text-center">
         <div className="font-semibold text-[11px]">
-          NadhisanBooth • Self-Service Photobooth Studio
+          Nadhisan Studio • Modern Visual Photobooth Space
         </div>
         <div className="text-[11px] font-bold text-[#E5FD5F]">
-          Kiosk App
+          Digital Cloud Archive
         </div>
       </footer>
     </main>
