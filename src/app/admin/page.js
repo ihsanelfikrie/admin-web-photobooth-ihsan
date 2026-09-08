@@ -1872,7 +1872,7 @@ export default function OnlineAdminPage() {
   }
 
   // ── Navigation Menu Definitions (Modern Studio Redesign) ─────────────
-  const menuGroups = [
+  const menuGroups = useMemo(() => [
     {
       groupTitle: 'MONITOR & INSIGHTS',
       items: [
@@ -1905,7 +1905,7 @@ export default function OnlineAdminPage() {
         { id: 'staff', label: 'Staff Management', icon: UserCheck },
       ],
     },
-  ];
+  ], []);
 
   // Filter accessible menus if logged in as staff
   const accessibleMenuGroups = useMemo(() => {
@@ -1920,7 +1920,7 @@ export default function OnlineAdminPage() {
         ),
       }))
       .filter(group => group.items.length > 0);
-  }, [currentUser, menuGroups]);
+  }, [currentUser, menuGroups]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeItemLabel = useMemo(() => {
     for (const group of menuGroups) {
