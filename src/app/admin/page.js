@@ -557,6 +557,27 @@ export default function OnlineAdminPage() {
   const [cleanupResult, setCleanupResult]     = useState(null);
   const [actionLoading, setActionLoading]     = useState(false);
 
+  // ── Staff Management State ───────────────────────────────────────────────
+  const [staffList, setStaffList]                         = useState([]);
+  const [loadingStaff, setLoadingStaff]                   = useState(false);
+  const [searchStaff, setSearchStaff]                     = useState('');
+  const [isAddStaffOpen, setIsAddStaffOpen]               = useState(false);
+  const [newStaffEmail, setNewStaffEmail]                 = useState('');
+  const [newStaffName, setNewStaffName]                   = useState('');
+  const [newStaffPassword, setNewStaffPassword]           = useState('');
+  const [newStaffConfirmPassword, setNewStaffConfirmPassword] = useState('');
+  const [passwordMode, setPasswordMode]                   = useState('auto');
+  const [createdStaffPasswordNotice, setCreatedStaffPasswordNotice] = useState(null);
+  const [selectedStaff, setSelectedStaff]                 = useState(null);
+  const [staffMenuAccess, setStaffMenuAccess]             = useState([]);
+  const [staffKioskAccess, setStaffKioskAccess]           = useState(['all']);
+  const [isAccessModalOpen, setIsAccessModalOpen]         = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen]     = useState(false);
+  const [changePasswordVal, setChangePasswordVal]         = useState('');
+  const [changePasswordConfirmVal, setChangePasswordConfirmVal] = useState('');
+  const [showNewStaffPassword, setShowNewStaffPassword]   = useState(false);
+  const [showChangePassword, setShowChangePassword]       = useState(false);
+
   // Toast Helper
   const showToast = (text, type = 'success') => {
     setToastMessage({ text, type });
