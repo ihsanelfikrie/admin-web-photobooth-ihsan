@@ -9,8 +9,8 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "TarasaBooth — Galeri Softfile & Panel Admin Cloud",
-  description: "Galeri Softfile Digital & Panel Admin Cloud Resmi TarasaBooth Photobooth Studio",
+  title: "NadhisanBooth — Galeri Softfile & Panel Admin Cloud",
+  description: "Galeri Softfile Digital & Panel Admin Cloud Resmi Nadhisan Photobooth Studio",
 };
 
 export default function RootLayout({ children }) {

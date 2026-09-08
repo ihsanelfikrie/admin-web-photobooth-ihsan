@@ -72,8 +72,14 @@ export async function GET(req, { params }) {
         name: kiosk.name,
         license_key: kiosk.license_key,
         device_id: kiosk.device_id,
+        os_hostname: kiosk.os_hostname || null,
+        os_platform: kiosk.os_platform || null,
         is_active: kiosk.is_active,
         is_testing_mode: kiosk.is_testing_mode ?? false,
+        is_event_mode: kiosk.is_event_mode ?? false,
+        event_name: kiosk.event_name || "",
+        is_queue_enabled: kiosk.is_queue_enabled ?? false,
+        pin: kiosk.pin || "1234",
         consent_enabled: kiosk.consent_enabled ?? true,
         consent_text: kiosk.consent_text || "Apakah anda berkenan foto anda kami unggah di media sosial kami?",
         consent_text_yes: kiosk.consent_text_yes || "Baik/Mengerti",
@@ -81,6 +87,7 @@ export async function GET(req, { params }) {
         countdown_timer: kiosk.countdown_timer ?? 10,
         qr_timer: kiosk.qr_timer ?? 90,
         session_duration: kiosk.session_duration ?? 300,
+        inactivity_timeout: kiosk.inactivity_timeout ?? 90,
         live_photo: kiosk.live_photo ?? true,
         max_photo: kiosk.max_photo ?? 6,
         max_print: kiosk.max_print ?? 5,
@@ -88,9 +95,18 @@ export async function GET(req, { params }) {
         price_per_photo: kiosk.price_per_photo ?? 30000,
         price_extra_print: kiosk.price_extra_print ?? 10000,
         price_discount: kiosk.price_discount ?? 0,
+        midtrans_client_key: kiosk.midtrans_client_key || null,
+        midtrans_server_key: kiosk.midtrans_server_key || null,
+        midtrans_environment: kiosk.midtrans_environment || "production",
         paper_management_enabled: kiosk.paper_management_enabled ?? true,
         paper_stock: kiosk.paper_stock ?? 700,
-        last_ping_at: kiosk.last_ping_at
+        paper_alert_threshold: kiosk.paper_alert_threshold ?? 50,
+        allowed_filters: kiosk.allowed_filters || [],
+        allowed_categories: kiosk.allowed_categories || [],
+        ota_version: kiosk.ota_version || "1.0.0",
+        ota_update_url: kiosk.ota_update_url || "",
+        last_ping_at: kiosk.last_ping_at,
+        updated_at: kiosk.updated_at
       }
     });
   } catch (error) {

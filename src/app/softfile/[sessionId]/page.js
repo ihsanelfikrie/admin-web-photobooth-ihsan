@@ -83,7 +83,7 @@ export default function SoftfileGalleryPage() {
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = filename || 'tarasabooth-photo.jpg';
+      link.download = filename || 'nadhisanbooth-photo.jpg';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -99,15 +99,15 @@ export default function SoftfileGalleryPage() {
     try {
       const queue = [];
       if (mainPhotoUrl) {
-        queue.push({ url: mainPhotoUrl, name: `tarasabooth-frame-${sessionId}.jpg` });
+        queue.push({ url: mainPhotoUrl, name: `nadhisanbooth-frame-${sessionId}.jpg` });
       }
       if (videoMediaUrl) {
-        queue.push({ url: videoMediaUrl, name: `tarasabooth-video-${sessionId}.mp4` });
+        queue.push({ url: videoMediaUrl, name: `nadhisanbooth-video-${sessionId}.mp4` });
       }
       singlePhotosList.forEach((item, idx) => {
         const photoUrl = typeof item === 'string' ? item : (item.publicUrl || item.url || item.filePath);
         if (photoUrl) {
-          queue.push({ url: photoUrl, name: `tarasabooth-pose-${idx + 1}-${sessionId}.jpg` });
+          queue.push({ url: photoUrl, name: `nadhisanbooth-pose-${idx + 1}-${sessionId}.jpg` });
         }
       });
 
@@ -132,10 +132,10 @@ export default function SoftfileGalleryPage() {
       {/* Top Banner Header */}
       <header className="w-full max-w-3xl flex flex-col items-center text-center py-6 border-b border-white/20 mb-6">
         <span className="px-4 py-1.5 bg-[#E5FD5F] text-[#111111] text-xs font-black rounded-full uppercase tracking-wider mb-3 shadow-md">
-          TARASABOOTH • SELF-SERVICE PHOTOBOOTH STUDIO
+          NADHISANBOOTH • SELF-SERVICE PHOTOBOOTH STUDIO
         </span>
         <h1 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-          TarasaBooth
+          NadhisanBooth
         </h1>
         <p className="text-xs md:text-sm text-white/80 font-bold mt-1 uppercase tracking-wider">
           GALERI RESMI PENGUNDUHAN SOFTFILE DIGITAL
@@ -229,7 +229,7 @@ export default function SoftfileGalleryPage() {
                 <div className="relative max-w-md w-full bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-200 shadow-sm p-1">
                   <img
                     src={mainPhotoUrl}
-                    alt="Hasil Foto TarasaBooth"
+                    alt="Hasil Foto NadhisanBooth"
                     className="w-full h-auto object-contain rounded-xl"
                   />
                 </div>
@@ -327,7 +327,7 @@ export default function SoftfileGalleryPage() {
       {/* Footer */}
       <footer className="w-full max-w-3xl flex flex-col sm:flex-row justify-between items-center text-xs text-white/80 py-4 border-t border-white/20 gap-2 text-center">
         <div className="font-semibold text-[11px]">
-          TarasaBooth • Self-Service Photobooth Studio
+          NadhisanBooth • Self-Service Photobooth Studio
         </div>
         <div className="text-[11px] font-bold text-[#E5FD5F]">
           Kiosk App

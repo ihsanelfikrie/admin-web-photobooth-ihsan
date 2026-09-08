@@ -353,8 +353,8 @@ export async function getKioskTelemetry() {
 
     if (error || !data) {
       return {
-        license_key: 'TARASABOOTH-001',
-        kiosk_name: 'TarasaBooth Main Studio',
+        license_key: 'NDH-88A-72K',
+        kiosk_name: 'Nadhisan Booth 01',
         online: true,
         last_ping: Date.now(),
         paper: {
@@ -381,8 +381,8 @@ export async function getKioskTelemetry() {
     return JSON.parse(text);
   } catch (_) {
     return {
-      license_key: 'TARASABOOTH-001',
-      kiosk_name: 'TarasaBooth Main Studio',
+      license_key: 'NDH-88A-72K',
+      kiosk_name: 'Nadhisan Booth 01',
       online: true,
       last_ping: Date.now(),
       paper: { raw_stock: 700, booked_stock: 0, pending_prints: 0, available: 700, initial_count: 700 },
@@ -452,7 +452,7 @@ export async function addCloudPrintJob(job) {
     const jobs = await getCloudPrintJobs();
     const newJob = {
       id: `print_job_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      session_code: job.sessionCode || job.sessionId || 'TARASA',
+      session_code: job.sessionCode || job.sessionId || 'NADHISAN',
       order_id: job.orderId || `ORD-${Date.now()}`,
       copies: Number(job.copies) || 1,
       status: 'pending',
@@ -685,6 +685,9 @@ export async function getFinancialSummary(filterRange = 'all') {
         originalPrice: price,
         paymentMethod: method.includes('qris') ? 'QRIS (Midtrans)' : method.includes('cash') ? 'Tunai / Manual' : method.includes('voucher') ? 'Voucher Free Pass' : 'QRIS (Midtrans)',
         status: s.paymentStatus || 'PAID',
+        kioskId: s.kioskId || s.kiosk_id || null,
+        kioskName: s.kioskName || s.kiosk_name || null,
+        licenseKey: s.licenseKey || s.license_key || null,
       });
     }
   }

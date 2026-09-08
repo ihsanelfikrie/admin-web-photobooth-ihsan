@@ -22,7 +22,7 @@ export default function HomePage() {
       <header className="w-full max-w-4xl flex justify-between items-center">
         <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#E5FD5F] text-[#111111] text-xs font-black uppercase tracking-wider shadow-md">
           <span className="h-2 w-2 rounded-full bg-[#120CD6] animate-ping" />
-          <span>TARASABOOTH CLOUD PORTAL</span>
+          <span>NADHISANBOOTH CLOUD PORTAL</span>
         </div>
 
         <Link
@@ -40,12 +40,12 @@ export default function HomePage() {
       <div className="w-full max-w-xl bg-white text-[#111111] rounded-3xl p-8 md:p-10 shadow-2xl my-auto text-center flex flex-col items-center gap-6 border-4 border-white">
         
         <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full text-xs font-black tracking-widest uppercase bg-[#120CD6] text-[#E5FD5F]">
-          <span>TARASABOOTH STUDIO PORTAL</span>
+          <span>NADHISANBOOTH STUDIO PORTAL</span>
         </div>
 
         <div className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-black text-[#120CD6] uppercase tracking-tight">
-            TarasaBooth
+            NadhisanBooth
           </h1>
           <h2 className="text-sm md:text-base font-bold text-slate-600 uppercase tracking-wider">
             Galeri Softfile Digital &amp; Video Reel
@@ -103,7 +103,7 @@ export default function HomePage() {
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#E5FD5F]" />
           <span className="font-bold text-white">SANS Creative</span>
-          <span className="text-white/70">• TarasaBooth Studio</span>
+          <span className="text-white/70">• NadhisanBooth Studio</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] md:text-xs">
           <span>Instagram: <strong className="text-white">@Ihsanelfikrie_</strong></span>

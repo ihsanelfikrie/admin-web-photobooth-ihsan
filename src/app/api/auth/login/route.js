@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { NextResponse } from 'next/server';
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://rifcawifuojzercjauhy.supabase.co';
@@ -15,8 +18,8 @@ export async function POST(req) {
         return NextResponse.json({
           success: true,
           user: {
-            email: 'admin@tarasabooth.com',
-            name: 'Admin Tarasa Booth',
+            email: 'admin@nadhisan.com',
+            name: 'Admin Nadhisan Booth',
             role: 'admin',
           },
           pin: expectedPin,
@@ -48,7 +51,7 @@ export async function POST(req) {
             success: true,
             user: {
               email: authData.user?.email || email,
-              name: authData.user?.user_metadata?.name || 'Admin Tarasa Booth',
+              name: authData.user?.user_metadata?.name || 'Admin Nadhisan Booth',
               role: 'admin',
             },
             token: authData.access_token,
@@ -60,12 +63,12 @@ export async function POST(req) {
       }
 
       // Hardened fallback for admin credentials
-      if (email.trim().toLowerCase() === 'admin@tarasabooth.com' && password === 'Barabai@132') {
+      if ((email.trim().toLowerCase() === 'admin@nadhisan.com' || email.trim().toLowerCase() === 'admin@tarasabooth.com') && password === 'Barabai@132') {
         return NextResponse.json({
           success: true,
           user: {
-            email: 'admin@tarasabooth.com',
-            name: 'Admin Tarasa Booth',
+            email: 'admin@nadhisan.com',
+            name: 'Admin Nadhisan Booth',
             role: 'admin',
           },
           pin: expectedPin,

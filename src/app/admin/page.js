@@ -358,10 +358,10 @@ ${photosXml.trimEnd()}
 export default function OnlineAdminPage() {
   // Auth state
   const [loginMethod, setLoginMethod]         = useState('credentials'); // 'credentials' | 'pin'
-  const [emailInput, setEmailInput]           = useState('admin@tarasabooth.com');
+  const [emailInput, setEmailInput]           = useState('admin@nadhisan.com');
   const [passwordInput, setPasswordInput]     = useState('');
   const [showPassword, setShowPassword]       = useState(false);
-  const [currentUser, setCurrentUser]         = useState({ email: 'admin@tarasabooth.com', name: 'Admin Tarasa Booth' });
+  const [currentUser, setCurrentUser]         = useState({ email: 'admin@nadhisan.com', name: 'Admin Nadhisan Booth' });
   const [pinInput, setPinInput]               = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError]             = useState('');
@@ -396,6 +396,7 @@ export default function OnlineAdminPage() {
   const [zipping, setZipping]                 = useState(false);
   const [previewModalImg, setPreviewModalImg] = useState(null);
   const [activeGalleryKiosk, setActiveGalleryKiosk] = useState(null);
+  const [transactionKioskFilter, setTransactionKioskFilter] = useState('all');
 
   // Kiosk Modal & Management State
   const [isKioskModalOpen, setIsKioskModalOpen] = useState(false);
@@ -430,7 +431,7 @@ export default function OnlineAdminPage() {
   const [pricingConfig, setPricingConfig] = useState(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("tarasa_admin_pricing");
+        const saved = localStorage.getItem("nadhisan_admin_pricing");
         if (saved) return JSON.parse(saved);
       } catch (_) {}
     }
@@ -540,7 +541,7 @@ export default function OnlineAdminPage() {
         setIsAuthenticated(true);
         sessionStorage.setItem('admin_pin', pin);
         if (!sessionStorage.getItem('admin_user_email')) {
-          sessionStorage.setItem('admin_user_email', 'admin@tarasabooth.com');
+          sessionStorage.setItem('admin_user_email', 'admin@nadhisan.com');
         }
         setSessions(json.sessions || []);
         loadVouchers(pin);
@@ -577,7 +578,7 @@ export default function OnlineAdminPage() {
         const pin = json.pin || '1234';
         sessionStorage.setItem('admin_pin', pin);
         sessionStorage.setItem('admin_user_email', json.user?.email || emailInput.trim());
-        setCurrentUser(json.user || { email: emailInput.trim(), name: 'Admin Tarasa Booth' });
+        setCurrentUser(json.user || { email: emailInput.trim(), name: 'Admin Nadhisan Booth' });
 
         const sessRes = await fetch(`/api/sessions?pin=${pin}`);
         const sessJson = await sessRes.json();
@@ -857,7 +858,7 @@ export default function OnlineAdminPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `tarasabooth-laporan-keuangan-${financeRange}-${Date.now()}.csv`);
+    link.setAttribute('download', `nadhisanbooth-laporan-keuangan-${financeRange}-${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -873,7 +874,7 @@ export default function OnlineAdminPage() {
 
     try {
       const zip = new JSZip();
-      const folder = zip.folder(`tarasabooth-${session.sessionId}`);
+      const folder = zip.folder(`nadhisanbooth-${session.sessionId}`);
 
       // 1. Composite Frame
       const compUrl = getDisplayCdnUrl(session.cdnCompositeUrl || session.compositeUrl);
@@ -913,7 +914,7 @@ export default function OnlineAdminPage() {
       const blobUrl = URL.createObjectURL(zipBlob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `tarasabooth-paket-lengkap-${session.sessionId}.zip`;
+      link.download = `nadhisanbooth-paket-lengkap-${session.sessionId}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1031,7 +1032,7 @@ export default function OnlineAdminPage() {
             type: voucherType,
             value: voucherValue,
             maxUses: voucherMaxUses,
-            description: voucherDesc || 'Voucher Spesial TarasaBooth',
+            description: voucherDesc || 'Voucher Spesial NadhisanBooth',
           },
         }),
       });
@@ -1101,29 +1102,6 @@ export default function OnlineAdminPage() {
   };
 
   // Kiosk CRUD Handlers
-  const handleSaveKiosk = (e) => {
-    e.preventDefault();
-    if (!kioskForm.name.trim()) return;
-
-    if (editingKiosk) {
-      setKiosks(prev => prev.map(k => k.id === editingKiosk.id ? { ...k, ...kioskForm } : k));
-      showToast('Data kiosk berhasil diperbarui.');
-    } else {
-      const newKiosk = {
-        id: `kiosk-${Date.now()}`,
-        ...kioskForm,
-        licenseKey: kioskForm.licenseKey || `TRSA-BOOTH-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-        created: new Date().toISOString().split('T')[0],
-        paperRoll: 100,
-        paperMax: 100,
-      };
-      setKiosks(prev => [...prev, newKiosk]);
-      showToast('Kiosk baru berhasil ditambahkan.');
-    }
-    setIsKioskModalOpen(false);
-    setEditingKiosk(null);
-  };
-
   const handleDeleteKiosk = async (kioskId) => {
     const target = kiosks.find(k => k.id === kioskId);
     if (!confirm(`Hapus kiosk "${target?.name || "ini"}" secara permanen dari Cloud?`)) return;
@@ -1272,16 +1250,43 @@ export default function OnlineAdminPage() {
 
   const filteredSessions = useMemo(() => {
     return sessions.filter(s => {
-      const matchesSearch = searchQuery === '' ||
+      if (activeGalleryKiosk) {
+        const targetLicense = (activeGalleryKiosk.licenseKey || activeGalleryKiosk.license_key || "").trim().toUpperCase();
+        const sessLicense = (s.licenseKey || s.license_key || "").trim().toUpperCase();
+        const matchesKiosk = (targetLicense && sessLicense === targetLicense) ||
+          (s.kioskId && String(s.kioskId) === String(activeGalleryKiosk.id)) ||
+          (s.kioskName && s.kioskName.toLowerCase() === (activeGalleryKiosk.name || "").toLowerCase()) ||
+          (kiosks.length === 1);
+        if (!matchesKiosk) return false;
+      }
+      const matchesSearch = searchQuery === "" ||
         s.sessionId?.toLowerCase().includes(searchQuery.toLowerCase());
       const isExpired = (now - (s.createdAt || 0)) > TWENTY_FOUR_HOURS_MS;
       const matchesStatus =
-        statusFilter === 'all' ? true :
-        statusFilter === 'active' ? !isExpired : isExpired;
+        statusFilter === "all" ? true :
+        statusFilter === "active" ? !isExpired : isExpired;
 
       return matchesSearch && matchesStatus;
     });
-  }, [sessions, searchQuery, statusFilter, now]);
+  }, [sessions, activeGalleryKiosk, kiosks.length, searchQuery, statusFilter, now]);
+
+  const displayedTransactions = useMemo(() => {
+    if (!finance?.transactions) return [];
+    return finance.transactions.filter(t => {
+      if (transactionKioskFilter !== "all") {
+        const matchKiosk = String(t.kioskId) === String(transactionKioskFilter) ||
+          (t.licenseKey && t.licenseKey.trim().toUpperCase() === transactionKioskFilter.trim().toUpperCase()) ||
+          (t.kioskName && t.kioskName.toLowerCase() === transactionKioskFilter.toLowerCase());
+        if (!matchKiosk) return false;
+      }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (t.orderId && t.orderId.toLowerCase().includes(q)) ||
+          (t.sessionId && t.sessionId.toLowerCase().includes(q));
+      }
+      return true;
+    });
+  }, [finance?.transactions, transactionKioskFilter, searchQuery]);
 
   // Combined Templates Catalog for Display
   const allTemplates = useMemo(() => {
@@ -1370,12 +1375,12 @@ export default function OnlineAdminPage() {
           {/* SANS Brand Tag */}
           <div className="flex items-center gap-2 px-4 py-1.5 bg-[#E5FD5F] text-[#111111] rounded-full text-xs font-black uppercase tracking-wider border border-[#120CD6]">
             <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
-            TARASA BOOTH MANAGEMENT
+            NADHISAN BOOTH MANAGEMENT
           </div>
 
           <div className="text-center space-y-1">
             <h1 className="text-2xl md:text-3xl font-black text-[#120CD6] uppercase tracking-tight">
-              Tarasa Booth
+              Nadhisan Booth
             </h1>
             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">
               Pusat Kendali Photobooth Studio
@@ -1431,7 +1436,7 @@ export default function OnlineAdminPage() {
                       setEmailInput(e.target.value);
                       setAuthError('');
                     }}
-                    placeholder="admin@tarasabooth.com"
+                    placeholder="admin@nadhisan.com"
                     className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-sm font-semibold text-[#111111] focus:outline-none focus:border-[#120CD6] transition-colors"
                   />
                 </div>
@@ -1602,7 +1607,7 @@ export default function OnlineAdminPage() {
             </div>
             <div>
               <h2 className="text-base font-black text-white tracking-tight uppercase leading-tight">
-                Tarasa Booth
+                Nadhisan Booth
               </h2>
               <p className="text-[10px] text-[#E5FD5F] font-bold uppercase tracking-wider">
                 Booth Management
@@ -1663,11 +1668,11 @@ export default function OnlineAdminPage() {
               TB
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-xs font-black text-white truncate" title={currentUser?.email || 'admin@tarasabooth.com'}>
-                {currentUser?.email || 'admin@tarasabooth.com'}
+              <p className="text-xs font-black text-white truncate" title={currentUser?.email || 'admin@nadhisan.com'}>
+                {currentUser?.email || 'admin@nadhisan.com'}
               </p>
               <span className="text-[10px] text-[#E5FD5F] font-semibold block">
-                Tarasa Administrator
+                Nadhisan Administrator
               </span>
             </div>
           </div>
@@ -1779,54 +1784,62 @@ export default function OnlineAdminPage() {
                   </div>
 
                   <div className="space-y-3">
-                    {kiosks.map((k) => (
-                      <div
-                        key={k.id}
-                        className="p-4 rounded-xl border border-slate-200 bg-[#F5F5F5] hover:bg-slate-100 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#120CD6] flex items-center justify-center text-[#120CD6] shrink-0 font-black">
-                            <Store className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="text-sm font-black text-[#111111]">{k.name}</h3>
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#120CD6]" />
-                                Live
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-0.5">{k.deviceType} • {k.location}</p>
-                            <div className="flex items-center gap-3 text-[11px] text-slate-500 mt-2 font-bold">
-                              <span>Kertas: {k.paperRoll}%</span>
-                              <span>•</span>
-                              <span>Ping: 24 ms</span>
-                              <span>•</span>
-                              <span>Tarif: Rp {k.price.toLocaleString('id-ID')}</span>
-                            </div>
-                          </div>
-                        </div>
+                    {kiosks.map((k) => {
+                      const isOnline = k.last_ping_at && (Date.now() - new Date(k.last_ping_at).getTime() < 120000);
+                      const paperVal = Number(k.paper_stock ?? (k.paperRoll ?? 700));
+                      const maxVal = 700;
+                      const pct = Math.min(100, Math.max(0, Math.round((paperVal / maxVal) * 100)));
+                      const diffSec = k.last_ping_at ? Math.round((Date.now() - new Date(k.last_ping_at).getTime()) / 1000) : null;
+                      const pingLabel = diffSec !== null ? (diffSec < 60 ? `${diffSec}d lalu` : `${Math.round(diffSec / 60)}m lalu`) : "Belum terhubung";
 
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            onClick={() => {
-                              setEditingKiosk(k);
-                              setKioskForm({
-                                name: k.name,
-                                deviceType: k.deviceType,
-                                gateway: k.gateway,
-                                price: k.price,
-                                location: k.location,
-                              });
-                              setIsKioskModalOpen(true);
-                            }}
-                            className="px-4 py-2 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase shadow-xs"
-                          >
-                            Kelola
-                          </button>
+                      return (
+                        <div
+                          key={k.id}
+                          className="p-4 rounded-xl border border-slate-200 bg-[#F5F5F5] hover:bg-slate-100 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-white border-2 border-[#120CD6] flex items-center justify-center text-[#120CD6] shrink-0 font-black">
+                              <Store className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-black text-[#111111]">{k.name}</h3>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                                  isOnline
+                                    ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                    : "bg-slate-200 text-slate-600"
+                                }`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                                  {isOnline ? "Online" : "Offline"}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 mt-0.5">{k.deviceType} • {k.location || "Outlet Utama"}</p>
+                              <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-slate-500 mt-2 font-bold">
+                                <span>Kertas: <strong className="text-slate-900">{paperVal} lbr ({pct}%)</strong></span>
+                                <span>•</span>
+                                <span>Koneksi: <strong className="text-[#120CD6]">{pingLabel}</strong></span>
+                                <span>•</span>
+                                <span>Tarif: <strong className="text-slate-900">Rp {k.price.toLocaleString("id-ID")}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => {
+                                setActiveKioskForConfig(k);
+                                setActiveTab("kiosks");
+                              }}
+                              className="px-4 py-2 bg-[#120CD6] hover:bg-blue-800 text-white rounded-xl text-xs font-black transition-colors cursor-pointer uppercase shadow-xs flex items-center gap-1.5"
+                              title="Buka Konfigurasi Lengkap Kiosk Ini"
+                            >
+                              <Sliders className="w-3.5 h-3.5" />
+                              <span>Kelola</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1903,6 +1916,18 @@ export default function OnlineAdminPage() {
                     ))}
                   </div>
 
+                  {/* Kiosk Filter Dropdown */}
+                  <select
+                    value={transactionKioskFilter}
+                    onChange={(e) => setTransactionKioskFilter(e.target.value)}
+                    className="px-3 py-2 bg-white border-2 border-slate-200 rounded-xl text-xs font-black text-slate-800 focus:outline-none focus:border-[#120CD6] cursor-pointer uppercase"
+                  >
+                    <option value="all">Semua Kiosk</option>
+                    {kiosks.map(k => (
+                      <option key={k.id} value={k.id}>{k.name}</option>
+                    ))}
+                  </select>
+
                   <button
                     onClick={handleExportCsv}
                     className="px-4 py-2 bg-[#E5FD5F] hover:bg-[#d8f244] border-2 border-[#120CD6] rounded-xl text-xs font-black text-[#111111] flex items-center gap-1.5 transition-colors cursor-pointer uppercase"
@@ -1928,7 +1953,7 @@ export default function OnlineAdminPage() {
                   </div>
 
                   <div className="text-xs text-slate-500 font-bold">
-                    Total: <span className="font-black text-[#120CD6]">{finance?.transactions?.length || 0}</span> transaksi
+                    Total: <span className="font-black text-[#120CD6]">{displayedTransactions.length}</span> transaksi {transactionKioskFilter !== "all" ? "(Kiosk Terfilter)" : ""}
                   </div>
                 </div>
 
@@ -1946,8 +1971,8 @@ export default function OnlineAdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
-                      {(finance?.transactions && finance.transactions.length > 0) ? (
-                        finance.transactions.map((t, idx) => (
+                      {(displayedTransactions && displayedTransactions.length > 0) ? (
+                        displayedTransactions.map((t, idx) => (
                           <tr key={t.orderId || idx} className="hover:bg-slate-50 transition-colors">
                             <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{t.orderId}</td>
                             <td className="py-3.5 px-4 font-mono text-slate-600">{t.sessionId}</td>
@@ -2036,66 +2061,105 @@ export default function OnlineAdminPage() {
                           </div>
                         </div>
 
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#E5FD5F] text-[#111111] border border-[#120CD6]">
-                          <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
-                          Online
-                        </span>
+                        {(() => {
+                          const isOnline = k.last_ping_at && (Date.now() - new Date(k.last_ping_at).getTime() < 120000);
+                          return (
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black ${
+                              isOnline
+                                ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                                : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}>
+                              <span className={`w-2 h-2 rounded-full ${isOnline ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                              {isOnline ? "Online (Tersambung)" : "Offline (Idle / Mati)"}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       {/* Specs Grid */}
-                      <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
-                          <p className="text-[11px] text-slate-500 font-bold uppercase">Ping Latency</p>
-                          <p className="text-base font-black text-[#120CD6] mt-0.5">24 ms</p>
-                        </div>
+                      {(() => {
+                        const paperVal = Number(k.paper_stock ?? (k.paperRoll ?? 700));
+                        const maxVal = 700;
+                        const pct = Math.min(100, Math.max(0, Math.round((paperVal / maxVal) * 100)));
+                        const diffSec = k.last_ping_at ? Math.round((Date.now() - new Date(k.last_ping_at).getTime()) / 1000) : null;
+                        const pingLabel = diffSec !== null ? (diffSec < 60 ? `${diffSec}d lalu` : `${Math.round(diffSec / 60)}m lalu`) : "Belum ping";
 
-                        <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
-                          <p className="text-[11px] text-slate-500 font-bold uppercase">Status Sesi</p>
-                          <p className="text-base font-black text-[#111111] mt-0.5">
-                            {telemetry?.status === 'session' ? 'IN_SESSION' : 'IDLE / READY'}
-                          </p>
-                        </div>
-                      </div>
+                        return (
+                          <>
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                              <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
+                                <p className="text-[11px] text-slate-500 font-bold uppercase">Koneksi Mesin</p>
+                                <p className="text-xs font-black text-[#120CD6] mt-0.5">{pingLabel}</p>
+                              </div>
 
-                      {/* Sisa Kertas Meter */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs font-bold">
-                          <span className="text-slate-600">Sisa Kertas Thermal</span>
-                          <span className="text-[#111111] font-black">{k.paperRoll} / {k.paperMax} Lembar</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-[#120CD6] transition-all"
-                            style={{ width: `${(k.paperRoll / k.paperMax) * 100}%` }}
-                          />
-                        </div>
-                      </div>
+                              <div className="p-3 bg-[#F5F5F5] rounded-xl border border-slate-200">
+                                <p className="text-[11px] text-slate-500 font-bold uppercase">Mode Sesi</p>
+                                <p className="text-xs font-black text-[#111111] mt-0.5">
+                                  {k.is_event_mode ? "EVENT GRATIS" : "KOMERSIAL QRIS"}
+                                </p>
+                              </div>
+                            </div>
 
-                      {/* Quick Operation Controls */}
-                      <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                        <button
-                          onClick={() => handlePaperRefill(100)}
-                          disabled={actionLoading}
-                          className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#111111] text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                          <span>Refill Kertas (+100)</span>
-                        </button>
+                            {/* Sisa Kertas Meter */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs font-bold">
+                                <span className="text-slate-600">Sisa Kertas Thermal ({pct}%)</span>
+                                <span className="text-[#111111] font-black">{paperVal} / {maxVal} Lembar</span>
+                              </div>
+                              <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${pct < 20 ? "bg-rose-500" : "bg-[#120CD6]"}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
 
-                        <button
-                          onClick={handleToggleEventMode}
-                          disabled={actionLoading}
-                          className={`px-3.5 py-2 rounded-xl text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase ${
-                            telemetry?.is_event_mode
-                              ? 'bg-[#F908E0] text-white'
-                              : 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]'
-                          }`}
-                        >
-                          <Sliders className="w-3.5 h-3.5" />
-                          <span>{telemetry?.is_event_mode ? 'Mode Event (Aktif)' : 'Ubah ke Mode Event'}</span>
-                        </button>
-                      </div>
+                            {/* Quick Operation Controls */}
+                            <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                              <button
+                                onClick={() => handlePaperRefill(k.id, 100)}
+                                disabled={actionLoading}
+                                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#111111] text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase"
+                                title="Tambah 100 lembar kertas ke kiosk ini"
+                              >
+                                <Printer className="w-3.5 h-3.5" />
+                                <span>+100 Kertas</span>
+                              </button>
 
+                              <button
+                                onClick={() => handlePaperRefill(k.id, 700)}
+                                disabled={actionLoading}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase border border-emerald-200"
+                                title="Isi penuh 700 lembar kertas roll baru"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Full Roll 700</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleToggleEventMode(k.id)}
+                                disabled={actionLoading}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase ${
+                                  k.is_event_mode
+                                    ? "bg-[#F908E0] text-white"
+                                    : "bg-[#E5FD5F] text-[#111111] border border-[#120CD6]"
+                                }`}
+                              >
+                                <Sliders className="w-3.5 h-3.5" />
+                                <span>{k.is_event_mode ? "Event (Gratis)" : "Jadikan Event"}</span>
+                              </button>
+
+                              <button
+                                onClick={() => setActiveKioskForConfig(k)}
+                                className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#120CD6] text-xs font-black transition-colors flex items-center gap-1.5 cursor-pointer uppercase border border-blue-200"
+                              >
+                                <Sliders className="w-3.5 h-3.5" />
+                                <span>Edit 11-Tab</span>
+                              </button>
+                            </div>
+                          </>
+                        );
+                      })()}
                       {/* Mini Queue Controller */}
                       <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                         <div className="flex items-center justify-between">
@@ -2578,7 +2642,7 @@ export default function OnlineAdminPage() {
                     type="button"
                     onClick={() => {
                       if (typeof window !== "undefined") {
-                        localStorage.setItem("tarasa_admin_pricing", JSON.stringify(pricingConfig));
+                        localStorage.setItem("nadhisan_admin_pricing", JSON.stringify(pricingConfig));
                       }
                       showToast('Tarif sesi & paket foto berhasil disimpan!');
                     }}
@@ -2905,34 +2969,53 @@ export default function OnlineAdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
-                      {kiosks.map((k) => (
-                        <tr key={k.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-[#120CD6]" />
-                              <span className="font-black text-[#111111]">{k.name}</span>
-                              <span className="text-[11px] text-[#111111] font-black bg-[#E5FD5F] px-2.5 py-0.5 rounded-full border border-[#120CD6]">
-                                Active Today
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-4 font-black text-[#120CD6]">
-                            {sessions.length || 14} Sesi
-                          </td>
-                          <td className="py-4 px-4 font-black text-slate-800">
-                            {sessions.length || 14} Softfile
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            <button
-                              onClick={() => setActiveGalleryKiosk(k)}
-                              className="px-4 py-2 rounded-xl bg-[#120CD6] hover:bg-blue-800 text-white font-black text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer uppercase"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>View Gallery</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {kiosks.map((k) => {
+                        const kioskSessions = sessions.filter(s => {
+                          const targetKey = (k.licenseKey || k.license_key || "").trim().toUpperCase();
+                          const sessKey = (s.licenseKey || s.license_key || "").trim().toUpperCase();
+                          return (targetKey && sessKey === targetKey) ||
+                            (s.kioskId && String(s.kioskId) === String(k.id)) ||
+                            (s.kioskName && s.kioskName.toLowerCase() === (k.name || "").toLowerCase()) ||
+                            (kiosks.length === 1);
+                        });
+                        const isSelected = activeGalleryKiosk?.id === k.id;
+
+                        return (
+                          <tr key={k.id} className={`hover:bg-slate-50 transition-colors ${isSelected ? "bg-blue-50/50" : ""}`}>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${isSelected ? "bg-[#F908E0]" : "bg-[#120CD6]"}`} />
+                                <span className="font-black text-[#111111]">{k.name}</span>
+                                <span className="text-[11px] text-[#111111] font-black bg-[#E5FD5F] px-2.5 py-0.5 rounded-full border border-[#120CD6]">
+                                  {k.licenseKey}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 font-black text-[#120CD6]">
+                              {kioskSessions.length} Sesi
+                            </td>
+                            <td className="py-4 px-4 font-black text-slate-800">
+                              {kioskSessions.length} Softfile
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                              <button
+                                onClick={() => {
+                                  if (isSelected) setActiveGalleryKiosk(null);
+                                  else setActiveGalleryKiosk(k);
+                                }}
+                                className={`px-4 py-2 rounded-xl font-black text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer uppercase shadow-xs ${
+                                  isSelected
+                                    ? "bg-[#F908E0] text-white hover:bg-pink-700"
+                                    : "bg-[#120CD6] hover:bg-blue-800 text-white"
+                                }`}
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>{isSelected ? "Filter Aktif ✓" : "View Gallery"}</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -2940,15 +3023,50 @@ export default function OnlineAdminPage() {
 
               {/* Sub-section: Detailed Gallery Sessions Viewer */}
               <div className="space-y-4 pt-4">
+                {activeGalleryKiosk && (
+                  <div className="p-4 bg-blue-50 border-2 border-[#120CD6] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-3 h-3 rounded-full bg-[#120CD6] animate-ping shrink-0" />
+                      <div>
+                        <p className="text-xs font-black text-[#120CD6] uppercase tracking-wider">
+                          Galeri Khusus: {activeGalleryKiosk.name} ({activeGalleryKiosk.licenseKey})
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-bold">
+                          Hanya menampilkan {filteredSessions.length} sesi foto dari unit kiosk ini
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setActiveGalleryKiosk(null)}
+                      className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-xl text-xs font-black cursor-pointer uppercase shadow-xs self-start sm:self-auto"
+                    >
+                      ✕ Tampilkan Semua Unit
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">
-                      Semua Sesi Galeri ({filteredSessions.length})
+                      {activeGalleryKiosk ? `Sesi Galeri - ${activeGalleryKiosk.name}` : "Semua Sesi Galeri"} ({filteredSessions.length})
                     </h3>
                     <p className="text-xs text-slate-400">Softfile foto &amp; video tersinkronisasi di cloud storage</p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={activeGalleryKiosk ? activeGalleryKiosk.id : "all"}
+                      onChange={(e) => {
+                        if (e.target.value === "all") setActiveGalleryKiosk(null);
+                        else setActiveGalleryKiosk(kiosks.find(k => String(k.id) === String(e.target.value)) || null);
+                      }}
+                      className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-800 cursor-pointer uppercase"
+                    >
+                      <option value="all">Semua Kiosk</option>
+                      {kiosks.map(k => (
+                        <option key={k.id} value={k.id}>{k.name}</option>
+                      ))}
+                    </select>
                     <button
                       onClick={() => setStatusFilter('all')}
                       className={`px-3 py-1 rounded-lg text-xs font-black cursor-pointer uppercase ${
@@ -3304,7 +3422,10 @@ export default function OnlineAdminPage() {
                   </div>
                   <h3 className="text-sm font-black text-[#111111] uppercase">Receipt Strip (Thermal)</h3>
                   <p className="text-xs text-slate-500 font-medium">Kertas thermal roll 58mm / 80mm monokrom vintage.</p>
-                  <p className="text-xs font-black text-[#120CD6]">4 Template Aktif</p>
+                  {(() => {
+                    const count = allTemplates.filter(t => t.size === "Receipt" || (t.category || "").includes("Receipt")).length;
+                    return <p className="text-xs font-black text-[#120CD6]">{count} Template Aktif</p>;
+                  })()}
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
@@ -3313,7 +3434,10 @@ export default function OnlineAdminPage() {
                   </div>
                   <h3 className="text-sm font-black text-[#111111] uppercase">Photostrip 2R</h3>
                   <p className="text-xs text-slate-500 font-medium">Ukuran 2x6 strip vertikal dengan 3 atau 4 slot foto.</p>
-                  <p className="text-xs font-black text-[#120CD6]">6 Template Aktif</p>
+                  {(() => {
+                    const count = allTemplates.filter(t => t.size === "2R" || (t.category || "").includes("2R")).length;
+                    return <p className="text-xs font-black text-[#120CD6]">{count} Template Aktif</p>;
+                  })()}
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
@@ -3322,7 +3446,10 @@ export default function OnlineAdminPage() {
                   </div>
                   <h3 className="text-sm font-black text-[#111111] uppercase">Classic 4R Studio</h3>
                   <p className="text-xs text-slate-500 font-medium">Format cetak penuh 4x6 grid 4 atau 6 slot pose.</p>
-                  <p className="text-xs font-black text-[#F908E0]">8 Template Aktif</p>
+                  {(() => {
+                    const count = allTemplates.filter(t => t.size === "4R" || (t.category || "").includes("4R")).length;
+                    return <p className="text-xs font-black text-[#F908E0]">{count} Template Aktif</p>;
+                  })()}
                 </div>
 
                 <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
@@ -3331,7 +3458,10 @@ export default function OnlineAdminPage() {
                   </div>
                   <h3 className="text-sm font-black text-[#111111] uppercase">Event &amp; Wedding</h3>
                   <p className="text-xs text-slate-500 font-medium">Desain custom khusus pernikahan dan pameran brand.</p>
-                  <p className="text-xs font-black text-amber-700">3 Template Aktif</p>
+                  {(() => {
+                    const count = allTemplates.filter(t => (t.category || "").includes("Event") || (t.category || "").includes("Wedding")).length;
+                    return <p className="text-xs font-black text-amber-700">{count} Template Aktif</p>;
+                  })()}
                 </div>
               </div>
             </div>
@@ -3446,108 +3576,8 @@ export default function OnlineAdminPage() {
         </div>
       )}
 
-      {/* 3. Add/Edit Kiosk Modal */}
-      {isKioskModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
-          onClick={() => setIsKioskModalOpen(false)}
-        >
-          <div 
-            className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl border-2 border-[#120CD6]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-sm font-black text-[#120CD6] uppercase tracking-tight">
-                {editingKiosk ? 'Edit Kiosk' : 'Tambah Kiosk Baru'}
-              </h3>
-              <button 
-                onClick={() => setIsKioskModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      
 
-            <form onSubmit={handleSaveKiosk} className="space-y-3 text-xs font-medium">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 uppercase">Nama Kiosk</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Photobooth Cabang 2"
-                  value={kioskForm.name}
-                  onChange={(e) => setKioskForm({ ...kioskForm, name: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 uppercase">Tipe Perangkat &amp; Printer</label>
-                <select
-                  value={kioskForm.deviceType}
-                  onChange={(e) => setKioskForm({ ...kioskForm, deviceType: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
-                >
-                  <option value="Tablet Android (Receipt Thermal 58mm)">Tablet Android (Receipt Thermal 58mm)</option>
-                  <option value="Tablet Android (Receipt Thermal 80mm)">Tablet Android (Receipt Thermal 80mm)</option>
-                  <option value="Windows PC (DNP 4R Printer)">Windows PC (DNP 4R Printer)</option>
-                  <option value="Windows PC (Receipt Thermal)">Windows PC (Receipt Thermal)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 uppercase">Tarif per Sesi (Rp)</label>
-                <input
-                  type="number"
-                  required
-                  value={kioskForm.price}
-                  onChange={(e) => setKioskForm({ ...kioskForm, price: Number(e.target.value) })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-black"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 uppercase">Payment Gateway</label>
-                <select
-                  value={kioskForm.gateway}
-                  onChange={(e) => setKioskForm({ ...kioskForm, gateway: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
-                >
-                  <option value="Midtrans QRIS">Midtrans QRIS</option>
-                  <option value="Manual Tunai">Manual Tunai</option>
-                  <option value="Gratis (Event)">Gratis (Event)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 uppercase">Lokasi / Outlet</label>
-                <input
-                  type="text"
-                  value={kioskForm.location}
-                  onChange={(e) => setKioskForm({ ...kioskForm, location: e.target.value })}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-bold"
-                />
-              </div>
-
-              <div className="pt-3 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsKioskModalOpen(false)}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl cursor-pointer uppercase"
-                >
-                  Simpan Kiosk
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* 4. Add Template Modal with XML Editor & Presets */}
       {isTemplateModalOpen && (

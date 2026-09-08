@@ -234,31 +234,63 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
   // Device actions
   const handleDeactivateDevice = async () => {
     const newStatus = !formData.is_active;
-    handleChange('is_active', newStatus);
-    alert(newStatus ? 'Akses perangkat diaktifkan kembali.' : 'Akses perangkat dinonaktifkan sementara.');
+    handleChange("is_active", newStatus);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/kiosks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_kiosk",
+          license_key: kiosk?.license_key || formData.license_key,
+          updates: { is_active: newStatus }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setToastMsg({
+          type: "success",
+          text: newStatus ? "Akses kiosk berhasil diaktifkan kembali." : "Akses kiosk dinonaktifkan sementara (Kiosk terkunci)."
+        });
+      } else {
+        setToastMsg({ type: "error", text: data.error || "Gagal mengubah status perangkat." });
+      }
+    } catch (err) {
+      setToastMsg({ type: "error", text: "Gagal menghubungi server: " + err.message });
+    } finally {
+      setSaving(false);
+      setTimeout(() => setToastMsg(null), 4000);
+    }
   };
 
   const handleResetDevice = async () => {
-    if (confirm('Apakah Anda yakin ingin mereset ikatan perangkat (Unbind) pada kiosk ini? License Key akan dapat dihubungkan ke komputer operator baru.')) {
-      try {
-        const res = await fetch('/api/admin/kiosks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'unbind_device',
-            license_key: kiosk.license_key,
-          }),
+    if (!confirm("Apakah Anda yakin ingin mereset ikatan perangkat (Unbind) pada kiosk ini? License Key akan dapat dihubungkan ke komputer operator baru.")) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/kiosks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "unbind_device",
+          license_key: kiosk?.license_key || formData.license_key,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        handleChange("device_id", null);
+        handleChange("os_hostname", null);
+        setToastMsg({
+          type: "success",
+          text: "Device Lock berhasil direset! Kiosk kini bebas untuk dihubungkan ke komputer/tablet baru."
         });
-        const data = await res.json();
-        if (data.success) {
-          handleChange('device_id', null);
-          alert('Device Lock berhasil direset! Kiosk kini bebas untuk dihubungkan ke perangkat baru.');
-        } else {
-          alert(data.error || 'Gagal mereset perangkat.');
-        }
-      } catch (err) {
-        alert(err.message);
+      } else {
+        setToastMsg({ type: "error", text: data.error || "Gagal mereset perangkat." });
       }
+    } catch (err) {
+      setToastMsg({ type: "error", text: "Gagal menghubungi server: " + err.message });
+    } finally {
+      setSaving(false);
+      setTimeout(() => setToastMsg(null), 4000);
     }
   };
 
@@ -1093,7 +1125,10 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => alert('Memeriksa pembaruan dari server cloud... Kiosk sudah menggunakan versi terbaru!')}
+                  onClick={() => {
+                    setToastMsg({ type: "success", text: `Memeriksa pembaruan... Software ${formData.software_version} pada channel ${formData.release_channel} sudah versi paling mutakhir (Up to Date).` });
+                    setTimeout(() => setToastMsg(null), 4500);
+                  }}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer self-start"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
