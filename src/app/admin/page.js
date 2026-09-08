@@ -482,6 +482,7 @@ export default function OnlineAdminPage() {
             id: k.id,
             name: k.name,
             licenseKey: k.license_key || k.licenseKey || "NDHS-001",
+            license_key: k.license_key || k.licenseKey || "NDHS-001",
             deviceType: k.os_platform ? `PC/Laptop (${k.os_platform})` : "Kiosk Photobooth",
             kiosk_mode: mode,
             is_event_mode: isEvent,
@@ -2552,14 +2553,77 @@ export default function OnlineAdminPage() {
                           <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Monitor className="w-8 h-8 text-slate-300" />
-                              <p className="text-xs font-bold text-slate-700">Belum ada unit kiosk terdaftar</p>
-                              <p className="text-[11px] text-slate-400">Klik tombol "+ Add Kiosk" di atas untuk mendaftarkan unit kiosk baru dengan License Key otomatis.</p>
-                              <button
-                                onClick={() => setActiveKioskForConfig('new')}
-                                className="mt-2 px-4 py-2 bg-[#120CD6] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-blue-800 transition shadow"
-                              >
-                                + Tambah Kiosk Baru
-                              </button>
+                              <p className="text-xs font-bold text-slate-700">
+                                {kioskModeFilter === 'all'
+                                  ? 'Belum ada unit kiosk terdaftar'
+                                  : `Belum ada unit kiosk dalam kategori ${
+                                      kioskModeFilter === 'receipt'
+                                        ? 'Receipt Photobooth (58/80mm)'
+                                        : kioskModeFilter === 'event'
+                                        ? 'Mode Event (Free Pass)'
+                                        : 'Reguler (2R/4R)'
+                                    }`}
+                              </p>
+                              <p className="text-[11px] text-slate-400">
+                                {kiosks.length > 0 && kioskModeFilter !== 'all'
+                                  ? `Anda dapat langsung mengubah mode unit "${kiosks[0].name}" ke ${
+                                      kioskModeFilter === 'receipt'
+                                        ? 'Receipt (58/80mm)'
+                                        : kioskModeFilter === 'event'
+                                        ? 'Mode Event'
+                                        : 'Reguler'
+                                    } atau menambah kiosk baru.`
+                                  : 'Klik tombol "+ Add Kiosk" di atas untuk mendaftarkan unit kiosk baru.'}
+                              </p>
+                              <div className="flex items-center gap-2 mt-2">
+                                {kiosks.length > 0 && kioskModeFilter !== 'all' && (
+                                  <button
+                                    onClick={async () => {
+                                      const targetK = kiosks[0];
+                                      const targetLicense = targetK.licenseKey || targetK.license_key;
+                                      const newMode = kioskModeFilter;
+                                      const isEvent = newMode === 'event';
+
+                                      setKiosks(prev => prev.map(item => {
+                                        if ((item.licenseKey || item.license_key) === targetLicense) {
+                                          return {
+                                            ...item,
+                                            kiosk_mode: newMode,
+                                            is_event_mode: isEvent,
+                                            gateway: isEvent ? "Free Pass (Event)" : "Midtrans QRIS",
+                                            price: isEvent ? 0 : (item.price || 30000),
+                                          };
+                                        }
+                                        return item;
+                                      }));
+
+                                      try {
+                                        await fetch('/api/admin/kiosks', {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({
+                                            action: 'update_kiosk',
+                                            license_key: targetLicense,
+                                            updates: { kiosk_mode: newMode, is_event_mode: isEvent }
+                                          })
+                                        });
+                                        showToast(`✅ ${targetK.name} kini beralih ke Mode ${newMode === 'receipt' ? 'Receipt (58/80mm)' : 'Event'}!`);
+                                      } catch (err) {
+                                        showToast('Gagal: ' + err.message, 'error');
+                                      }
+                                    }}
+                                    className="px-4 py-2 bg-[#04442A] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-[#064E3B] transition shadow"
+                                  >
+                                    ⚡ Ubah "${kiosks[0].name}" ke Mode ${kioskModeFilter === 'receipt' ? 'Receipt (58/80mm)' : 'Event (Free)'}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => setActiveKioskForConfig('new')}
+                                  className="px-4 py-2 bg-[#120CD6] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-blue-800 transition shadow"
+                                >
+                                  + Tambah Kiosk Baru
+                                </button>
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -2581,19 +2645,64 @@ export default function OnlineAdminPage() {
                               <div className="text-[11px] text-slate-400">{k.deviceType}</div>
                             </td>
                             <td className="py-3.5 px-4">
-                              {k.kiosk_mode === 'receipt' ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
-                                  🧾 RECEIPT (58/80MM)
-                                </span>
-                              ) : k.kiosk_mode === 'event' || k.is_event_mode ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                  🎉 EVENT (FREE PASS)
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-100 text-[#120CD6] border border-blue-300">
-                                  📸 REGULER (2R/4R)
-                                </span>
-                              )}
+                              <select
+                                value={k.kiosk_mode || (k.is_event_mode ? 'event' : 'regular')}
+                                onChange={async (e) => {
+                                  const newMode = e.target.value;
+                                  const isEvent = newMode === 'event';
+                                  const targetLicense = k.licenseKey || k.license_key;
+
+                                  // Optimistic UI update
+                                  setKiosks(prev => prev.map(item => {
+                                    if ((item.licenseKey || item.license_key) === targetLicense) {
+                                      return {
+                                        ...item,
+                                        kiosk_mode: newMode,
+                                        is_event_mode: isEvent,
+                                        gateway: isEvent ? "Free Pass (Event)" : "Midtrans QRIS",
+                                        price: isEvent ? 0 : (item.price || 30000),
+                                      };
+                                    }
+                                    return item;
+                                  }));
+
+                                  try {
+                                    const res = await fetch('/api/admin/kiosks', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        action: 'update_kiosk',
+                                        license_key: targetLicense,
+                                        updates: {
+                                          kiosk_mode: newMode,
+                                          is_event_mode: isEvent,
+                                        }
+                                      })
+                                    });
+                                    const json = await res.json();
+                                    if (json.success) {
+                                      showToast(`✅ Mode ${k.name} berhasil diubah ke: ${newMode === 'receipt' ? 'Receipt Photobooth (58/80mm)' : newMode === 'event' ? 'Mode Event (Free Pass)' : 'Photobooth Reguler (2R/4R)'}`);
+                                    } else {
+                                      showToast(`Gagal: ${json.error || 'Gagal mengubah mode'}`, 'error');
+                                      fetchKiosksCloud();
+                                    }
+                                  } catch (err) {
+                                    showToast(`Gagal koneksi: ${err.message}`, 'error');
+                                    fetchKiosksCloud();
+                                  }
+                                }}
+                                className={`px-2.5 py-1.5 rounded-xl text-xs font-black cursor-pointer border shadow-xs transition-all focus:outline-none ${
+                                  (k.kiosk_mode || (k.is_event_mode ? 'event' : 'regular')) === 'receipt'
+                                    ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                                    : (k.kiosk_mode || (k.is_event_mode ? 'event' : 'regular')) === 'event'
+                                    ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
+                                    : 'bg-blue-50 text-[#120CD6] border-blue-300 hover:bg-blue-100'
+                                }`}
+                              >
+                                <option value="regular">📸 REGULER (2R/4R)</option>
+                                <option value="receipt">🧾 RECEIPT (58/80MM)</option>
+                                <option value="event">🎉 EVENT (FREE PASS)</option>
+                              </select>
                             </td>
                             <td className="py-3.5 px-4">
                               <span className={`px-2.5 py-1 rounded-lg font-bold ${

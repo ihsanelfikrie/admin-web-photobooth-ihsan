@@ -96,9 +96,12 @@ export async function POST(req) {
 
     if (action === "update" || action === "update_kiosk" || action === "save") {
       const data = updates || kiosk || {};
-      const key = (license_key || (data && data.license_key) || "").trim().toUpperCase();
+      const key = (license_key || (data && (data.license_key || data.licenseKey)) || "").trim().toUpperCase();
       const targetId = data.id || kioskId;
-      const index = kiosks.findIndex(k => (key && k.license_key === key) || (targetId && String(k.id) === String(targetId)));
+      const index = kiosks.findIndex(k => {
+        const kKey = (k.license_key || k.licenseKey || "").trim().toUpperCase();
+        return (key && kKey === key) || (targetId && String(k.id) === String(targetId));
+      });
       
       if (index === -1) {
         return NextResponse.json({ success: false, error: "Kiosk tidak ditemukan" }, { status: 404 });
