@@ -578,10 +578,116 @@ export default function OnlineAdminPage() {
   const [showNewStaffPassword, setShowNewStaffPassword]   = useState(false);
   const [showChangePassword, setShowChangePassword]       = useState(false);
 
+  // ── Diagnostics & Stability Tools ────────────────────────────────────
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen]         = useState(false);
+  const [diagnosticData, setDiagnosticData]               = useState(null);
+  const [isCheckingDiagnostics, setIsCheckingDiagnostics] = useState(false);
+  const [diagnosticCopied, setDiagnosticCopied]           = useState(false);
+
   // Toast Helper
   const showToast = (text, type = 'success') => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Global error safety listener
+  useEffect(() => {
+    const handleError = (e) => {
+      console.warn("[Nadhisan Studio Uncaught Error]", e.error || e.message);
+    };
+    const handleRejection = (e) => {
+      console.warn("[Nadhisan Studio Unhandled Rejection]", e.reason);
+    };
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleRejection);
+    return () => {
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleRejection);
+    };
+  }, []);
+
+  const runDiagnostics = async () => {
+    setIsCheckingDiagnostics(true);
+    const start = Date.now();
+    const results = {
+      timestamp: new Date().toISOString(),
+      user: currentUser?.email || "Admin",
+      role: currentUser?.role || "admin",
+      online: typeof navigator !== "undefined" ? navigator.onLine : true,
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "Unknown",
+      viewport: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : "N/A",
+      kiosksCount: kiosks.length,
+      sessionsCount: sessions.length,
+      vouchersCount: vouchers.length,
+      framesCount: frames.length,
+      endpoints: {}
+    };
+
+    const endpoints = [
+      { id: "sessions", name: "Sessions Cloud API", url: `/api/sessions?pin=${currentPin || "1234"}` },
+      { id: "kiosks", name: "Kiosks Registry API", url: `/api/admin/kiosks?t=${Date.now()}` },
+      { id: "finance", name: "Finance Metrics API", url: `/api/finance?range=month&pin=${currentPin || "1234"}` },
+      { id: "vouchers", name: "Voucher Engine API", url: `/api/vouchers?pin=${currentPin || "1234"}` },
+      { id: "telemetry", name: "Kiosk Telemetry Ping", url: "/api/kiosk/status" },
+      { id: "staff", name: "Staff Management API", url: "/api/admin/staff" },
+    ];
+
+    await Promise.all(endpoints.map(async (ep) => {
+      const t0 = performance.now();
+      try {
+        const res = await fetch(ep.url);
+        const t1 = performance.now();
+        results.endpoints[ep.id] = {
+          name: ep.name,
+          status: res.status,
+          ok: res.ok,
+          latency: Math.round(t1 - t0)
+        };
+      } catch (err) {
+        results.endpoints[ep.id] = {
+          name: ep.name,
+          status: 0,
+          ok: false,
+          error: err.message
+        };
+      }
+    }));
+
+    results.duration = Date.now() - start;
+    setDiagnosticData(results);
+    setIsCheckingDiagnostics(false);
+  };
+
+  const handleRefreshAllData = () => {
+    fetchKiosksCloud();
+    loadSessions();
+    loadFinance();
+    loadVouchers();
+    loadTelemetry();
+    loadFrames();
+    loadStaff();
+    showToast("Semua data berhasil dimuat ulang dari Cloud!");
+  };
+
+  const handleClearKioskCache = () => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("sans_admin_kiosks");
+        fetchKiosksCloud();
+        showToast("Cache lokal kiosk dibersihkan & disinkronisasi ulang!");
+      } catch (_) {}
+    }
+  };
+
+  const handleCopyDiagnostic = () => {
+    if (!diagnosticData) return;
+    const jsonStr = JSON.stringify(diagnosticData, null, 2);
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(jsonStr);
+      setDiagnosticCopied(true);
+      setTimeout(() => setDiagnosticCopied(false), 2500);
+      showToast("Laporan diagnostik berhasil disalin ke clipboard");
+    }
   };
 
   // Check stored auth session
@@ -1783,7 +1889,7 @@ export default function OnlineAdminPage() {
   // ── SANS Signature Login Screen (Electric Blue #120CD6) ──────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#120CD6] text-white flex items-center justify-center p-4 select-none font-sans selection:bg-[#E5FD5F] selection:text-[#111111]">
+      <div className="min-h-[100dvh] bg-[#120CD6] text-white flex items-center justify-center p-4 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] select-none font-sans selection:bg-[#E5FD5F] selection:text-[#111111] overflow-y-auto">
         <div className="w-full max-w-md p-8 md:p-10 bg-white text-[#111111] rounded-3xl shadow-2xl flex flex-col items-center gap-6 border-4 border-white">
           {/* Brand Tag */}
           <div className="flex items-center gap-2 px-4 py-1.5 bg-[#120CD6] text-[#E5FD5F] rounded-full text-xs font-black uppercase tracking-wider">
@@ -1953,11 +2059,11 @@ export default function OnlineAdminPage() {
 
   // ── Main Authenticated Layout (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F, White #FFFFFF) ───────────────────
   return (
-    <div className="min-h-screen bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row antialiased selection:bg-[#E5FD5F] selection:text-[#111111]">
+    <div className="min-h-[100dvh] bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row antialiased selection:bg-[#E5FD5F] selection:text-[#111111] overflow-x-hidden">
       
       {/* Toast Alert */}
       {toastMessage && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 border-2 transition-all ${
+        <div className={`fixed bottom-[max(1.25rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))] right-[max(1rem,calc(0.5rem+env(safe-area-inset-right,0px)))] left-[max(1rem,calc(0.5rem+env(safe-area-inset-left,0px)))] sm:left-auto sm:right-6 z-50 px-4 py-3.5 rounded-2xl shadow-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2.5 border-2 transition-all ${
           toastMessage.type === 'error'
             ? 'bg-rose-600 text-white border-white'
             : 'bg-[#120CD6] text-white border-2 border-[#E5FD5F] shadow-2xl'
@@ -1976,7 +2082,7 @@ export default function OnlineAdminPage() {
       )}
 
       {/* ── Left Sidebar (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F) ── */}
-      <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-[#120CD6] text-white flex flex-col z-50 transition-transform duration-200 shrink-0 ${
+      <aside className={`fixed md:sticky top-0 left-0 h-[100dvh] w-72 max-w-[85vw] bg-[#120CD6] text-white flex flex-col z-50 transition-transform duration-300 ease-in-out shrink-0 shadow-2xl md:shadow-none pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] pl-[env(safe-area-inset-left,0px)] ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         
@@ -2001,7 +2107,8 @@ export default function OnlineAdminPage() {
           
           <button 
             onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden text-white/80 hover:text-white p-1 cursor-pointer"
+            className="md:hidden text-white/90 hover:text-white p-2 min-w-[44px] min-h-[44px] rounded-xl hover:bg-white/10 active:bg-white/20 flex items-center justify-center cursor-pointer transition-colors"
+            title="Tutup Menu"
           >
             <X className="w-5 h-5" />
           </button>
@@ -2032,7 +2139,7 @@ export default function OnlineAdminPage() {
                       if (item.id === 'gallery') loadSessions();
                       if (item.id === 'staff') loadStaff();
                     }}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all text-left cursor-pointer ${
+                    className={`w-full flex items-center gap-3 px-3.5 py-3 min-h-[44px] md:min-h-[38px] rounded-xl text-xs font-black uppercase tracking-wide transition-all text-left cursor-pointer active:scale-[0.98] ${
                       isActive
                         ? 'bg-[#E5FD5F] text-[#111111] border-2 border-white shadow-md'
                         : 'text-white/85 hover:bg-white/10 hover:text-white'
@@ -2065,7 +2172,7 @@ export default function OnlineAdminPage() {
           
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl text-xs font-black text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer uppercase shadow-xs"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 min-h-[42px] rounded-xl text-xs font-black text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer uppercase shadow-xs"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Logout</span>
@@ -2077,11 +2184,12 @@ export default function OnlineAdminPage() {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top Header Bar (SANS Studio Breadcrumb) */}
-        <header className="h-16 bg-white border-b-2 border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30">
+        <header className="min-h-[4rem] bg-white/95 backdrop-blur-md border-b-2 border-slate-200 px-4 md:px-8 pt-[env(safe-area-inset-top,0px)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] flex items-center justify-between sticky top-0 z-30 transition-all">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 text-slate-700 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"
+              className="md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-700 hover:text-slate-900 rounded-xl hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+              title="Buka Menu Navigasi"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -2094,8 +2202,20 @@ export default function OnlineAdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E5FD5F] text-[#111111] border-2 border-[#120CD6] text-xs font-black">
+          <div className="flex items-center gap-2 md:gap-3">
+            <button
+              onClick={() => {
+                setIsDiagnosticsOpen(true);
+                runDiagnostics();
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-[#E5FD5F] hover:text-[#111111] text-slate-700 border border-slate-300 text-xs font-black transition-all cursor-pointer shadow-xs"
+              title="Periksa kesehatan API, koneksi cloud, dan diagnostik sistem"
+            >
+              <Activity className="w-3.5 h-3.5 text-[#120CD6]" />
+              <span className="hidden sm:inline">STATUS SISTEM</span>
+            </button>
+
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#E5FD5F] text-[#111111] border-2 border-[#120CD6] text-xs font-black">
               <span className="w-2 h-2 rounded-full bg-[#120CD6] animate-ping" />
               <span>CLOUD SYNC AKTIF</span>
             </div>
@@ -2106,7 +2226,7 @@ export default function OnlineAdminPage() {
         </header>
 
         {/* Dynamic Content View Container */}
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-5 md:p-8 max-w-7xl w-full mx-auto overflow-y-auto pb-[calc(3rem+env(safe-area-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))]">
           
           {/* ══════════════════════════════════════════════════════════════
               VIEW 1: DASHBOARD
@@ -4149,7 +4269,7 @@ export default function OnlineAdminPage() {
               MODAL: TAMBAH STAFF
           ══════════════════════════════════════════════════════════════ */}
           {isAddStaffOpen && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))]">
               <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                 <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                   <div>
@@ -4277,7 +4397,7 @@ export default function OnlineAdminPage() {
               MODAL: NOTICE PASSWORD GENERATE OTOMATIS
           ══════════════════════════════════════════════════════════════ */}
           {createdStaffPasswordNotice && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))]">
               <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-sm w-full p-6 text-center space-y-4 animate-in fade-in zoom-in-95">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto">
                   <CheckCircle className="w-6 h-6" />
@@ -4317,7 +4437,7 @@ export default function OnlineAdminPage() {
               MODAL: AKSES MENU & KIOSK (Screenshot 2 Match)
           ══════════════════════════════════════════════════════════════ */}
           {isAccessModalOpen && selectedStaff && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))]">
               <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                 <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                   <div>
@@ -4501,7 +4621,7 @@ export default function OnlineAdminPage() {
               MODAL: UBAH PASSWORD STAFF (Screenshot 3 Match)
           ══════════════════════════════════════════════════════════════ */}
           {isPasswordModalOpen && selectedStaff && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))]">
               <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                 <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
                   <div>
@@ -4573,10 +4693,149 @@ export default function OnlineAdminPage() {
           )}
 
 
+{/* ══════════════════════════════════════════════════════════════
+               MODAL: SISTEM DIAGNOSTIK & KESEHATAN CLOUD
+          ══════════════════════════════════════════════════════════════ */}
+          {isDiagnosticsOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 pt-[max(1rem,env(safe-area-inset-top,0px))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] pl-[max(0.75rem,env(safe-area-inset-left,0px))] pr-[max(0.75rem,env(safe-area-inset-right,0px))]">
+              <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+                {/* Modal Header */}
+                <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-[#E5FD5F] text-[#111111] border-2 border-[#120CD6] flex items-center justify-center font-black shadow-xs">
+                      <Activity className="w-5 h-5 text-[#120CD6]" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">
+                        Diagnostik &amp; Kesehatan Cloud
+                      </h3>
+                      <p className="text-xs text-slate-500 font-bold">
+                        Pemeriksaan status koneksi real-time, latensi microservice, dan cache lokal
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsDiagnosticsOpen(false)}
+                    className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 overflow-y-auto space-y-5 text-xs font-bold">
+                  {/* Status Banner */}
+                  <div className="flex items-center justify-between p-4 bg-emerald-50 border-2 border-emerald-500 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="font-black text-emerald-900 uppercase">
+                          Sistem Berjalan Stabil (All Systems Operational)
+                        </p>
+                        <p className="text-[11px] text-emerald-700 font-medium">
+                          {isCheckingDiagnostics ? "Sedang memindai microservices..." : "Seluruh microservices cloud merespons dengan normal."}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={runDiagnostics}
+                      disabled={isCheckingDiagnostics}
+                      className="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-black rounded-xl text-[11px] uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isCheckingDiagnostics ? "animate-spin" : ""}`} />
+                      <span>Uji Ulang</span>
+                    </button>
+                  </div>
+
+                  {/* Microservices API Grid */}
+                  <div>
+                    <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-600 mb-2.5">
+                      Status Endpoint Microservices Cloud
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {diagnosticData?.endpoints && Object.entries(diagnosticData.endpoints).map(([key, ep]) => (
+                        <div
+                          key={key}
+                          className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${ep.ok ? "bg-emerald-500" : "bg-rose-500 animate-ping"}`} />
+                            <div className="min-w-0">
+                              <p className="text-xs font-black text-slate-800 truncate">{ep.name}</p>
+                              <p className="text-[10px] text-slate-400 font-mono">
+                                {ep.ok ? `Status ${ep.status} OK` : `Error: ${ep.error || "Gagal"}`}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="font-mono text-[11px] px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600 font-bold shrink-0">
+                            {ep.latency}ms
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Environment & Memory Summary */}
+                  <div>
+                    <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-600 mb-2.5">
+                      Informasi Sesi &amp; Cache Lokal
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <p className="text-lg font-black text-[#120CD6]">{kiosks.length}</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">Unit Kiosk</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <p className="text-lg font-black text-slate-900">{sessions.length}</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">Sesi Terindeks</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <p className="text-lg font-black text-slate-900">{vouchers.length}</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">Voucher Aktif</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <p className="text-lg font-black text-emerald-600">{currentUser?.role || "admin"}</p>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">Role Akun</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions Bar */}
+                  <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleRefreshAllData}
+                        className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-black rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        <span>Refresh Semua Data</span>
+                      </button>
+                      <button
+                        onClick={handleClearKioskCache}
+                        className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-black rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                        title="Bersihkan cache localStorage dan sinkron ulang dari Supabase"
+                      >
+                        Bersihkan Cache Kiosk
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={handleCopyDiagnostic}
+                      className="px-4 py-2 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs flex items-center gap-1.5 ml-auto"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{diagnosticCopied ? "✓ Disalin" : "Salin Laporan (JSON)"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </main>
 
         {/* SANS Creative Signature Footer (agent nya sans design.md Section 11.3) */}
-        <footer className="mt-auto border-t-2 border-slate-200 bg-white px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-slate-600">
+        <footer className="mt-auto border-t-2 border-slate-200 bg-white px-4 sm:px-6 py-4 pb-[max(1rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-medium text-slate-600">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#120CD6]" />
             <span className="font-black text-[#120CD6] uppercase tracking-wide">SANS Creative</span>
