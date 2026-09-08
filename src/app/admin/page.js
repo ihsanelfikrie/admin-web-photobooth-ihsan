@@ -509,7 +509,7 @@ export default function OnlineAdminPage() {
   const [voucherCode, setVoucherCode]         = useState('');
   const [voucherCategory, setVoucherCategory] = useState('cash'); // 'cash' | 'promo'
   const [voucherType, setVoucherType]         = useState('cash');
-  const [voucherValue, setVoucherValue]       = useState('30000');
+  const [voucherValue, setVoucherValue]       = useState('15000');
   const [voucherMaxUses, setVoucherMaxUses]   = useState('1');
   const [voucherDesc, setVoucherDesc]         = useState('');
   const [voucherMsg, setVoucherMsg]           = useState(null);
@@ -518,7 +518,7 @@ export default function OnlineAdminPage() {
   const [showBulkModal, setShowBulkModal]     = useState(false);
   const [bulkCount, setBulkCount]             = useState(100);
   const [bulkPrefix, setBulkPrefix]           = useState('CSH');
-  const [bulkValue, setBulkValue]             = useState(30000);
+  const [bulkValue, setBulkValue]             = useState(15000);
   const [bulkKioskTarget, setBulkKioskTarget] = useState('all');
   const [bulkDescription, setBulkDescription] = useState('');
   const [bulkIsGenerating, setBulkIsGenerating] = useState(false);
@@ -1045,7 +1045,7 @@ export default function OnlineAdminPage() {
             code: voucherCode.trim(),
             category: voucherCategory,
             type: voucherCategory === 'cash' ? 'cash' : voucherType,
-            value: voucherCategory === 'cash' ? (Number(voucherValue) || 30000) : voucherValue,
+            value: voucherCategory === 'cash' ? (Number(voucherValue) || 15000) : voucherValue,
             maxUses: voucherCategory === 'cash' ? 1 : voucherMaxUses,
             description: voucherDesc || (voucherCategory === 'cash' ? 'Voucher Bayar Cash Barista Cafe' : 'Voucher Promo Photobooth'),
             kiosk_id: voucherKioskTarget === 'all' ? null : voucherKioskTarget,
@@ -1078,7 +1078,7 @@ export default function OnlineAdminPage() {
           count: Number(bulkCount) || 100,
           prefix: bulkPrefix || 'CSH',
           category: 'cash',
-          value: Number(bulkValue) || 30000,
+          value: Number(bulkValue) || 15000,
           kiosk_id: bulkKioskTarget === 'all' ? null : bulkKioskTarget,
           description: bulkDescription || `Batch ${bulkCount || 100} Voucher Cash Barista Cafe - ${new Date().toLocaleDateString('id-ID')}`,
         }),
@@ -1115,7 +1115,7 @@ export default function OnlineAdminPage() {
       '=====================================================',
       `Tanggal Dibuat : ${new Date().toLocaleString('id-ID')}`,
       `Total Voucher  : ${bulkResult.length} Kode`,
-      `Nominal Sesi   : Rp ${(Number(bulkValue) || 30000).toLocaleString('id-ID')}`,
+      `Nominal Sesi   : Rp ${(Number(bulkValue) || 15000).toLocaleString('id-ID')}`,
       'Aturan Pakai   : 1x Pakai per Struk Pembayaran Barista',
       '=====================================================',
       '',
@@ -1145,7 +1145,7 @@ export default function OnlineAdminPage() {
         i + 1,
         c,
         'Bayar Cash (Barista)',
-        bulkValue || 30000,
+        bulkValue || 15000,
         '1x Pakai',
         'Aktif',
         'Diserahkan saat pelanggan bayar tunai ke barista'
@@ -3064,7 +3064,7 @@ export default function OnlineAdminPage() {
                         onClick={() => {
                           setVoucherCategory('cash');
                           setVoucherType('cash');
-                          setVoucherValue('30000');
+                          setVoucherValue('15000');
                           setVoucherMaxUses('1');
                           setVoucherDesc('Voucher Bayar Cash Barista Cafe');
                         }}
@@ -3234,7 +3234,7 @@ export default function OnlineAdminPage() {
                                 <td className="py-3.5 px-4 font-black text-slate-900">
                                   {isCash ? (
                                     <span className="text-emerald-700 font-black">
-                                      Rp {Number(v.value || 30000).toLocaleString('id-ID')}
+                                      Rp {Number(v.value || 15000).toLocaleString('id-ID')}
                                     </span>
                                   ) : v.type === 'free' ? (
                                     '100% Free'
@@ -3420,7 +3420,7 @@ export default function OnlineAdminPage() {
                             <div className="p-4 bg-emerald-50 border-2 border-emerald-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div>
                                 <p className="font-black text-emerald-900 text-sm">🎉 Berhasil Men-generate {bulkResult.length} Voucher Cash!</p>
-                                <p className="text-[11px] text-emerald-700">Nominal: Rp {Number(bulkValue || 30000).toLocaleString('id-ID')} • 1x pakai • Kategori Bayar Cash</p>
+                                <p className="text-[11px] text-emerald-700">Nominal: Rp {Number(bulkValue || 15000).toLocaleString('id-ID')} • 1x pakai • Kategori Bayar Cash</p>
                               </div>
 
                               <div className="flex items-center gap-2">

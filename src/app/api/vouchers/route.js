@@ -57,7 +57,7 @@ export async function POST(req) {
       const count = Math.min(500, Math.max(1, Number(body.count) || 100));
       const prefix = (body.prefix || 'CSH').trim().toUpperCase().replace(/[^A-Z0-9]/g, '') || 'CSH';
       const category = body.category || 'cash';
-      const value = Number(body.value) || 30000;
+      const value = Number(body.value) || 15000;
       const kiosk_id = body.kiosk_id || null;
       const description = body.description || `Voucher Bayar Cash Barista Cafe (${new Date().toLocaleDateString('id-ID')})`;
 
@@ -125,7 +125,7 @@ export async function POST(req) {
       code: upperCode,
       category, // 'cash' | 'promo'
       type: voucher.type || (category === 'cash' ? 'cash' : 'free'),
-      value: Number(voucher.value) !== undefined ? Number(voucher.value) : (category === 'cash' ? 30000 : 100),
+      value: Number(voucher.value) !== undefined ? Number(voucher.value) : (category === 'cash' ? 15000 : 100),
       maxUses: Number(voucher.maxUses) || (category === 'cash' ? 1 : 100),
       usedCount: existingIdx >= 0 ? (vouchers[existingIdx].usedCount || 0) : 0,
       active: voucher.active !== undefined ? voucher.active : true,
