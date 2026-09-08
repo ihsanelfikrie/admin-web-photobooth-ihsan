@@ -317,7 +317,14 @@ export async function getCloudVouchers() {
     }
 
     const text = await data.text();
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) {
+      return parsed.map(v => ({
+        ...v,
+        category: v.category || (v.type === "cash" ? "cash" : "promo"),
+      }));
+    }
+    return parsed;
   } catch (_) {
     return [];
   }
@@ -658,8 +665,19 @@ export async function getFinancialSummary(filterRange = 'all') {
     const s = filtered[idx];
     const price = Number(s.price || s.amount || s.sessionPrice || 0);
     const method = (s.paymentMethod || s.paymentMode || '').toLowerCase();
+    const isCashVoucher = Boolean(
+      s.isCashVoucher ||
+      s.voucherCategory === 'cash' ||
+      s.kategori_voucher === 'cash' ||
+      s.kategoriVoucher === 'cash' ||
+      (method.includes('cash') && (s.voucherCode || s.kode_voucher))
+    );
 
-    if (method.includes('qris')) {
+    if (isCashVoucher) {
+      cashCount++;
+      cashAmount += price;
+      totalGross += price;
+    } else if (method.includes('qris')) {
       qrisCount++;
       qrisAmount += price;
       totalGross += price;
@@ -677,13 +695,25 @@ export async function getFinancialSummary(filterRange = 'all') {
     }
 
     if (price > 0 || method) {
+      const resolvedPaymentMethod = isCashVoucher
+        ? 'Voucher Bayar Cash (Barista)'
+        : method.includes('qris')
+        ? 'QRIS (Midtrans)'
+        : method.includes('cash')
+        ? 'Tunai / Manual'
+        : method.includes('voucher')
+        ? 'Voucher Free Pass'
+        : 'QRIS (Midtrans)';
+
       transactions.push({
         orderId: s.orderId || `ORD-${s.sessionId?.slice(-8) || idx}`,
         sessionId: s.sessionId,
         createdAt: s.createdAt || now,
-        amount: method.includes('voucher') ? 0 : price,
+        amount: (isCashVoucher || !method.includes('voucher')) ? price : 0,
         originalPrice: price,
-        paymentMethod: method.includes('qris') ? 'QRIS (Midtrans)' : method.includes('cash') ? 'Tunai / Manual' : method.includes('voucher') ? 'Voucher Free Pass' : 'QRIS (Midtrans)',
+        paymentMethod: resolvedPaymentMethod,
+        voucherCategory: isCashVoucher ? 'cash' : (s.voucherCategory || null),
+        voucherCode: s.voucherCode || s.kode_voucher || null,
         status: s.paymentStatus || 'PAID',
         kioskId: s.kioskId || s.kiosk_id || null,
         kioskName: s.kioskName || s.kiosk_name || null,

@@ -507,11 +507,23 @@ export default function OnlineAdminPage() {
   const [announcementInput, setAnnouncementInput] = useState('');
   const [announcementActive, setAnnouncementActive] = useState(true);
   const [voucherCode, setVoucherCode]         = useState('');
-  const [voucherType, setVoucherType]         = useState('free');
-  const [voucherValue, setVoucherValue]       = useState('100');
-  const [voucherMaxUses, setVoucherMaxUses]   = useState('100');
+  const [voucherCategory, setVoucherCategory] = useState('cash'); // 'cash' | 'promo'
+  const [voucherType, setVoucherType]         = useState('cash');
+  const [voucherValue, setVoucherValue]       = useState('30000');
+  const [voucherMaxUses, setVoucherMaxUses]   = useState('1');
   const [voucherDesc, setVoucherDesc]         = useState('');
   const [voucherMsg, setVoucherMsg]           = useState(null);
+  const [voucherFilterTab, setVoucherFilterTab] = useState('all'); // 'all' | 'cash' | 'promo'
+  const [voucherSearchQuery, setVoucherSearchQuery] = useState('');
+  const [showBulkModal, setShowBulkModal]     = useState(false);
+  const [bulkCount, setBulkCount]             = useState(100);
+  const [bulkPrefix, setBulkPrefix]           = useState('CSH');
+  const [bulkValue, setBulkValue]             = useState(30000);
+  const [bulkKioskTarget, setBulkKioskTarget] = useState('all');
+  const [bulkDescription, setBulkDescription] = useState('');
+  const [bulkIsGenerating, setBulkIsGenerating] = useState(false);
+  const [bulkResult, setBulkResult]           = useState(null);
+  const [bulkCopied, setBulkCopied]           = useState(false);
   const [cleanupRunning, setCleanupRunning]   = useState(false);
   const [cleanupResult, setCleanupResult]     = useState(null);
   const [actionLoading, setActionLoading]     = useState(false);
@@ -1031,10 +1043,11 @@ export default function OnlineAdminPage() {
           pin: currentPin,
           voucher: {
             code: voucherCode.trim(),
-            type: voucherType,
-            value: voucherValue,
-            maxUses: voucherMaxUses,
-            description: voucherDesc || 'Voucher Spesial NadhisanBooth',
+            category: voucherCategory,
+            type: voucherCategory === 'cash' ? 'cash' : voucherType,
+            value: voucherCategory === 'cash' ? (Number(voucherValue) || 30000) : voucherValue,
+            maxUses: voucherCategory === 'cash' ? 1 : voucherMaxUses,
+            description: voucherDesc || (voucherCategory === 'cash' ? 'Voucher Bayar Cash Barista Cafe' : 'Voucher Promo Photobooth'),
             kiosk_id: voucherKioskTarget === 'all' ? null : voucherKioskTarget,
           },
         }),
@@ -1044,13 +1057,106 @@ export default function OnlineAdminPage() {
         setVouchers(json.vouchers || []);
         setVoucherCode('');
         setVoucherDesc('');
-        showToast(`Voucher ${voucherCode.toUpperCase()} berhasil disimpan!`);
+        showToast(`Voucher ${voucherCode.toUpperCase()} (${voucherCategory === 'cash' ? 'Bayar Cash' : 'Promo'}) berhasil disimpan!`);
       } else {
         setVoucherMsg({ type: 'error', text: json.error || 'Gagal menyimpan voucher' });
       }
     } catch (err) {
       setVoucherMsg({ type: 'error', text: 'Kesalahan jaringan saat menyimpan voucher' });
     }
+  };
+
+  const handleGenerateBulkCashVouchers = async () => {
+    setBulkIsGenerating(true);
+    try {
+      const res = await fetch('/api/vouchers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate_bulk',
+          pin: currentPin,
+          count: Number(bulkCount) || 100,
+          prefix: bulkPrefix || 'CSH',
+          category: 'cash',
+          value: Number(bulkValue) || 30000,
+          kiosk_id: bulkKioskTarget === 'all' ? null : bulkKioskTarget,
+          description: bulkDescription || `Batch ${bulkCount || 100} Voucher Cash Barista Cafe - ${new Date().toLocaleDateString('id-ID')}`,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setBulkResult(json.generatedCodes || []);
+        setVouchers(json.vouchers || []);
+        showToast(`⚡ Sukses men-generate ${json.count} voucher cash!`);
+      } else {
+        showToast(json.error || 'Gagal men-generate bulk voucher', 'error');
+      }
+    } catch (err) {
+      showToast('Kesalahan jaringan saat generate bulk voucher', 'error');
+    } finally {
+      setBulkIsGenerating(false);
+    }
+  };
+
+  const handleCopyAllBulkCodes = () => {
+    if (!bulkResult || bulkResult.length === 0) return;
+    const text = bulkResult.join('\n');
+    navigator.clipboard.writeText(text);
+    setBulkCopied(true);
+    showToast(`📋 ${bulkResult.length} Kode Voucher disalin ke clipboard!`);
+    setTimeout(() => setBulkCopied(false), 2000);
+  };
+
+  const handleDownloadBulkTxt = () => {
+    if (!bulkResult || bulkResult.length === 0) return;
+    const header = [
+      '=====================================================',
+      '       DAFTAR VOUCHER BAYAR CASH BARISTA CAFE        ',
+      '=====================================================',
+      `Tanggal Dibuat : ${new Date().toLocaleString('id-ID')}`,
+      `Total Voucher  : ${bulkResult.length} Kode`,
+      `Nominal Sesi   : Rp ${(Number(bulkValue) || 30000).toLocaleString('id-ID')}`,
+      'Aturan Pakai   : 1x Pakai per Struk Pembayaran Barista',
+      '=====================================================',
+      '',
+      'Berikan SATU kode voucher unik ini ke pelanggan setelah',
+      'mereka membayar tunai di kasir barista cafe. Pelanggan',
+      'cukup memasukkan kode ini di layar pembayaran booth.',
+      '',
+      'DAFTAR KODE VOUCHER:',
+      '-----------------------------------------------------',
+    ];
+    const lines = bulkResult.map((c, i) => `${(i + 1).toString().padStart(3, ' ')}. [ ${c} ]`);
+    const textData = [...header, ...lines, '', '====================================================='].join('\n');
+    const blob = new Blob([textData], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `VOUCHER_CASH_BARISTA_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadBulkCsv = () => {
+    if (!bulkResult || bulkResult.length === 0) return;
+    const rows = [
+      ['No', 'Kode Voucher', 'Kategori', 'Nominal (Rp)', 'Maks Penggunaan', 'Status', 'Catatan Kasir'],
+      ...bulkResult.map((c, i) => [
+        i + 1,
+        c,
+        'Bayar Cash (Barista)',
+        bulkValue || 30000,
+        '1x Pakai',
+        'Aktif',
+        'Diserahkan saat pelanggan bayar tunai ke barista'
+      ])
+    ];
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.map(x => `"${x}"`).join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const a = document.createElement('a');
+    a.href = encodedUri;
+    a.download = `VOUCHER_CASH_BARISTA_${Date.now()}.csv`;
+    a.click();
   };
 
   const handleDeleteVoucher = async (code) => {
@@ -2858,178 +2964,572 @@ export default function OnlineAdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 7: VOUCHER
+              VIEW 7: VOUCHER (PROMO & BAYAR CASH BARISTA CAFE)
           ══════════════════════════════════════════════════════════════ */}
-          {activeTab === 'vouchers' && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Voucher Management</h2>
-                  <p className="text-xs text-slate-500">Kelola kupon diskon dan kode promosi untuk pengunjung photobooth</p>
-                </div>
-              </div>
+          {activeTab === 'vouchers' && (() => {
+            const cashCount = vouchers.filter(v => (v.category === 'cash' || v.type === 'cash')).length;
+            const promoCount = vouchers.filter(v => !(v.category === 'cash' || v.type === 'cash')).length;
 
-              {/* Form Tambah Voucher */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 space-y-4">
-                <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Buat Voucher Baru</h3>
-                <form onSubmit={handleSaveVoucher} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 uppercase">Kode Voucher</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. DISKON50"
-                      value={voucherCode}
-                      onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-black text-[#120CD6]"
-                    />
+            const displayedVouchers = vouchers.filter(v => {
+              const isCash = (v.category === 'cash' || v.type === 'cash');
+              if (voucherFilterTab === 'cash' && !isCash) return false;
+              if (voucherFilterTab === 'promo' && isCash) return false;
+              if (voucherSearchQuery.trim()) {
+                const q = voucherSearchQuery.toLowerCase();
+                const matchCode = (v.code || '').toLowerCase().includes(q);
+                const matchDesc = (v.description || '').toLowerCase().includes(q);
+                if (!matchCode && !matchDesc) return false;
+              }
+              return true;
+            });
+
+            return (
+              <div className="space-y-6">
+                {/* Header & Bulk Generate Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Voucher &amp; Cash Payment Management</h2>
+                    <p className="text-xs text-slate-500">Kelola kupon promo dan sistem voucher bayar tunai (cash) kasir barista cafe</p>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 uppercase">Tipe Potongan</label>
-                    <select
-                      value={voucherType}
-                      onChange={(e) => setVoucherType(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
-                    >
-                      <option value="free">Gratis 100%</option>
-                      <option value="percent">Persentase (%)</option>
-                      <option value="nominal">Nominal Tunai (Rp)</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 uppercase">Nilai Diskon</label>
-                    <input
-                      type="number"
-                      value={voucherValue}
-                      onChange={(e) => setVoucherValue(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 uppercase">Maks Penggunaan</label>
-                    <input
-                      type="number"
-                      value={voucherMaxUses}
-                      onChange={(e) => setVoucherMaxUses(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="font-bold text-slate-700 uppercase">Keterangan / Event</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Promo Grand Opening"
-                      value={voucherDesc}
-                      onChange={(e) => setVoucherDesc(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 uppercase">Berlaku Untuk</label>
-                    <select
-                      value={voucherKioskTarget}
-                      onChange={(e) => setVoucherKioskTarget(e.target.value)}
-                      className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
-                    >
-                      <option value="all">🌐 Semua Kiosk</option>
-                      {kiosks.map(k => (
-                        <option key={k.id} value={k.id}>🖥️ {k.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex items-end">
+                  <div className="flex items-center gap-2">
                     <button
-                      type="submit"
-                      className="w-full py-2 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
+                      type="button"
+                      onClick={() => {
+                        setBulkResult(null);
+                        setBulkCopied(false);
+                        setShowBulkModal(true);
+                      }}
+                      className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-emerald-600/20 transition-all cursor-pointer uppercase tracking-tight"
                     >
-                      + Simpan Voucher
+                      <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300 animate-pulse" />
+                      <span>⚡ Generate 100 Voucher Cash Sekaligus</span>
                     </button>
                   </div>
-                </form>
-              </div>
+                </div>
 
-              {/* Tabel Voucher */}
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
-                      <tr>
-                        <th className="py-3.5 px-4">Kode Voucher</th>
-                        <th className="py-3.5 px-4">Tipe Diskon</th>
-                        <th className="py-3.5 px-4">Nilai</th>
-                        <th className="py-3.5 px-4">Kuota Terpakai</th>
-                        <th className="py-3.5 px-4">Keterangan</th>
-                        <th className="py-3.5 px-4">Berlaku Di</th>
-                        <th className="py-3.5 px-4">Status</th>
-                        <th className="py-3.5 px-4 text-center">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium">
-                      {vouchers.length > 0 ? (
-                        vouchers.map((v) => (
-                          <tr key={v.code} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-black text-[#120CD6]">{v.code}</td>
-                            <td className="py-3.5 px-4 capitalize text-slate-600 font-bold">{v.type}</td>
-                            <td className="py-3.5 px-4 font-black text-slate-900">
-                              {v.type === 'free' ? '100% Free' : v.type === 'percent' ? `${v.value}%` : `Rp ${Number(v.value).toLocaleString('id-ID')}`}
-                            </td>
-                            <td className="py-3.5 px-4 font-bold text-slate-700">
-                              {v.usedCount || 0} / {v.maxUses || '∞'}
-                            </td>
-                            <td className="py-3.5 px-4 text-slate-500">{v.description || '-'}</td>
-                            <td className="py-3.5 px-4">
-                              {(() => {
-                                const targetKiosk = v.kiosk_id ? kiosks.find(k => String(k.id) === String(v.kiosk_id)) : null;
-                                return targetKiosk ? (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                    🖥️ {targetKiosk.name}
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-[#120CD6] border border-blue-200">
-                                    🌐 Semua Kiosk
-                                  </span>
-                                );
-                              })()}
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <button
-                                onClick={() => handleToggleVoucher(v)}
-                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-black cursor-pointer transition-colors ${
-                                  v.active !== false ? 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]' : 'bg-slate-100 text-slate-500'
-                                }`}
-                              >
-                                {v.active !== false ? 'Aktif' : 'Nonaktif'}
-                              </button>
-                            </td>
-                            <td className="py-3.5 px-4 text-center">
-                              <button
-                                onClick={() => handleDeleteVoucher(v.code)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                title="Hapus Voucher"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                {/* Filter Tabs & Search Bar */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 overflow-x-auto">
+                    <button
+                      onClick={() => setVoucherFilterTab('all')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-colors cursor-pointer uppercase ${
+                        voucherFilterTab === 'all' ? 'bg-[#120CD6] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      Semua ({vouchers.length})
+                    </button>
+                    <button
+                      onClick={() => setVoucherFilterTab('cash')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase ${
+                        voucherFilterTab === 'cash' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                      }`}
+                    >
+                      <span>💵 Voucher Bayar Cash ({cashCount})</span>
+                    </button>
+                    <button
+                      onClick={() => setVoucherFilterTab('promo')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer uppercase ${
+                        voucherFilterTab === 'promo' ? 'bg-[#F908E0] text-white' : 'bg-blue-50 text-[#120CD6] hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      <span>🎟️ Voucher Promo ({promoCount})</span>
+                    </button>
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Cari kode / event voucher..."
+                      value={voucherSearchQuery}
+                      onChange={(e) => setVoucherSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:border-[#120CD6]"
+                    />
+                  </div>
+                </div>
+
+                {/* Form Tambah Voucher Satuan */}
+                <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div>
+                      <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Buat Voucher Baru (Satuan)</h3>
+                      <p className="text-[11px] text-slate-400">Pilih kategori untuk membedakan voucher cash kasir dengan kupon promo diskon</p>
+                    </div>
+
+                    {/* Kategori Switcher */}
+                    <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVoucherCategory('cash');
+                          setVoucherType('cash');
+                          setVoucherValue('30000');
+                          setVoucherMaxUses('1');
+                          setVoucherDesc('Voucher Bayar Cash Barista Cafe');
+                        }}
+                        className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                          voucherCategory === 'cash' ? 'bg-emerald-600 text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        💵 Bayar Cash (Barista)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVoucherCategory('promo');
+                          setVoucherType('free');
+                          setVoucherValue('100');
+                          setVoucherMaxUses('100');
+                          setVoucherDesc('Promo Diskon Khusus');
+                        }}
+                        className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                          voucherCategory === 'promo' ? 'bg-[#120CD6] text-white font-black shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        🎟️ Promo / Diskon
+                      </button>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSaveVoucher} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-700 uppercase">Kode Voucher</label>
+                      <input
+                        type="text"
+                        placeholder={voucherCategory === 'cash' ? 'e.g. CSH-88A72K' : 'e.g. DISKON50'}
+                        value={voucherCode}
+                        onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-mono uppercase font-black text-[#120CD6]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-700 uppercase">Tipe Voucher</label>
+                      {voucherCategory === 'cash' ? (
+                        <input
+                          type="text"
+                          disabled
+                          value="Bayar Tunai (Cash)"
+                          className="w-full p-2 bg-emerald-50 border border-emerald-200 rounded-xl font-black text-emerald-800 cursor-not-allowed"
+                        />
+                      ) : (
+                        <select
+                          value={voucherType}
+                          onChange={(e) => setVoucherType(e.target.value)}
+                          className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                        >
+                          <option value="free">Gratis 100% (Free Pass)</option>
+                          <option value="percent">Persentase (%)</option>
+                          <option value="nominal">Nominal Tunai (Rp)</option>
+                        </select>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-700 uppercase">
+                        {voucherCategory === 'cash' ? 'Nilai Cash (Rp)' : 'Nilai Diskon'}
+                      </label>
+                      <input
+                        type="number"
+                        value={voucherValue}
+                        onChange={(e) => setVoucherValue(e.target.value)}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-700 uppercase">Maks Pakai</label>
+                      <input
+                        type="number"
+                        value={voucherMaxUses}
+                        onChange={(e) => setVoucherMaxUses(e.target.value)}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="font-bold text-slate-700 uppercase">Berlaku Di</label>
+                      <select
+                        value={voucherKioskTarget}
+                        onChange={(e) => setVoucherKioskTarget(e.target.value)}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800"
+                      >
+                        <option value="all">🌐 Semua Kiosk</option>
+                        {kiosks.map(k => (
+                          <option key={k.id} value={k.id}>🖥️ {k.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-4 space-y-1">
+                      <label className="font-bold text-slate-700 uppercase">Keterangan / Catatan Kasir</label>
+                      <input
+                        type="text"
+                        placeholder={voucherCategory === 'cash' ? 'e.g. Voucher Pembayaran Tunai Kasir Barista Cafe' : 'e.g. Promo Grand Opening'}
+                        value={voucherDesc}
+                        onChange={(e) => setVoucherDesc(e.target.value)}
+                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium"
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <button
+                        type="submit"
+                        className="w-full py-2 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
+                      >
+                        + Simpan
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Tabel Voucher */}
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
+                        <tr>
+                          <th className="py-3.5 px-4">Kode Voucher</th>
+                          <th className="py-3.5 px-4">Kategori</th>
+                          <th className="py-3.5 px-4">Tipe / Nominal</th>
+                          <th className="py-3.5 px-4">Status Penggunaan</th>
+                          <th className="py-3.5 px-4">Keterangan</th>
+                          <th className="py-3.5 px-4">Berlaku Di</th>
+                          <th className="py-3.5 px-4">Status</th>
+                          <th className="py-3.5 px-4 text-center">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-medium">
+                        {displayedVouchers.length > 0 ? (
+                          displayedVouchers.map((v) => {
+                            const isCash = (v.category === 'cash' || v.type === 'cash');
+                            const isUsed = v.usedCount >= v.maxUses;
+                            return (
+                              <tr key={v.code} className="hover:bg-slate-50 transition-colors">
+                                <td className="py-3.5 px-4 font-mono font-black text-[#120CD6] flex items-center gap-1.5">
+                                  <span>{v.code}</span>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(v.code);
+                                      showToast(`Kode ${v.code} disalin!`);
+                                    }}
+                                    className="text-slate-400 hover:text-slate-700 p-0.5"
+                                    title="Salin Kode"
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </button>
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  {isCash ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                      💵 BAYAR CASH (BARISTA)
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#120CD6] border border-blue-200">
+                                      🎟️ PROMO DISKON
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3.5 px-4 font-black text-slate-900">
+                                  {isCash ? (
+                                    <span className="text-emerald-700 font-black">
+                                      Rp {Number(v.value || 30000).toLocaleString('id-ID')}
+                                    </span>
+                                  ) : v.type === 'free' ? (
+                                    '100% Free'
+                                  ) : v.type === 'percent' ? (
+                                    `${v.value}%`
+                                  ) : (
+                                    `Rp ${Number(v.value).toLocaleString('id-ID')}`
+                                  )}
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  {isCash ? (
+                                    isUsed ? (
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500">
+                                        Sudah Terpakai (1/1)
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        ✓ Belum Dipakai (0/1)
+                                      </span>
+                                    )
+                                  ) : (
+                                    <span className="font-bold text-slate-700">
+                                      {v.usedCount || 0} / {v.maxUses || '∞'}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3.5 px-4 text-slate-500">{v.description || '-'}</td>
+                                <td className="py-3.5 px-4">
+                                  {(() => {
+                                    const targetKiosk = v.kiosk_id ? kiosks.find(k => String(k.id) === String(v.kiosk_id)) : null;
+                                    return targetKiosk ? (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                        🖥️ {targetKiosk.name}
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-[#120CD6] border border-blue-200">
+                                        🌐 Semua Kiosk
+                                      </span>
+                                    );
+                                  })()}
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <button
+                                    onClick={() => handleToggleVoucher(v)}
+                                    className={`px-2.5 py-0.5 rounded-full text-[11px] font-black cursor-pointer transition-colors ${
+                                      v.active !== false ? 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]' : 'bg-slate-100 text-slate-500'
+                                    }`}
+                                  >
+                                    {v.active !== false ? 'Aktif' : 'Nonaktif'}
+                                  </button>
+                                </td>
+                                <td className="py-3.5 px-4 text-center">
+                                  <button
+                                    onClick={() => handleDeleteVoucher(v.code)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Hapus Voucher"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={8} className="py-12 text-center text-slate-400 font-bold">
+                              Tidak ada voucher yang sesuai dengan filter.
                             </td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={7} className="py-8 text-center text-slate-400 font-bold">
-                            Belum ada voucher yang dibuat.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+
+                {/* MODAL BULK GENERATOR 100 VOUCHER CASH */}
+                {showBulkModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                      {/* Modal Header */}
+                      <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-yellow-300">
+                            <Zap className="w-6 h-6 fill-yellow-300" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-black uppercase tracking-tight">
+                              {bulkResult ? '100 Voucher Cash Berhasil Dibuat!' : 'Generate 100 Voucher Bayar Cash Sekaligus'}
+                            </h3>
+                            <p className="text-xs text-emerald-100">
+                              {bulkResult
+                                ? `Sebanyak ${bulkResult.length} kode voucher siap diserahkan barista kepada pelanggan`
+                                : 'Sistem voucher tunai cafe: Pelanggan bayar tunai ke barista &amp; dapat kode sesi booth'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowBulkModal(false)}
+                          className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* Modal Body */}
+                      <div className="p-6 overflow-y-auto space-y-5 text-xs flex-1">
+                        {!bulkResult ? (
+                          <>
+                            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 space-y-1">
+                              <p className="font-bold">💡 Bagaimana cara kerjanya?</p>
+                              <p className="text-[11px] text-emerald-800 leading-relaxed">
+                                Fitur ini akan membuat 100 kode voucher acak unik (misal: <strong>CSH-88A72K</strong>). Barista cafe mencatat atau mencetak daftar kode ini. Saat pelanggan membayar cash ke barista, barista memberikan 1 kode voucher unik. Pelanggan memasukkan kode ini di layar photobooth untuk langsung mulai foto, dan omzetnya otomatis masuk ke <strong>Pendapatan Cash / Tunai</strong>.
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1">
+                                <label className="font-bold text-slate-700 uppercase">Jumlah Voucher</label>
+                                <select
+                                  value={bulkCount}
+                                  onChange={(e) => setBulkCount(Number(e.target.value))}
+                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800 text-sm"
+                                >
+                                  <option value="50">50 Voucher</option>
+                                  <option value="100">100 Voucher (Standar)</option>
+                                  <option value="200">200 Voucher</option>
+                                  <option value="300">300 Voucher</option>
+                                </select>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="font-bold text-slate-700 uppercase">Prefix Huruf Kode</label>
+                                <input
+                                  type="text"
+                                  value={bulkPrefix}
+                                  onChange={(e) => setBulkPrefix(e.target.value.toUpperCase().slice(0, 4))}
+                                  placeholder="CSH"
+                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-black text-[#120CD6] text-sm uppercase"
+                                />
+                                <p className="text-[10px] text-slate-400">Contoh format hasil: <strong>{bulkPrefix || 'CSH'}-7K9X2B</strong></p>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="font-bold text-slate-700 uppercase">Nominal Tunai per Sesi (Rp)</label>
+                                <input
+                                  type="number"
+                                  value={bulkValue}
+                                  onChange={(e) => setBulkValue(Number(e.target.value))}
+                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-black text-slate-800 text-sm"
+                                />
+                                <p className="text-[10px] text-slate-400">Tercatat di pembukuan cash kasir per voucher</p>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="font-bold text-slate-700 uppercase">Berlaku di Kiosk</label>
+                                <select
+                                  value={bulkKioskTarget}
+                                  onChange={(e) => setBulkKioskTarget(e.target.value)}
+                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 text-sm"
+                                >
+                                  <option value="all">🌐 Berlaku di Semua Kiosk</option>
+                                  {kiosks.map(k => (
+                                    <option key={k.id} value={k.id}>🖥️ {k.name}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="sm:col-span-2 space-y-1">
+                                <label className="font-bold text-slate-700 uppercase">Catatan / Keterangan Batch</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Batch 100 Voucher Cash Barista Cafe"
+                                  value={bulkDescription}
+                                  onChange={(e) => setBulkDescription(e.target.value)}
+                                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-medium"
+                                />
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* Hasil Sukses Bulk Generate */}
+                            <div className="p-4 bg-emerald-50 border-2 border-emerald-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div>
+                                <p className="font-black text-emerald-900 text-sm">🎉 Berhasil Men-generate {bulkResult.length} Voucher Cash!</p>
+                                <p className="text-[11px] text-emerald-700">Nominal: Rp {Number(bulkValue || 30000).toLocaleString('id-ID')} • 1x pakai • Kategori Bayar Cash</p>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleCopyAllBulkCodes}
+                                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                                >
+                                  {bulkCopied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5 text-white" />}
+                                  <span>{bulkCopied ? 'Tersalin!' : 'Salin Semua'}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleDownloadBulkTxt}
+                                  className="px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-black text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                                  title="Unduh format teks struk cetak"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>Unduh TXT</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleDownloadBulkCsv}
+                                  className="px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-black text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                                  title="Unduh format spreadsheet CSV"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>CSV</span>
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Daftar 100 Kode dalam Scroll Box */}
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-slate-500 font-bold">
+                                <span>Preview 100 Kode Voucher:</span>
+                                <span className="text-[10px] text-slate-400">Klik salah satu kode untuk menyalinnya</span>
+                              </div>
+                              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 max-h-64 overflow-y-auto grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                {bulkResult.map((c, idx) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(c);
+                                      showToast(`Kode ${c} disalin!`);
+                                    }}
+                                    className="p-2 bg-white rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50 text-slate-800 font-mono font-black text-[11px] text-center transition-all cursor-pointer flex items-center justify-between group"
+                                  >
+                                    <span className="text-[9px] text-slate-400 font-sans font-bold">{(idx + 1).toString().padStart(2, '0')}</span>
+                                    <span>{c}</span>
+                                    <Copy className="w-3 h-3 text-slate-300 group-hover:text-emerald-600" />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Modal Footer */}
+                      <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                        {!bulkResult ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setShowBulkModal(false)}
+                              className="px-4 py-2 text-slate-600 hover:text-slate-900 font-bold rounded-xl text-xs cursor-pointer"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              type="button"
+                              disabled={bulkIsGenerating}
+                              onClick={handleGenerateBulkCashVouchers}
+                              className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black rounded-xl text-xs flex items-center gap-2 shadow-md shadow-emerald-600/20 transition-all cursor-pointer uppercase disabled:opacity-50"
+                            >
+                              {bulkIsGenerating ? (
+                                <>
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                  <span>Sedang Meng-generate...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
+                                  <span>⚡ Generate {bulkCount} Voucher Sekarang</span>
+                                </>
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowBulkModal(false);
+                              setVoucherFilterTab('cash');
+                            }}
+                            className="px-5 py-2 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl text-xs transition-colors cursor-pointer uppercase"
+                          >
+                            ✓ Selesai &amp; Lihat di Tabel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ══════════════════════════════════════════════════════════════
               VIEW 8: GALLERY
