@@ -44,7 +44,10 @@ export default function KioskStatisticsView({
 }) {
   // ── Global & Per-Card Filters ─────────────────────────────────────────────
   const [revenueRange, setRevenueRange] = useState('monthly'); // 'daily' | 'weekly' | 'monthly' | 'yearly'
-  const [selectedMonth, setSelectedMonth] = useState('2026-09');
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   // Template ranking filter
   const [templateKioskFilter, setTemplateKioskFilter] = useState('all');
@@ -72,7 +75,7 @@ export default function KioskStatisticsView({
   const [heatmapRange, setHeatmapRange] = useState('monthly');
 
   // Ensure selectedComparisonKiosks is populated when kiosks load
-  useMemo(() => {
+  React.useEffect(() => {
     if (selectedComparisonKiosks.length === 0 && kiosks.length > 0) {
       setSelectedComparisonKiosks(kiosks.slice(0, Math.min(2, kiosks.length)).map((k) => k.id));
     }
@@ -81,11 +84,25 @@ export default function KioskStatisticsView({
     }
   }, [kiosks]);
 
-  // ── Date Filtering Helper ─────────────────────────────────────────────────
+  // ── Robust Date Parser & Filter Helper ────────────────────────────────────
+  const parseTimestamp = (val) => {
+    if (!val) return null;
+    if (typeof val === 'number') return new Date(val);
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (!isNaN(Number(trimmed)) && trimmed.length >= 10) {
+        return new Date(Number(trimmed));
+      }
+      const d = new Date(trimmed);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+    return null;
+  };
+
   const isDateInRange = (timestamp, rangeType) => {
-    if (!timestamp) return false;
-    const d = new Date(timestamp);
-    if (isNaN(d.getTime())) return false;
+    const d = parseTimestamp(timestamp);
+    if (!d) return false;
     const now = new Date();
 
     if (rangeType === 'daily') {
@@ -134,19 +151,21 @@ export default function KioskStatisticsView({
     const totalSessionsCount = inRangeSessions.length;
 
     // Build timeline points for chart
-    // If monthly: 30 days of the month
+    // If monthly: days of the month
     const [selYear, selMonth] = selectedMonth.split('-').map(Number);
     const daysInMonth = new Date(selYear, selMonth, 0).getDate();
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const monthLabel = MONTH_NAMES[(selMonth || 1) - 1] || 'Bln';
     const dayPoints = Array.from({ length: daysInMonth }, (_, i) => ({
       day: i + 1,
-      label: `${i + 1} Sep`,
+      label: `${i + 1} ${monthLabel}`,
       revenue: 0,
       sessions: 0,
     }));
 
     // Aggregate by day
     inRangeSessions.forEach((s) => {
-      const d = new Date(s.createdAt || Date.now());
+      const d = parseTimestamp(s.createdAt) || new Date();
       if (d.getMonth() + 1 === selMonth && d.getFullYear() === selYear) {
         const dayIdx = d.getDate() - 1;
         if (dayPoints[dayIdx]) {
@@ -159,7 +178,7 @@ export default function KioskStatisticsView({
 
     // Also factor transactions if available
     inRangeTx.forEach((t) => {
-      const d = new Date(t.createdAt || Date.now());
+      const d = parseTimestamp(t.createdAt) || new Date();
       if (d.getMonth() + 1 === selMonth && d.getFullYear() === selYear) {
         const dayIdx = d.getDate() - 1;
         if (dayPoints[dayIdx] && dayPoints[dayIdx].revenue === 0) {
@@ -176,6 +195,8 @@ export default function KioskStatisticsView({
       totalSessionsCount,
       dayPoints,
       maxRev,
+      monthLabel,
+      daysInMonth,
     };
   }, [sessions, transactions, revenueRange, selectedMonth]);
 
@@ -630,12 +651,11 @@ export default function KioskStatisticsView({
 
           {/* X-Axis Labels */}
           <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 pt-3 border-t border-slate-100">
-            <span>1 Sep</span>
-            <span>8 Sep</span>
-            <span>15 Sep</span>
-            <span>22 Sep</span>
-            <span>29 Sep</span>
-            <span>30 Sep</span>
+            <span>1 {overallData.monthLabel}</span>
+            <span>{Math.round(overallData.daysInMonth * 0.25)} {overallData.monthLabel}</span>
+            <span>{Math.round(overallData.daysInMonth * 0.5)} {overallData.monthLabel}</span>
+            <span>{Math.round(overallData.daysInMonth * 0.75)} {overallData.monthLabel}</span>
+            <span>{overallData.daysInMonth} {overallData.monthLabel}</span>
           </div>
         </div>
       </div>
@@ -1165,12 +1185,11 @@ export default function KioskStatisticsView({
             </div>
 
             <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 pt-3 border-t border-slate-100">
-              <span>1 Sep</span>
-              <span>8 Sep</span>
-              <span>15 Sep</span>
-              <span>22 Sep</span>
-              <span>29 Sep</span>
-              <span>30 Sep</span>
+              <span>1 {overallData.monthLabel}</span>
+              <span>{Math.round(overallData.daysInMonth * 0.25)} {overallData.monthLabel}</span>
+              <span>{Math.round(overallData.daysInMonth * 0.5)} {overallData.monthLabel}</span>
+              <span>{Math.round(overallData.daysInMonth * 0.75)} {overallData.monthLabel}</span>
+              <span>{overallData.daysInMonth} {overallData.monthLabel}</span>
             </div>
           </div>
         </div>
@@ -1280,6 +1299,7 @@ export default function KioskStatisticsView({
             {/* Donut Chart */}
             <div className="relative w-44 h-44 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#F1F5F9" strokeWidth="18" />
                 {(() => {
                   let accumulatedPercent = 0;
                   return kioskRankings.ranked.map((k) => {
