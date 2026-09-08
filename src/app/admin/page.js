@@ -52,7 +52,8 @@ import {
   FileCode,
   Mail,
   Lock,
-  EyeOff
+  EyeOff,
+  Monitor
 } from 'lucide-react';
 import TemplateEditorStudio from '@/components/TemplateEditorStudio';
 import KioskGalleryView from '@/components/KioskGalleryView';
@@ -2565,13 +2566,13 @@ export default function OnlineAdminPage() {
                                     }`}
                               </p>
                               <p className="text-[11px] text-slate-400">
-                                {kiosks.length > 0 && kioskModeFilter !== 'all'
-                                  ? `Anda dapat langsung mengubah mode unit "${kiosks[0].name}" ke ${
+                                {kiosks?.length > 0 && kioskModeFilter !== 'all'
+                                  ? `Anda dapat langsung mengubah mode unit "${kiosks[0]?.name || "Kiosk"}" ke ${
                                       kioskModeFilter === 'receipt'
                                         ? 'Receipt (58/80mm)'
                                         : kioskModeFilter === 'event'
                                         ? 'Mode Event'
-                                        : 'Reguler'
+                                        : 'Reguler (2R/4R)'
                                     } atau menambah kiosk baru.`
                                   : 'Klik tombol "+ Add Kiosk" di atas untuk mendaftarkan unit kiosk baru.'}
                               </p>
@@ -2607,14 +2608,14 @@ export default function OnlineAdminPage() {
                                             updates: { kiosk_mode: newMode, is_event_mode: isEvent }
                                           })
                                         });
-                                        showToast(`✅ ${targetK.name} kini beralih ke Mode ${newMode === 'receipt' ? 'Receipt (58/80mm)' : 'Event'}!`);
+                                        showToast(`✅ ${targetK.name} kini beralih ke Mode ${newMode === 'receipt' ? 'Receipt (58/80mm)' : newMode === 'event' ? 'Event (Free)' : 'Reguler (2R/4R)'}!`);
                                       } catch (err) {
                                         showToast('Gagal: ' + err.message, 'error');
                                       }
                                     }}
                                     className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-slate-800 transition shadow"
                                   >
-                                    ⚡ Ubah "${kiosks[0].name}" ke Mode ${kioskModeFilter === 'receipt' ? 'Receipt (58/80mm)' : 'Event (Free)'}
+                                    ⚡ Ubah "${kiosks[0]?.name || 'Kiosk'}" ke Mode ${kioskModeFilter === 'receipt' ? 'Receipt (58/80mm)' : kioskModeFilter === 'event' ? 'Event (Free)' : 'Reguler (2R/4R)'}
                                   </button>
                                 )}
                                 <button

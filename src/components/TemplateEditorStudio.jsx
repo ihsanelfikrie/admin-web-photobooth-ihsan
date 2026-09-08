@@ -42,32 +42,26 @@ export const TEMPLATE_CATEGORIES = [
 
 export const SIZE_PRESETS = {
   // ── Photobooth Reguler (2R & 4R Saja) ───────────
+  // Ukuran kanvas sama-sama 1200 × 1800 px portrait.
+  // 2R: dipotong/cut menjadi 2 strip 2×6" saat dicetak.
+  // 4R: utuh/tanpa cut 1 lembar postcard 4×6" saat dicetak.
   '2R': {
-    label: '2R (1200 × 1800 px) - Mini Format',
+    label: '2R (1200 × 1800 px) - Strip (Auto-Cut Bagi 2)',
     categoryType: 'regular',
     category: '2R',
     paperSize: '2r',
     width: 1200,
     height: 1800,
-    defaultSlots: [
-      { id: 1, x: 120, y: 140, width: 960, height: 460, rotation: 0, zIndex: 1 },
-      { id: 2, x: 120, y: 640, width: 960, height: 460, rotation: 0, zIndex: 2 },
-      { id: 3, x: 120, y: 1140, width: 960, height: 460, rotation: 0, zIndex: 3 },
-    ],
+    defaultSlots: [],
   },
   '4R': {
-    label: '4R (1800 × 1200 px) - Postcard Standar',
+    label: '4R (1200 × 1800 px) - Postcard Full (Tanpa Cut)',
     categoryType: 'regular',
     category: '4R',
     paperSize: '4r',
-    width: 1800,
-    height: 1200,
-    defaultSlots: [
-      { id: 1, x: 80, y: 80, width: 780, height: 480, rotation: 0, zIndex: 1 },
-      { id: 2, x: 940, y: 80, width: 780, height: 480, rotation: 0, zIndex: 2 },
-      { id: 3, x: 80, y: 620, width: 780, height: 480, rotation: 0, zIndex: 3 },
-      { id: 4, x: 940, y: 620, width: 780, height: 480, rotation: 0, zIndex: 4 },
-    ],
+    width: 1200,
+    height: 1800,
+    defaultSlots: [],
   },
 
   // ── Receipt Photobooth (58mm & 80mm Saja) ───────
@@ -78,11 +72,7 @@ export const SIZE_PRESETS = {
     paperSize: 'thermal_58mm',
     width: 384,
     height: 1200,
-    defaultSlots: [
-      { id: 1, x: 24, y: 100, width: 336, height: 260, rotation: 0, zIndex: 1 },
-      { id: 2, x: 24, y: 400, width: 336, height: 260, rotation: 0, zIndex: 2 },
-      { id: 3, x: 24, y: 700, width: 336, height: 260, rotation: 0, zIndex: 3 },
-    ],
+    defaultSlots: [],
   },
   '80mm': {
     label: '80mm Thermal (576 × 1600 px)',
@@ -91,11 +81,7 @@ export const SIZE_PRESETS = {
     paperSize: 'thermal_80mm',
     width: 576,
     height: 1600,
-    defaultSlots: [
-      { id: 1, x: 38, y: 120, width: 500, height: 380, rotation: 0, zIndex: 1 },
-      { id: 2, x: 38, y: 540, width: 500, height: 380, rotation: 0, zIndex: 2 },
-      { id: 3, x: 38, y: 960, width: 500, height: 380, rotation: 0, zIndex: 3 },
-    ],
+    defaultSlots: [],
   },
 };
 
@@ -132,7 +118,7 @@ export default function TemplateEditorStudio({
     }
     if (
       initialTemplate?.size === '4R' ||
-      Number(initialTemplate?.width) > Number(initialTemplate?.height)
+      initialTemplate?.paperSize === '4r'
     ) {
       return '4R';
     }
@@ -145,24 +131,22 @@ export default function TemplateEditorStudio({
     initialTemplate?.category || (isInitialReceipt ? 'Receipt' : initialSizeKey)
   );
   const [width, setWidth] = useState(
-    Number(initialTemplate?.width) || (isInitialReceipt ? (initialSizeKey === '58mm' ? 384 : 576) : (initialSizeKey === '4R' ? 1800 : 1200))
+    Number(initialTemplate?.width) || (isInitialReceipt ? (initialSizeKey === '58mm' ? 384 : 576) : 1200)
   );
   const [height, setHeight] = useState(
-    Number(initialTemplate?.height) || (isInitialReceipt ? (initialSizeKey === '58mm' ? 1200 : 1600) : (initialSizeKey === '4R' ? 1200 : 1800))
+    Number(initialTemplate?.height) || (isInitialReceipt ? (initialSizeKey === '58mm' ? 1200 : 1600) : 1800)
   );
   const [rotation, setRotation] = useState(Number(initialTemplate?.rotation) || 0);
   const [paperSize, setPaperSize] = useState(
     initialTemplate?.paperSize || (isInitialReceipt ? (initialSizeKey === '58mm' ? 'thermal_58mm' : 'thermal_80mm') : (initialSizeKey === '4R' ? '4r' : '2r'))
   );
 
-  // Slots
+  // Slots: default kosong tanpa slot foto terlebih dahulu
   const [slots, setSlots] = useState(
-    initialTemplate?.slots?.length > 0
-      ? initialTemplate.slots
-      : SIZE_PRESETS[initialSizeKey]?.defaultSlots || []
+    initialTemplate?.slots?.length > 0 ? initialTemplate.slots : []
   );
   const [activeSlotId, setActiveSlotId] = useState(
-    initialTemplate?.slots?.[0]?.id || SIZE_PRESETS[initialSizeKey]?.defaultSlots?.[0]?.id || null
+    initialTemplate?.slots?.[0]?.id || null
   );
 
   // Backgrounds & Previews
@@ -1043,6 +1027,19 @@ ${slots
                   </option>
                 ))}
             </select>
+            {templateType === 'regular' ? (
+              <p className="text-[10px] text-slate-500 font-medium">
+                {sizePreset === '2R'
+                  ? '✂️ Format 2R (1200×1800 px): Dicetak dan dipotong otomatis oleh printer menjadi 2 strip 2×6".'
+                  : '🖼️ Format 4R (1200×1800 px): Dicetak 1 lembar postcard 4×6" utuh tanpa dipotong printer.'}
+              </p>
+            ) : (
+              <p className="text-[10px] text-slate-500 font-medium">
+                {sizePreset === '58mm'
+                  ? '🧾 Format Thermal 58mm (384×1200 px): Kertas struk kasir mini.'
+                  : '🧾 Format Thermal 80mm (576×1600 px): Kertas struk kasir standar.'}
+              </p>
+            )}
           </div>
 
           {/* 3b. Dimensi Kanvas Aktif & Penyesuaian Manual */}
