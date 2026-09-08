@@ -445,64 +445,55 @@ export default function OnlineAdminPage() {
     };
   });
 
-  // Kiosks registry with localStorage persistence (100% real data)
+  // Kiosks state synchronized directly with Cloud (Supabase)
   const [kiosks, setKiosks] = useState(() => {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("sans_admin_kiosks");
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Filter out any legacy dummy testing2
+            const filtered = parsed.filter(k => k.name !== "TESTING2" && k.licenseKey !== "88Q-TUR-W2G");
+            return filtered;
+          }
         }
       } catch (_) {}
     }
-    return [
-      {
-        id: "kiosk-01",
-        name: "TESTING2",
-        deviceType: "PC / Laptop (Canon DSLR & DNP Printer)",
-        gateway: "Midtrans QRIS",
-        price: 30000,
-        licenseKey: "88Q-TUR-W2G",
-        status: "Active",
-        created: "2026-09-06",
-        location: "Outlet Utama - Booth 1",
-        paperRoll: 500,
-        paperMax: 500,
-      }
-    ];
+    return [];
   });
 
-  // Automatically persist kiosks to localStorage on change
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("sans_admin_kiosks", JSON.stringify(kiosks));
-      } catch (_) {}
-    }
-  }, [kiosks]);
-
-  // Form States
-  
   const fetchKiosksCloud = async () => {
     try {
-      const res = await fetch("/api/admin/kiosks");
+      const res = await fetch(`/api/admin/kiosks?t=${Date.now()}`, { cache: "no-store" });
       const data = await res.json();
-      if (data.success && Array.isArray(data.kiosks) && data.kiosks.length > 0) {
-        setKiosks(data.kiosks.map(k => ({
+      if (data.success && Array.isArray(data.kiosks)) {
+        const formatted = data.kiosks.map(k => ({
           ...k,
+          id: k.id,
+          name: k.name,
           licenseKey: k.license_key || k.licenseKey || "NDHS-001",
-          deviceType: k.os_platform ? "PC/Laptop (" + k.os_platform + ")" : "Kiosk Photobooth",
+          deviceType: k.os_platform ? `PC/Laptop (${k.os_platform})` : "Kiosk Photobooth",
           gateway: "Midtrans QRIS",
-          price: k.price_per_photo || 30000,
-          status: k.is_active ? "Active" : "Inactive",
-          created: k.created_at ? k.created_at.substring(0, 10) : "2026-09-06"
-        })));
+          price: Number(k.price_per_photo || k.price || 30000),
+          status: k.is_active !== false ? "Active" : "Inactive",
+          created: k.created_at ? k.created_at.substring(0, 10) : "2026-09-08"
+        }));
+        setKiosks(formatted);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("sans_admin_kiosks", JSON.stringify(formatted));
+          } catch (_) {}
+        }
       }
     } catch (err) {
       console.warn("Could not fetch kiosks from cloud:", err);
     }
   };
+
+  useEffect(() => {
+    fetchKiosksCloud();
+  }, []);
 
   useEffect(() => {
     if (activeTab === "kiosks") {
@@ -1133,10 +1124,35 @@ export default function OnlineAdminPage() {
     setEditingKiosk(null);
   };
 
-  const handleDeleteKiosk = (kioskId) => {
-    if (!confirm('Hapus kiosk ini dari sistem?')) return;
+  const handleDeleteKiosk = async (kioskId) => {
+    const target = kiosks.find(k => k.id === kioskId);
+    if (!confirm(`Hapus kiosk "${target?.name || "ini"}" secara permanen dari Cloud?`)) return;
+    
+    // Remove immediately from UI
     setKiosks(prev => prev.filter(k => k.id !== kioskId));
-    showToast('Kiosk telah dihapus.');
+    showToast("Menghapus kiosk dari Cloud...");
+
+    try {
+      const res = await fetch("/api/admin/kiosks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          kioskId: kioskId,
+          license_key: target?.licenseKey || target?.license_key
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("Kiosk berhasil dihapus dari Cloud.");
+      } else {
+        showToast("Gagal menghapus di cloud: " + (data.error || ""));
+      }
+    } catch (err) {
+      showToast("Gagal menghubungi server: " + err.message);
+    } finally {
+      fetchKiosksCloud();
+    }
   };
 
   // Template CRUD Handlers with XML Parity
@@ -2298,8 +2314,30 @@ export default function OnlineAdminPage() {
                   setActiveKioskForConfig(null);
                   fetchKiosksCloud();
                 }}
-                onSaveSuccess={() => {
+                onSaveSuccess={(savedKiosk) => {
                   setActiveKioskForConfig(null);
+                  if (savedKiosk) {
+                    setKiosks(prev => {
+                      const formatted = {
+                        ...savedKiosk,
+                        id: savedKiosk.id || Date.now(),
+                        name: savedKiosk.name,
+                        licenseKey: savedKiosk.license_key || savedKiosk.licenseKey,
+                        deviceType: savedKiosk.os_platform ? `PC/Laptop (${savedKiosk.os_platform})` : "Kiosk Photobooth",
+                        gateway: "Midtrans QRIS",
+                        price: Number(savedKiosk.price_per_photo || savedKiosk.price || 30000),
+                        status: savedKiosk.is_active !== false ? "Active" : "Inactive",
+                        created: (savedKiosk.created_at || new Date().toISOString()).substring(0, 10)
+                      };
+                      const existingIdx = prev.findIndex(p => String(p.id) === String(savedKiosk.id) || p.licenseKey === formatted.licenseKey);
+                      if (existingIdx >= 0) {
+                        const copy = [...prev];
+                        copy[existingIdx] = { ...copy[existingIdx], ...formatted };
+                        return copy;
+                      }
+                      return [formatted, ...prev];
+                    });
+                  }
                   fetchKiosksCloud();
                   showToast("Konfigurasi Kiosk berhasil disimpan ke Cloud!");
                 }}
@@ -2355,9 +2393,26 @@ export default function OnlineAdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
-                      {kiosks
-                        .filter(k => searchQuery === '' || k.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map((k) => (
+                      {kiosks.filter(k => searchQuery === '' || (k.name || "").toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <Monitor className="w-8 h-8 text-slate-300" />
+                              <p className="text-xs font-bold text-slate-700">Belum ada unit kiosk terdaftar</p>
+                              <p className="text-[11px] text-slate-400">Klik tombol "+ Add Kiosk" di atas untuk mendaftarkan unit kiosk baru dengan License Key otomatis.</p>
+                              <button
+                                onClick={() => setActiveKioskForConfig('new')}
+                                className="mt-2 px-4 py-2 bg-[#120CD6] text-white rounded-xl text-xs font-bold cursor-pointer hover:bg-blue-800 transition shadow"
+                              >
+                                + Tambah Kiosk Baru
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        kiosks
+                          .filter(k => searchQuery === '' || (k.name || "").toLowerCase().includes(searchQuery.toLowerCase()))
+                          .map((k) => (
                           <tr key={k.id} className="hover:bg-slate-50 transition-colors">
                             <td className="py-3.5 px-4">
                               <div className="font-black text-[#111111]">{k.name}</div>
@@ -2415,7 +2470,8 @@ export default function OnlineAdminPage() {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>

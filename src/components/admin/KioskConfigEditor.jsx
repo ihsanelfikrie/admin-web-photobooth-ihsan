@@ -24,25 +24,33 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
+
+function generateRandomLicenseKey() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const chunk = (len) => Array.from({ length: len }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join("");
+  return `${chunk(3)}-${chunk(3)}-${chunk(3)}`;
+}
+
 export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
   const [activeTab, setActiveTab] = useState('general');
 
   // Form State initialized from kiosk data
-  const [formData, setFormData] = useState({
-    name: kiosk?.name || '',
-    license_key: kiosk?.license_key || '',
-    pin: kiosk?.pin || '1111',
+  const isNewKiosk = !kiosk?.id;
+  const [formData, setFormData] = useState(() => ({
+    name: kiosk?.name || (isNewKiosk ? "Nadhisan Booth " + Math.floor(10 + Math.random() * 90) : ""),
+    license_key: kiosk?.license_key || generateRandomLicenseKey(),
+    pin: kiosk?.pin || "1111",
     is_testing_mode: kiosk?.is_testing_mode ?? false,
     is_active: kiosk?.is_active ?? true,
 
     // Consent
     consent_enabled: kiosk?.consent_enabled ?? true,
-    consent_text: kiosk?.consent_text || 'Apakah anda berkenan foto anda kami unggah di media sosial kami?',
-    consent_text_yes: kiosk?.consent_text_yes || 'Baik/Mengerti',
-    consent_text_no: kiosk?.consent_text_no || 'Tidak',
+    consent_text: kiosk?.consent_text || "Apakah anda berkenan foto anda kami unggah di media sosial kami?",
+    consent_text_yes: kiosk?.consent_text_yes || "Baik/Mengerti",
+    consent_text_no: kiosk?.consent_text_no || "Tidak",
 
     // Timer
-    countdown_timer: kiosk?.countdown_timer ?? 10,
+    countdown_timer: kiosk?.countdown_timer ?? 5,
     qr_timer: kiosk?.qr_timer ?? 90,
 
     // Photo Session
@@ -56,21 +64,21 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
     price_per_photo: kiosk?.price_per_photo ?? 30000,
     price_extra_print: kiosk?.price_extra_print ?? 10000,
     price_discount: kiosk?.price_discount ?? 0,
-    midtrans_server_key: kiosk?.midtrans_server_key || '',
-    midtrans_client_key: kiosk?.midtrans_client_key || '',
-    midtrans_merchant_id: kiosk?.midtrans_merchant_id || '',
+    midtrans_server_key: kiosk?.midtrans_server_key || "",
+    midtrans_client_key: kiosk?.midtrans_client_key || "",
+    midtrans_merchant_id: kiosk?.midtrans_merchant_id || "",
     midtrans_is_production: kiosk?.midtrans_is_production ?? false,
 
     // Event & Queue
     is_event_mode: kiosk?.is_event_mode ?? false,
-    event_name: kiosk?.event_name || '',
-    watermark_text: kiosk?.watermark_text || '',
+    event_name: kiosk?.event_name || "",
+    watermark_text: kiosk?.watermark_text || "",
     is_queue_enabled: kiosk?.is_queue_enabled ?? false,
     queue_timeout_minutes: kiosk?.queue_timeout_minutes ?? 3,
 
-    // Device
-    os_hostname: kiosk?.os_hostname || 'DESKTOP-T2QQPN3',
-    os_platform: kiosk?.os_platform || 'darwin',
+    // Device (Real data from client, no dummy strings)
+    os_hostname: kiosk?.os_hostname || null,
+    os_platform: kiosk?.os_platform || null,
     device_id: kiosk?.device_id || null,
 
     // Paper
@@ -84,9 +92,9 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
 
     // Custom Filters
     allowed_filters: kiosk?.allowed_filters || ['bw', 'bw_high', 'soft_glam', 'sepia', 'vintage', 'film_grain', 'none'],
-  });
+  }));
 
-  const [isDirty, setIsDirty] = useState(false);
+  const [isDirty, setIsDirty] = useState(isNewKiosk);
   const [saving, setSaving] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
 
@@ -165,38 +173,58 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
 
   // Save changes
   const handleSave = async () => {
+    const trimmedName = (formData.name || "").trim();
+    if (!trimmedName) {
+      setToastMsg({ type: "error", text: "Nama Kiosk wajib diisi!" });
+      return;
+    }
+
+    let finalKey = (formData.license_key || "").trim().toUpperCase();
+    if (!finalKey) {
+      finalKey = generateRandomLicenseKey();
+      handleChange("license_key", finalKey);
+    }
+
     setSaving(true);
     setToastMsg(null);
 
     try {
       const isNew = !kiosk?.id;
-      const res = await fetch('/api/admin/kiosks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const payload = {
+        ...formData,
+        name: trimmedName,
+        license_key: finalKey,
+      };
+
+      const res = await fetch("/api/admin/kiosks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
           isNew
             ? {
-                action: 'create_kiosk',
-                kioskData: formData,
+                action: "create_kiosk",
+                kioskData: payload,
               }
             : {
-                action: 'update_kiosk',
-                license_key: kiosk.license_key,
-                updates: formData,
+                action: "update_kiosk",
+                license_key: kiosk.license_key || finalKey,
+                updates: payload,
               }
         ),
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setIsDirty(false);
-        setToastMsg({ type: 'success', text: 'Konfigurasi kiosk berhasil disimpan ke server!' });
-        if (onSaveSuccess) onSaveSuccess(data.kiosk || formData);
+        setToastMsg({ type: "success", text: isNew ? "Kiosk baru berhasil dibuat dan disimpan ke Cloud!" : "Konfigurasi kiosk berhasil disimpan ke Cloud!" });
+        if (onSaveSuccess) {
+          onSaveSuccess(data.kiosk || payload);
+        }
       } else {
-        setToastMsg({ type: 'error', text: data.error || 'Gagal menyimpan perubahan.' });
+        setToastMsg({ type: "error", text: data.error || "Gagal menyimpan perubahan ke Cloud." });
       }
     } catch (err) {
-      setToastMsg({ type: 'error', text: 'Kesalahan jaringan: ' + err.message });
+      setToastMsg({ type: "error", text: "Kesalahan jaringan: " + err.message });
     } finally {
       setSaving(false);
       setTimeout(() => setToastMsg(null), 4000);
@@ -419,18 +447,32 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-zinc-700">
-                    License Key <span className="text-rose-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-zinc-700">
+                      License Key <span className="text-rose-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newKey = generateRandomLicenseKey();
+                        handleChange("license_key", newKey);
+                      }}
+                      className="text-[11px] text-[#120CD6] hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer transition bg-blue-50 px-2 py-0.5 rounded-md"
+                      title="Acak kode lisensi baru"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>🎲 Acak Lisensi Baru</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={formData.license_key}
-                    onChange={(e) => handleChange('license_key', e.target.value.toUpperCase())}
+                    onChange={(e) => handleChange("license_key", e.target.value.toUpperCase())}
                     placeholder="Contoh: A77-LNU-30N"
-                    className="w-full px-3.5 py-2.5 bg-white border border-zinc-300 rounded-lg text-xs font-mono text-zinc-900 uppercase focus:outline-none focus:border-emerald-500 transition shadow-sm"
+                    className="w-full px-3.5 py-2.5 bg-white border border-zinc-300 rounded-lg text-xs font-mono font-bold text-zinc-900 uppercase focus:outline-none focus:border-emerald-500 transition shadow-sm"
                   />
                   <p className="text-[11px] text-zinc-400">
-                    License Key rahasia untuk otorisasi mesin client/operator photobooth.
+                    Kode lisensi otomatis untuk otorisasi mesin kiosk / tablet saat pertama kali login.
                   </p>
                 </div>
               </div>
@@ -562,13 +604,13 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                   <div className="space-y-3 text-xs">
                     <div className="flex justify-between items-center py-1 border-b border-zinc-100">
                       <span className="text-zinc-500">OS Hostname</span>
-                      <span className="font-mono font-bold text-zinc-800">{formData.os_hostname}</span>
+                      <span className="font-mono font-bold text-zinc-800">{formData.os_hostname || "Belum terhubung ke perangkat"}</span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-zinc-100">
                       <span className="text-zinc-500">Device ID</span>
                       <span className="font-mono text-[11px] text-zinc-700 max-w-[180px] truncate">
-                        {formData.device_id || 'Belum terikat'}
+                        {formData.device_id || "Belum terikat (Siap Aktivasi)"}
                       </span>
                     </div>
 

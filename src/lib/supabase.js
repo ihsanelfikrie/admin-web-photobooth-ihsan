@@ -750,16 +750,16 @@ const KIOSKS_PATH = "system/kiosks.json";
 const DEFAULT_KIOSKS = [
   {
     id: 1,
-    uuid: "7c4861bd-b8b8-4abd-a0eb-536827abaff3",
-    license_key: "88Q-TUR-W2G",
-    name: "TESTING2",
+    uuid: "kiosk-outlet-01",
+    license_key: "NDH-88A-72K",
+    name: "Nadhisan Booth 01",
     pin: "1111",
-    device_id: "fa4eb4cf-62d3-4e09-bd6f-036937babb49",
-    os_platform: "darwin",
-    os_hostname: "Ihsan-Macbook-Pro.local",
+    device_id: null,
+    os_platform: null,
+    os_hostname: null,
     is_active: true,
     is_event_mode: false,
-    is_queue_enabled: true,
+    is_queue_enabled: false,
     session_duration: 300,
     countdown_timer: 5,
     qr_timer: 90,
@@ -771,7 +771,7 @@ const DEFAULT_KIOSKS = [
     live_photo: true,
     no_retake_after: 0,
     paper_management_enabled: true,
-    paper_stock: 496,
+    paper_stock: 700,
     paper_booked: 0,
     consent_enabled: true,
     consent_text: "Apakah anda berkenan foto anda kami unggah di media sosial kami?",
@@ -780,24 +780,27 @@ const DEFAULT_KIOSKS = [
     midtrans_server_key: process.env.MIDTRANS_SERVER_KEY || "",
     midtrans_client_key: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "",
     templates_version: "v1.0.0",
-    last_ping_at: new Date().toISOString(),
-    created_at: "2026-09-06T15:35:17.723Z",
+    last_ping_at: null,
+    created_at: "2026-09-08T00:00:00.000Z",
     updated_at: new Date().toISOString()
   }
 ];
 
 export async function getKiosksCloud() {
   try {
-    const { data, error } = await supabaseAdmin.storage
-      .from(bucketName)
-      .download(KIOSKS_PATH);
-
-    if (error || !data) {
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${KIOSKS_PATH}?t=${Date.now()}`, {
+      headers: {
+        "apikey": supabaseServiceKey,
+        "Authorization": `Bearer ${supabaseServiceKey}`,
+        "Cache-Control": "no-cache, no-store"
+      },
+      cache: "no-store"
+    });
+    if (!res.ok) {
       return DEFAULT_KIOSKS;
     }
-    const text = await data.text();
-    const parsed = JSON.parse(text);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_KIOSKS;
+    const parsed = await res.json();
+    return Array.isArray(parsed) ? parsed : DEFAULT_KIOSKS;
   } catch (err) {
     console.warn("[Supabase] Error reading kiosks cloud:", err.message);
     return DEFAULT_KIOSKS;
@@ -806,15 +809,18 @@ export async function getKiosksCloud() {
 
 export async function saveKiosksCloud(kiosks) {
   try {
-    const jsonString = JSON.stringify(kiosks, null, 2);
-    const { error } = await supabaseAdmin.storage
-      .from(bucketName)
-      .upload(KIOSKS_PATH, Buffer.from(jsonString, "utf-8"), {
-        contentType: "application/json",
-        upsert: true
-      });
-
-    return !error;
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${KIOSKS_PATH}`, {
+      method: "POST",
+      headers: {
+        "apikey": supabaseServiceKey,
+        "Authorization": `Bearer ${supabaseServiceKey}`,
+        "Content-Type": "application/json",
+        "cache-control": "no-cache, max-age=0",
+        "x-upsert": "true"
+      },
+      body: JSON.stringify(kiosks, null, 2)
+    });
+    return res.ok;
   } catch (err) {
     console.error("[Supabase] Error saving kiosks cloud:", err.message);
     return false;
@@ -859,16 +865,19 @@ const DEFAULT_CATEGORIES = [
 
 export async function getCategoriesCloud() {
   try {
-    const { data, error } = await supabaseAdmin.storage
-      .from(bucketName)
-      .download(CATEGORIES_PATH);
-
-    if (error || !data) {
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${CATEGORIES_PATH}?t=${Date.now()}`, {
+      headers: {
+        "apikey": supabaseServiceKey,
+        "Authorization": `Bearer ${supabaseServiceKey}`,
+        "Cache-Control": "no-cache, no-store"
+      },
+      cache: "no-store"
+    });
+    if (!res.ok) {
       return DEFAULT_CATEGORIES;
     }
-    const text = await data.text();
-    const parsed = JSON.parse(text);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_CATEGORIES;
+    const parsed = await res.json();
+    return Array.isArray(parsed) ? parsed : DEFAULT_CATEGORIES;
   } catch (err) {
     console.warn("[Supabase] Error reading categories cloud:", err.message);
     return DEFAULT_CATEGORIES;
@@ -877,15 +886,18 @@ export async function getCategoriesCloud() {
 
 export async function saveCategoriesCloud(categories) {
   try {
-    const jsonString = JSON.stringify(categories, null, 2);
-    const { error } = await supabaseAdmin.storage
-      .from(bucketName)
-      .upload(CATEGORIES_PATH, Buffer.from(jsonString, "utf-8"), {
-        contentType: "application/json",
-        upsert: true
-      });
-
-    return !error;
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${CATEGORIES_PATH}`, {
+      method: "POST",
+      headers: {
+        "apikey": supabaseServiceKey,
+        "Authorization": `Bearer ${supabaseServiceKey}`,
+        "Content-Type": "application/json",
+        "cache-control": "no-cache, max-age=0",
+        "x-upsert": "true"
+      },
+      body: JSON.stringify(categories, null, 2)
+    });
+    return res.ok;
   } catch (err) {
     console.error("[Supabase] Error saving categories cloud:", err.message);
     return false;
