@@ -57,6 +57,7 @@ import {
 import TemplateEditorStudio from '@/components/TemplateEditorStudio';
 import KioskGalleryView from '@/components/KioskGalleryView';
 import KioskPaymentGatewayEditor from '@/components/KioskPaymentGatewayEditor';
+import KioskStatisticsView from '@/components/KioskStatisticsView';
 
 const SUPABASE_CDN_BASE = 'https://rifcawifuojzercjauhy.supabase.co/storage/v1/object/public/pbak-assets';
 
@@ -2383,175 +2384,16 @@ export default function OnlineAdminPage() {
           )}
 
           {/* ══════════════════════════════════════════════════════════════
-              VIEW 4: STATISTICS
+              VIEW 4: STATISTICS (Full Reference Design & Real Analytics)
           ══════════════════════════════════════════════════════════════ */}
-          {activeTab === 'statistics' && (() => {
-            const statsSessions = statsKioskFilter === 'all'
-              ? sessions
-              : sessions.filter(s => {
-                  const targetK = kiosks.find(k => String(k.id) === String(statsKioskFilter));
-                  const targetLicense = (targetK?.licenseKey || targetK?.license_key || "").trim().toUpperCase();
-                  const targetName = (targetK?.name || "").toLowerCase();
-                  return (s.kioskId && String(s.kioskId) === String(statsKioskFilter)) ||
-                         (targetLicense && s.licenseKey && s.licenseKey.trim().toUpperCase() === targetLicense) ||
-                         (targetName && s.kioskName && s.kioskName.toLowerCase() === targetName);
-                });
-
-            const allTx = finance?.transactions || [];
-            const statsTransactions = statsKioskFilter === 'all'
-              ? allTx
-              : allTx.filter(t => {
-                  const targetK = kiosks.find(k => String(k.id) === String(statsKioskFilter));
-                  const targetLicense = (targetK?.licenseKey || targetK?.license_key || "").trim().toUpperCase();
-                  const targetName = (targetK?.name || "").toLowerCase();
-                  return (t.kioskId && String(t.kioskId) === String(statsKioskFilter)) ||
-                         (targetLicense && t.licenseKey && t.licenseKey.trim().toUpperCase() === targetLicense) ||
-                         (targetName && t.kioskName && t.kioskName.toLowerCase() === targetName);
-                });
-
-            const totalRevenue = statsTransactions.reduce((acc, t) => {
-              const st = (t.status || '').toLowerCase();
-              if (st === 'success' || st === 'settlement' || st === 'capture' || st === 'paid') {
-                return acc + (Number(t.amount) || Number(t.gross_amount) || 0);
-              }
-              return acc;
-            }, 0);
-
-            return (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight">Statistik &amp; Analisis Performa</h2>
-                    <p className="text-xs text-slate-500">Wawasan analitik penggunaan photobooth dan konversi pendapatan</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-600 uppercase">Unit Kiosk:</span>
-                    <select
-                      value={statsKioskFilter}
-                      onChange={(e) => setStatsKioskFilter(e.target.value)}
-                      className="p-2 bg-white border-2 border-slate-200 rounded-xl font-black text-xs text-[#111111] cursor-pointer"
-                    >
-                      <option value="all">🌐 Semua Kiosk (Global)</option>
-                      {kiosks.map(k => (
-                        <option key={k.id} value={k.id}>
-                          🖥️ {k.name} ({k.licenseKey})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Sesi Foto</p>
-                    <p className="text-3xl font-black text-[#111111] mt-1">{statsSessions.length} Sesi</p>
-                    <p className="text-[11px] text-[#120CD6] font-bold mt-1">
-                      {statsSessions.length > 0 ? 'Data terfilter sinkron' : 'Belum ada sesi baru'}
-                    </p>
-                  </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Omzet</p>
-                    <p className="text-3xl font-black text-[#120CD6] mt-1">{formatRupiah(totalRevenue)}</p>
-                    <p className="text-[11px] text-emerald-600 font-bold mt-1">{statsTransactions.length} Transaksi</p>
-                  </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Durasi Rata-rata</p>
-                    <p className="text-3xl font-black text-slate-800 mt-1">
-                      {statsSessions.length > 0 ? '2m 45s' : '0m 00s'}
-                    </p>
-                    <p className="text-[11px] text-slate-400 font-medium mt-1">Alur cepat &amp; efisien</p>
-                  </div>
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tingkat Unduh</p>
-                    <p className="text-3xl font-black text-[#111111] mt-1">
-                      {statsSessions.length > 0 ? '100%' : '0%'}
-                    </p>
-                    <p className="text-[11px] text-[#120CD6] font-bold mt-1">Supabase CDN stabil</p>
-                  </div>
-                </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
-                  <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Pangsa Metode Pembayaran</h3>
-                  {(() => {
-                    const qrisCount = finance?.breakdown?.qris?.count || 0;
-                    const cashCount = finance?.breakdown?.cash?.count || 0;
-                    const voucherCount = finance?.breakdown?.voucher?.count || 0;
-                    const totalCount = qrisCount + cashCount + voucherCount;
-                    const qrisPct = totalCount > 0 ? Math.round((qrisCount / totalCount) * 100) : 0;
-                    const cashPct = totalCount > 0 ? Math.round((cashCount / totalCount) * 100) : 0;
-                    const voucherPct = totalCount > 0 ? Math.round((voucherCount / totalCount) * 100) : 0;
-
-                    return (
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between text-xs font-bold mb-1">
-                            <span>QRIS Midtrans</span>
-                            <span className="font-black text-[#120CD6]">{qrisPct}%</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                            <div className="bg-[#120CD6] h-full rounded-full transition-all" style={{ width: `${qrisPct}%` }} />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-xs font-bold mb-1">
-                            <span>Voucher Promo</span>
-                            <span className="font-black text-[#F908E0]">{voucherPct}%</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                            <div className="bg-[#F908E0] h-full rounded-full transition-all" style={{ width: `${voucherPct}%` }} />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-xs font-bold mb-1">
-                            <span>Tunai / Event</span>
-                            <span className="font-black text-[#111111]">{cashPct}%</span>
-                          </div>
-                          <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                            <div className="bg-[#E5FD5F] h-full rounded-full border border-[#120CD6] transition-all" style={{ width: `${cashPct}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
-                  <h3 className="text-sm font-black text-[#111111] uppercase tracking-tight">Distribusi Ukuran Template</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-xs font-bold mb-1">
-                        <span>Receipt Strip (Thermal)</span>
-                        <span className="font-black text-[#120CD6]">65%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                        <div className="bg-[#120CD6] h-full rounded-full" style={{ width: '65%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs font-bold mb-1">
-                        <span>4R Classic Grid</span>
-                        <span className="font-black text-[#F908E0]">25%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                        <div className="bg-[#F908E0] h-full rounded-full" style={{ width: '25%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-xs font-bold mb-1">
-                        <span>Photostrip 2R</span>
-                        <span className="font-black text-slate-700">10%</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                        <div className="bg-[#E5FD5F] h-full rounded-full border border-[#120CD6]" style={{ width: '10%' }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            );
-          })()}
+          {activeTab === 'statistics' && (
+            <KioskStatisticsView
+              sessions={sessions}
+              transactions={finance?.transactions || []}
+              kiosks={kiosks}
+              templates={allTemplates}
+            />
+          )}
 
           {/* ══════════════════════════════════════════════════════════════
               VIEW 5: KIOSK
