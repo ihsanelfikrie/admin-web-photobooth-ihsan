@@ -936,3 +936,60 @@ export async function saveCategoriesCloud(categories) {
     return false;
   }
 }
+
+// ── Staff Cloud Storage Helpers ───────────────────────────────────────────────
+const STAFF_PATH = "system/staff.json";
+
+const DEFAULT_STAFF = [
+  {
+    id: 1,
+    name: "Staff Nadhisan",
+    email: "staff@nadhisanbooth.com",
+    password: "Password123",
+    role: "staff",
+    allowed_menus: ["dashboard", "transactions", "live_monitor", "gallery"],
+    allowed_kiosks: ["all"],
+    created_at: "2026-09-08T12:00:00.000Z"
+  }
+];
+
+export async function getStaffCloud() {
+  try {
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${STAFF_PATH}?t=${Date.now()}`, {
+      headers: {
+        "apikey": supabaseServiceKey,
+        "Authorization": `Bearer ${supabaseServiceKey}`,
+        "Cache-Control": "no-cache, no-store"
+      },
+      cache: "no-store"
+    });
+    if (!res.ok) {
+      return DEFAULT_STAFF;
+    }
+    const parsed = await res.json();
+    return Array.isArray(parsed) ? parsed : DEFAULT_STAFF;
+  } catch (err) {
+    console.warn("[Supabase] Error reading staff cloud:", err.message);
+    return DEFAULT_STAFF;
+  }
+}
+
+export async function saveStaffCloud(staffList) {
+  try {
+    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${STAFF_PATH}`, {
+      method: "POST",
+      headers: {
+        "apikey": supabaseServiceKey,
+        "Authorization": `Bearer ${supabaseServiceKey}`,
+        "Content-Type": "application/json",
+        "cache-control": "no-cache, max-age=0",
+        "x-upsert": "true"
+      },
+      body: JSON.stringify(staffList, null, 2)
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("[Supabase] Error saving staff cloud:", err.message);
+    return false;
+  }
+}

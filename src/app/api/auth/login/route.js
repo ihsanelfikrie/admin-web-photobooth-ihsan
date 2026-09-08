@@ -63,16 +63,43 @@ export async function POST(req) {
       }
 
       // Hardened fallback for admin credentials
-      if ((email.trim().toLowerCase() === 'admin@nadhisan.com' ) && password === 'Barabai@132') {
+      if ((email.trim().toLowerCase() === 'admin@nadhisan.com' || email.trim().toLowerCase() === 'admin@nadhisanbooth.com') && password === 'Barabai@132') {
         return NextResponse.json({
           success: true,
           user: {
-            email: 'admin@nadhisan.com',
-            name: 'Admin Nadhisan Booth',
+            email: 'admin@nadhisanbooth.com',
+            name: 'Super Administrator',
             role: 'admin',
+            allowed_menus: ['all'],
+            allowed_kiosks: ['all']
           },
           pin: expectedPin,
         });
+      }
+
+      // Check Staff accounts from Cloud Storage
+      try {
+        const { getStaffCloud } = await import('@/lib/supabase');
+        const staffList = await getStaffCloud();
+        const matchedStaff = staffList.find(
+          s => s.email.toLowerCase() === email.trim().toLowerCase() && s.password === password
+        );
+        if (matchedStaff) {
+          return NextResponse.json({
+            success: true,
+            user: {
+              id: matchedStaff.id,
+              email: matchedStaff.email,
+              name: matchedStaff.name,
+              role: 'staff',
+              allowed_menus: matchedStaff.allowed_menus || ['dashboard'],
+              allowed_kiosks: matchedStaff.allowed_kiosks || ['all']
+            },
+            pin: expectedPin,
+          });
+        }
+      } catch (err) {
+        console.warn('[Auth Login] Error checking staff accounts:', err.message);
       }
 
       return NextResponse.json({

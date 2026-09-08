@@ -7,6 +7,10 @@ import Link from 'next/link';
 import QRCode from 'qrcode';
 import JSZip from 'jszip';
 import {
+  UserCheck,
+  Users,
+  ShieldCheck,
+  UserPlus,
   LayoutDashboard,
   ShoppingCart,
   Activity,
@@ -720,6 +724,189 @@ export default function OnlineAdminPage() {
       if (json.success) setQueue(json.queue);
     } catch (err) {
       console.error('Failed to load queue:', err);
+    }
+  };
+
+  const loadStaff = async () => {
+    setLoadingStaff(true);
+    try {
+      const res = await fetch('/api/admin/staff');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.staff)) {
+        setStaffList(data.staff);
+      }
+    } catch (err) {
+      console.error('[Admin] Error loading staff:', err);
+    } finally {
+      setLoadingStaff(false);
+    }
+  };
+
+  const handleCreateStaff = async (e) => {
+    e.preventDefault();
+    if (!newStaffEmail.trim()) {
+      showToast('Email staff wajib diisi.', 'error');
+      return;
+    }
+
+    let finalPassword = '';
+    if (passwordMode === 'auto') {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+      finalPassword = 'SANS-' + Array.from({ length: 8 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+    } else {
+      if (newStaffPassword.length < 6) {
+        showToast('Password minimal 6 karakter.', 'error');
+        return;
+      }
+      if (newStaffPassword !== newStaffConfirmPassword) {
+        showToast('Konfirmasi password tidak cocok.', 'error');
+        return;
+      }
+      finalPassword = newStaffPassword;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          staffData: {
+            name: newStaffName.trim() || 'Staff Nadhisan',
+            email: newStaffEmail.trim(),
+            password: finalPassword,
+            allowed_menus: ['dashboard', 'transactions', 'live_monitor'],
+            allowed_kiosks: ['all']
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Staff ${data.staff.name} berhasil ditambahkan!`, 'success');
+        setStaffList(prev => [...prev.filter(s => s.id !== data.staff.id), data.staff]);
+        if (passwordMode === 'auto') {
+          setCreatedStaffPasswordNotice({
+            name: data.staff.name,
+            email: data.staff.email,
+            password: finalPassword
+          });
+        }
+        setIsAddStaffOpen(false);
+        setNewStaffName('');
+        setNewStaffEmail('');
+        setNewStaffPassword('');
+        setNewStaffConfirmPassword('');
+      } else {
+        showToast(data.error || 'Gagal menambahkan staff.', 'error');
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenAccessModal = (staff) => {
+    setSelectedStaff(staff);
+    setStaffMenuAccess(Array.isArray(staff.allowed_menus) ? [...staff.allowed_menus] : ['dashboard', 'transactions', 'live_monitor']);
+    setStaffKioskAccess(Array.isArray(staff.allowed_kiosks) ? [...staff.allowed_kiosks] : ['all']);
+    setIsAccessModalOpen(true);
+  };
+
+  const handleSaveAccess = async () => {
+    if (!selectedStaff) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_access',
+          id: selectedStaff.id,
+          allowed_menus: staffMenuAccess,
+          allowed_kiosks: staffKioskAccess
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Hak akses untuk ${selectedStaff.name} berhasil disimpan!`, 'success');
+        setStaffList(prev => prev.map(s => s.id === selectedStaff.id ? { ...s, allowed_menus: staffMenuAccess, allowed_kiosks: staffKioskAccess } : s));
+        setIsAccessModalOpen(false);
+      } else {
+        showToast(data.error || 'Gagal menyimpan akses.', 'error');
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenPasswordModal = (staff) => {
+    setSelectedStaff(staff);
+    setChangePasswordVal('');
+    setChangePasswordConfirmVal('');
+    setIsPasswordModalOpen(true);
+  };
+
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    if (!selectedStaff) return;
+    if (changePasswordVal.length < 6) {
+      showToast('Password baru minimal 6 karakter.', 'error');
+      return;
+    }
+    if (changePasswordVal !== changePasswordConfirmVal) {
+      showToast('Konfirmasi password tidak cocok.', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'change_password',
+          id: selectedStaff.id,
+          password: changePasswordVal
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Password untuk ${selectedStaff.name} berhasil diubah!`, 'success');
+        setIsPasswordModalOpen(false);
+      } else {
+        showToast(data.error || 'Gagal mengubah password.', 'error');
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteStaff = async (staff) => {
+    if (!window.confirm(`Hapus akun staff "${staff.name}" (${staff.email})?`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: staff.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Staff ${staff.name} berhasil dihapus.`, 'success');
+        setStaffList(prev => prev.filter(s => s.id !== staff.id));
+      } else {
+        showToast(data.error || 'Gagal menghapus staff.', 'error');
+      }
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1712,7 +1899,28 @@ export default function OnlineAdminPage() {
         { id: 'public_gallery', label: 'Portal Softfile Tamu', icon: QrCode },
       ],
     },
+    {
+      groupTitle: 'ADMINISTRASI & STAFF',
+      items: [
+        { id: 'staff', label: 'Staff Management', icon: UserCheck },
+      ],
+    },
   ];
+
+  // Filter accessible menus if logged in as staff
+  const accessibleMenuGroups = useMemo(() => {
+    if (!currentUser || currentUser.role === 'admin' || !Array.isArray(currentUser.allowed_menus)) {
+      return menuGroups;
+    }
+    return menuGroups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item =>
+          currentUser.allowed_menus.includes('all') || currentUser.allowed_menus.includes(item.id)
+        ),
+      }))
+      .filter(group => group.items.length > 0);
+  }, [currentUser, menuGroups]);
 
   const activeItemLabel = useMemo(() => {
     for (const group of menuGroups) {
@@ -1780,7 +1988,7 @@ export default function OnlineAdminPage() {
 
         {/* Scrollable Nav Items */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-          {menuGroups.map((group) => (
+          {accessibleMenuGroups.map((group) => (
             <div key={group.groupTitle} className="space-y-1">
               <div className="px-3 pb-1 text-[10px] font-black tracking-widest text-[#E5FD5F] uppercase select-none flex items-center gap-1">
                 <span>✳</span>
@@ -1801,6 +2009,7 @@ export default function OnlineAdminPage() {
                       if (item.id === 'vouchers') loadVouchers();
                       if (item.id === 'templates') loadFrames();
                       if (item.id === 'gallery') loadSessions();
+                      if (item.id === 'staff') loadStaff();
                     }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all text-left cursor-pointer ${
                       isActive
@@ -3760,6 +3969,588 @@ export default function OnlineAdminPage() {
               </div>
             </div>
           )}
+          {/* ══════════════════════════════════════════════════════════════
+              VIEW 12: STAFF MANAGEMENT (SANS Studio Edition)
+          ══════════════════════════════════════════════════════════════ */}
+          {activeTab === 'staff' && (
+            <div className="space-y-6">
+              {/* Header Title & CTA */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#E5FD5F] text-[#111111] border-2 border-[#120CD6] flex items-center justify-center font-black shadow-xs shrink-0">
+                    <Users className="w-6 h-6 text-[#111111]" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight flex items-center gap-2">
+                      <span>Staff Management</span>
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Kelola staff dan hak akses menu mereka. Staff hanya bisa melihat data milik Anda.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsAddStaffOpen(true)}
+                  className="px-5 py-2.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs flex items-center justify-center gap-2"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Tambah Staff</span>
+                </button>
+              </div>
+
+              {/* Total Staff Stat Card */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-2xl border-2 border-slate-200 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center font-black">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black text-[#111111]">{staffList.length}</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Staff</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchStaff}
+                  onChange={(e) => setSearchStaff(e.target.value)}
+                  placeholder="Cari berdasarkan email..."
+                  className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-200 rounded-2xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#120CD6] transition-colors shadow-xs"
+                />
+              </div>
+
+              {/* Staff Table */}
+              <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b-2 border-slate-200 bg-slate-50 text-[11px] font-black text-slate-600 uppercase tracking-wider">
+                        <th className="py-3 px-4 w-16">No.</th>
+                        <th className="py-3 px-4">Name</th>
+                        <th className="py-3 px-4">Email</th>
+                        <th className="py-3 px-4 text-center">Menu Access</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs font-bold">
+                      {loadingStaff ? (
+                        <tr>
+                          <td colSpan={5} className="py-10 text-center text-slate-500">
+                            <div className="flex items-center justify-center gap-2">
+                              <RefreshCw className="w-4 h-4 animate-spin text-[#120CD6]" />
+                              <span>Memuat data staff...</span>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (() => {
+                        const filtered = staffList.filter(s =>
+                          !searchStaff || s.email.toLowerCase().includes(searchStaff.toLowerCase()) || s.name.toLowerCase().includes(searchStaff.toLowerCase())
+                        );
+
+                        if (filtered.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={5} className="py-10 text-center text-slate-400">
+                                Belum ada staff terdaftar. Klik "+ Tambah Staff" untuk membuat akun baru.
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        return filtered.map((staff, idx) => (
+                          <tr key={staff.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3.5 px-4 text-slate-400 font-mono">{idx + 1}</td>
+                            <td className="py-3.5 px-4 font-black text-[#111111]">{staff.name}</td>
+                            <td className="py-3.5 px-4 font-mono text-slate-600">{staff.email}</td>
+                            <td className="py-3.5 px-4 text-center">
+                              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-xs font-black uppercase tracking-wider">
+                                {staff.allowed_menus?.includes('all')
+                                  ? 'Semua Menu'
+                                  : `${staff.allowed_menus?.length || 0} menu`}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => handleOpenAccessModal(staff)}
+                                  className="px-2.5 py-1 text-xs font-black text-[#120CD6] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg flex items-center gap-1 cursor-pointer transition-colors uppercase tracking-tight"
+                                  title="Atur hak akses menu & kiosk"
+                                >
+                                  <Sliders className="w-3.5 h-3.5" />
+                                  <span>Menu</span>
+                                </button>
+                                <button
+                                  onClick={() => handleOpenPasswordModal(staff)}
+                                  className="px-2.5 py-1 text-xs font-black text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg flex items-center gap-1 cursor-pointer transition-colors uppercase tracking-tight"
+                                  title="Ubah password staff"
+                                >
+                                  <Key className="w-3.5 h-3.5" />
+                                  <span>Pass</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteStaff(staff)}
+                                  className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
+                                  title="Hapus staff"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination footer */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs font-bold text-slate-500">
+                  <span>Page 1 of 1</span>
+                  <div className="flex gap-2">
+                    <button disabled className="px-3 py-1 bg-white border border-slate-200 rounded-lg opacity-50 cursor-not-allowed">
+                      Previous
+                    </button>
+                    <button disabled className="px-3 py-1 bg-white border border-slate-200 rounded-lg opacity-50 cursor-not-allowed">
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              MODAL: TAMBAH STAFF
+          ══════════════════════════════════════════════════════════════ */}
+          {isAddStaffOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                  <div>
+                    <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">Tambah Staff</h3>
+                    <p className="text-xs text-slate-500">Buat akun staff baru untuk mengelola kiosk Anda</p>
+                  </div>
+                  <button onClick={() => setIsAddStaffOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateStaff} className="p-6 space-y-4 text-xs font-bold">
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">
+                      Nama
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newStaffName}
+                      onChange={(e) => setNewStaffName(e.target.value)}
+                      placeholder="Nama staff"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={newStaffEmail}
+                      onChange={(e) => setNewStaffEmail(e.target.value)}
+                      placeholder="staff@example.com"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                      Password
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setPasswordMode('auto')}
+                        className={`py-1.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${
+                          passwordMode === 'auto'
+                            ? 'bg-[#120CD6] text-white shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        🔄 Auto Generate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPasswordMode('manual')}
+                        className={`py-1.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all ${
+                          passwordMode === 'manual'
+                            ? 'bg-[#120CD6] text-white shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        🔑 Manual
+                      </button>
+                    </div>
+
+                    {passwordMode === 'auto' ? (
+                      <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-[11px] text-[#120CD6] font-medium leading-relaxed">
+                        Password akan dibuat otomatis dan ditampilkan setelah staff berhasil dibuat.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <input
+                            type={showNewStaffPassword ? 'text' : 'password'}
+                            value={newStaffPassword}
+                            onChange={(e) => setNewStaffPassword(e.target.value)}
+                            placeholder="Min 6 karakter"
+                            className="w-full px-3.5 py-2.5 pr-10 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewStaffPassword(!showNewStaffPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                          >
+                            {showNewStaffPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <input
+                          type={showNewStaffPassword ? 'text' : 'password'}
+                          value={newStaffConfirmPassword}
+                          onChange={(e) => setNewStaffConfirmPassword(e.target.value)}
+                          placeholder="Konfirmasi password"
+                          className="w-full px-3.5 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 py-3 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      {loading ? 'Menyimpan...' : 'Buat Staff'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddStaffOpen(false)}
+                      className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              MODAL: NOTICE PASSWORD GENERATE OTOMATIS
+          ══════════════════════════════════════════════════════════════ */}
+          {createdStaffPasswordNotice && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-sm w-full p-6 text-center space-y-4 animate-in fade-in zoom-in-95">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto">
+                  <CheckCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">Akun Staff Siap!</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Silakan salin password akun staff untuk <strong>{createdStaffPasswordNotice.email}</strong>:
+                  </p>
+                </div>
+
+                <div className="p-3 bg-slate-100 border-2 border-dashed border-slate-300 rounded-2xl font-mono text-sm font-black text-[#120CD6] select-all flex items-center justify-between">
+                  <span>{createdStaffPasswordNotice.password}</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdStaffPasswordNotice.password);
+                      showToast('Password berhasil disalin!', 'success');
+                    }}
+                    className="p-1 hover:text-[#111111] text-slate-500"
+                    title="Copy"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setCreatedStaffPasswordNotice(null)}
+                  className="w-full py-2.5 bg-[#120CD6] hover:bg-blue-800 text-white font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  Selesai
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              MODAL: AKSES MENU & KIOSK (Screenshot 2 Match)
+          ══════════════════════════════════════════════════════════════ */}
+          {isAccessModalOpen && selectedStaff && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                  <div>
+                    <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">Akses Menu &amp; Kiosk</h3>
+                    <p className="text-xs text-slate-500">Atur akses untuk <strong className="text-[#120CD6]">{selectedStaff.email}</strong></p>
+                  </div>
+                  <button onClick={() => setIsAccessModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Left Column: Akses Menu */}
+                    <div className="space-y-3">
+                      <div className="pb-2 border-b border-slate-200 flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Akses Menu</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const allMenuIds = ['dashboard', 'transactions', 'live_monitor', 'statistics', 'kiosks', 'payment_gateway', 'vouchers', 'staff', 'templates', 'template_categories', 'gallery', 'public_gallery'];
+                            if (staffMenuAccess.length === allMenuIds.length) {
+                              setStaffMenuAccess([]);
+                            } else {
+                              setStaffMenuAccess(allMenuIds);
+                            }
+                          }}
+                          className="text-[10px] font-black text-[#120CD6] hover:underline uppercase"
+                        >
+                          Pilih Semua
+                        </button>
+                      </div>
+
+                      <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                        {[
+                          { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
+                          { id: 'kiosks', label: 'Kiosk', path: '/kiosk' },
+                          { id: 'payment_gateway', label: 'Payment Gateway', path: '/payment-gateway' },
+                          { id: 'transactions', label: 'Transaction', path: '/transactions' },
+                          { id: 'vouchers', label: 'Voucher', path: '/vouchers' },
+                          { id: 'staff', label: 'Staff', path: '/staff' },
+                          { id: 'gallery', label: 'Gallery', path: '/gallery' },
+                          { id: 'templates', label: 'Templates', path: '/templates' },
+                          { id: 'template_categories', label: 'Template Categories', path: '/template-categories' },
+                          { id: 'public_gallery', label: 'Public Gallery', path: '/public-gallery' },
+                          { id: 'live_monitor', label: 'Live Monitor', path: '/live-monitor' },
+                          { id: 'statistics', label: 'Laporan & Finansial', path: '/statistics' },
+                        ].map((m) => {
+                          const isChecked = staffMenuAccess.includes('all') || staffMenuAccess.includes(m.id);
+                          return (
+                            <label
+                              key={m.id}
+                              className={`flex items-start gap-3 p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                                isChecked ? 'bg-blue-50/60 border-blue-200' : 'bg-white border-slate-200 hover:bg-slate-50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setStaffMenuAccess(prev => [...prev.filter(x => x !== 'all'), m.id]);
+                                  } else {
+                                    setStaffMenuAccess(prev => prev.filter(x => x !== m.id && x !== 'all'));
+                                  }
+                                }}
+                                className="w-4 h-4 mt-0.5 text-[#120CD6] accent-[#120CD6] rounded"
+                              />
+                              <div>
+                                <p className="text-xs font-black text-[#111111] leading-tight">{m.label}</p>
+                                <p className="text-[10px] text-slate-400 font-mono">{m.path}</p>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Right Column: Akses Kiosk */}
+                    <div className="space-y-3">
+                      <div className="pb-2 border-b border-slate-200 flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-800 uppercase tracking-wider">Akses Kiosk</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (staffKioskAccess.includes('all')) {
+                              setStaffKioskAccess([]);
+                            } else {
+                              setStaffKioskAccess(['all']);
+                            }
+                          }}
+                          className="text-[10px] font-black text-[#120CD6] hover:underline uppercase"
+                        >
+                          {staffKioskAccess.includes('all') ? 'Hapus Semua' : 'Pilih Semua'}
+                        </button>
+                      </div>
+
+                      <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                        {/* Option: All Kiosks */}
+                        <label
+                          className={`flex items-start gap-3 p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                            staffKioskAccess.includes('all') ? 'bg-[#E5FD5F]/30 border-[#120CD6]' : 'bg-white border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={staffKioskAccess.includes('all')}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setStaffKioskAccess(['all']);
+                              } else {
+                                setStaffKioskAccess([]);
+                              }
+                            }}
+                            className="w-4 h-4 mt-0.5 text-[#120CD6] accent-[#120CD6] rounded"
+                          />
+                          <div>
+                            <p className="text-xs font-black text-[#111111] leading-tight">Semua Bilik Kiosk (Full Access)</p>
+                            <p className="text-[10px] text-slate-400">Staff dapat mengelola semua unit bilik</p>
+                          </div>
+                        </label>
+
+                        {/* Individual Kiosks */}
+                        {kiosks.map((k) => {
+                          const isChecked = staffKioskAccess.includes('all') || staffKioskAccess.includes(String(k.id)) || staffKioskAccess.includes(k.license_key);
+                          return (
+                            <label
+                              key={k.id}
+                              className={`flex items-start gap-3 p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                                isChecked ? 'bg-blue-50/60 border-blue-200' : 'bg-white border-slate-200 hover:bg-slate-50'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setStaffKioskAccess(prev => [...prev.filter(x => x !== 'all'), String(k.id)]);
+                                  } else {
+                                    setStaffKioskAccess(prev => prev.filter(x => x !== String(k.id) && x !== k.license_key && x !== 'all'));
+                                  }
+                                }}
+                                className="w-4 h-4 mt-0.5 text-[#120CD6] accent-[#120CD6] rounded"
+                              />
+                              <div>
+                                <p className="text-xs font-black text-[#111111] leading-tight">{k.name}</p>
+                                <p className="text-[10px] text-slate-400 font-mono">
+                                  {k.license_key} • {k.kiosk_mode === 'receipt' ? 'Receipt' : k.kiosk_mode === 'event' ? 'Event' : 'Reguler'}
+                                </p>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAccessModalOpen(false)}
+                    className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={handleSaveAccess}
+                    className="px-5 py-2.5 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    {loading ? 'Menyimpan...' : 'Simpan Akses'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              MODAL: UBAH PASSWORD STAFF (Screenshot 3 Match)
+          ══════════════════════════════════════════════════════════════ */}
+          {isPasswordModalOpen && selectedStaff && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border-4 border-white shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                  <div>
+                    <h3 className="text-base font-black text-[#111111] uppercase tracking-tight">Ubah Password</h3>
+                    <p className="text-xs text-slate-500">Ubah password untuk <strong className="text-[#120CD6]">{selectedStaff.email}</strong></p>
+                  </div>
+                  <button onClick={() => setIsPasswordModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700 rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSavePassword} className="p-6 space-y-4 text-xs font-bold">
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">
+                      Password Baru
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showChangePassword ? 'text' : 'password'}
+                        required
+                        value={changePasswordVal}
+                        onChange={(e) => setChangePasswordVal(e.target.value)}
+                        placeholder="Min 6 karakter"
+                        className="w-full px-3.5 py-2.5 pr-10 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowChangePassword(!showChangePassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                      >
+                        {showChangePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">
+                      Konfirmasi Password
+                    </label>
+                    <input
+                      type={showChangePassword ? 'text' : 'password'}
+                      required
+                      value={changePasswordConfirmVal}
+                      onChange={(e) => setChangePasswordConfirmVal(e.target.value)}
+                      placeholder="Ulangi password"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#120CD6]"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 py-3 bg-[#E5FD5F] hover:bg-[#d8f244] active:bg-[#F908E0] active:text-white text-[#111111] border-2 border-[#120CD6] font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      {loading ? 'Menyimpan...' : 'Simpan'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordModalOpen(false)}
+                      className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
 
         </main>
 
