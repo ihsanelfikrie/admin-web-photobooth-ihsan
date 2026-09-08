@@ -495,7 +495,7 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                       ? 'bg-amber-100 text-amber-800 border border-amber-300'
                       : formData.kiosk_mode === 'event'
                       ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                      : 'bg-blue-100 text-[#120CD6] border border-blue-300'
+                      : 'bg-blue-100 text-indigo-600 border border-blue-300'
                   }`}>
                     {formData.kiosk_mode === 'receipt' ? '🧾 Receipt Photobooth' : formData.kiosk_mode === 'event' ? '🎉 Mode Event (Free)' : '📸 Photobooth Normal'}
                   </span>
@@ -510,7 +510,7 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                     }}
                     className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
                       (formData.kiosk_mode || 'regular') === 'regular'
-                        ? 'border-[#120CD6] bg-white ring-2 ring-[#120CD6]/20 shadow-sm'
+                        ? 'border-indigo-600 bg-white ring-2 ring-indigo-500/20 shadow-sm'
                         : 'border-slate-200 bg-white/60 hover:bg-white hover:border-slate-300'
                     }`}
                   >
