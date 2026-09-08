@@ -940,18 +940,7 @@ export async function saveCategoriesCloud(categories) {
 // ── Staff Cloud Storage Helpers ───────────────────────────────────────────────
 const STAFF_PATH = "system/staff.json";
 
-const DEFAULT_STAFF = [
-  {
-    id: 1,
-    name: "Staff Nadhisan",
-    email: "staff@nadhisanbooth.com",
-    password: "Password123",
-    role: "staff",
-    allowed_menus: ["dashboard", "transactions", "live_monitor", "gallery"],
-    allowed_kiosks: ["all"],
-    created_at: "2026-09-08T12:00:00.000Z"
-  }
-];
+const DEFAULT_STAFF = [];
 
 export async function getStaffCloud() {
   try {
