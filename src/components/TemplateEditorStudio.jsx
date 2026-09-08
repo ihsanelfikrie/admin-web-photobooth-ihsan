@@ -23,9 +23,28 @@ import {
   Settings
 } from 'lucide-react';
 
-const SIZE_PRESETS = {
+export const TEMPLATE_CATEGORIES = [
+  {
+    id: 'regular',
+    name: 'Photobooth Reguler',
+    description: 'Format foto standar 2R & 4R untuk Kiosk Normal & Event',
+    icon: '📸',
+    allowedSizes: ['2R', '4R'],
+  },
+  {
+    id: 'receipt',
+    name: 'Receipt Photobooth',
+    description: 'Format kertas thermal receipt khusus 58mm & 80mm',
+    icon: '🧾',
+    allowedSizes: ['58mm', '80mm'],
+  },
+];
+
+export const SIZE_PRESETS = {
+  // ── Photobooth Reguler (2R & 4R Saja) ───────────
   '2R': {
-    label: '2R (1200 × 1800 px)',
+    label: '2R (1200 × 1800 px) - Mini Format',
+    categoryType: 'regular',
     category: '2R',
     paperSize: '2r',
     width: 1200,
@@ -33,56 +52,35 @@ const SIZE_PRESETS = {
     defaultSlots: [],
   },
   '4R': {
-    label: '4R (1800 × 1200 px)',
+    label: '4R (1800 × 1200 px) - Postcard Standar',
+    categoryType: 'regular',
     category: '4R',
     paperSize: '4r',
     width: 1800,
     height: 1200,
     defaultSlots: [],
   },
-  '5R': {
-    label: '5R (1500 × 2100 px)',
-    category: '5R',
-    paperSize: '5r',
-    width: 1500,
-    height: 2100,
+
+  // ── Receipt Photobooth (58mm & 80mm Saja) ───────
+  '58mm': {
+    label: '58mm Thermal (384 × 1200 px)',
+    categoryType: 'receipt',
+    category: 'Receipt',
+    paperSize: 'thermal_58mm',
+    width: 384,
+    height: 1200,
     defaultSlots: [],
   },
-  Receipt: {
-    label: 'Receipt (576 × 1600 px)',
+  '80mm': {
+    label: '80mm Thermal (576 × 1600 px)',
+    categoryType: 'receipt',
     category: 'Receipt',
     paperSize: 'thermal_80mm',
     width: 576,
     height: 1600,
     defaultSlots: [],
   },
-  Photostrip: {
-    label: 'Photostrip (600 × 1800 px)',
-    category: 'Photostrip',
-    paperSize: 'strip_2x6',
-    width: 600,
-    height: 1800,
-    defaultSlots: [],
-  },
-  Custom: {
-    label: 'Custom Size...',
-    category: 'Umum',
-    paperSize: 'standard',
-    width: 1200,
-    height: 1800,
-    defaultSlots: [],
-  },
 };
-
-const KIOSK_CATEGORIES = [
-  { id: 'Receipt', label: 'Receipt (Thermal 576 × 1600 px)', width: 576, height: 1600, size: 'Receipt', paperSize: 'thermal_80mm' },
-  { id: 'Photostrip', label: 'Photostrip (Format 2x6 / 600 × 1800 px)', width: 600, height: 1800, size: 'Photostrip', paperSize: 'strip_2x6' },
-  { id: '2R', label: '2R (Mini Format 1200 × 1800 px)', width: 1200, height: 1800, size: '2R', paperSize: '2r' },
-  { id: '4R', label: '4R (Postcard Standar 1800 × 1200 px)', width: 1800, height: 1200, size: '4R', paperSize: '4r' },
-  { id: '5R', label: '5R (Format Besar 1500 × 2100 px)', width: 1500, height: 2100, size: '5R', paperSize: '5r' },
-  { id: 'Umum', label: 'Umum / Classic Studio (1800 × 1200 px)', width: 1800, height: 1200, size: '4R', paperSize: '4r' },
-  { id: 'Event', label: 'Event Spesial / Custom (1800 × 1200 px)', width: 1800, height: 1200, size: '4R', paperSize: '4r' },
-];
 
 export default function TemplateEditorStudio({
   initialTemplate = null,
@@ -91,15 +89,54 @@ export default function TemplateEditorStudio({
   showToast,
   adminPin = '1234',
 }) {
+  const isInitialReceipt =
+    initialTemplate?.templateType === 'receipt' ||
+    initialTemplate?.categoryType === 'receipt' ||
+    initialTemplate?.category === 'Receipt' ||
+    initialTemplate?.paperSize === 'thermal_80mm' ||
+    initialTemplate?.paperSize === 'thermal_58mm' ||
+    initialTemplate?.size === 'Receipt' ||
+    initialTemplate?.size === '58mm' ||
+    initialTemplate?.size === '80mm' ||
+    initialTemplate?.name?.toLowerCase().includes('receipt');
+
+  const [templateType, setTemplateType] = useState(isInitialReceipt ? 'receipt' : 'regular');
+
+  const initialSizeKey = (() => {
+    if (isInitialReceipt) {
+      if (
+        initialTemplate?.size === '58mm' ||
+        Number(initialTemplate?.width) <= 400 ||
+        initialTemplate?.paperSize === 'thermal_58mm'
+      ) {
+        return '58mm';
+      }
+      return '80mm';
+    }
+    if (
+      initialTemplate?.size === '4R' ||
+      Number(initialTemplate?.width) > Number(initialTemplate?.height)
+    ) {
+      return '4R';
+    }
+    return '2R';
+  })();
+
   const [name, setName] = useState(initialTemplate?.name || '');
-  const [sizePreset, setSizePreset] = useState(initialTemplate?.size || '2R');
+  const [sizePreset, setSizePreset] = useState(initialSizeKey);
   const [category, setCategory] = useState(
-    initialTemplate?.category || (initialTemplate?.size === 'Receipt' ? 'Receipt' : '2R')
+    initialTemplate?.category || (isInitialReceipt ? 'Receipt' : initialSizeKey)
   );
-  const [width, setWidth] = useState(Number(initialTemplate?.width) || 1200);
-  const [height, setHeight] = useState(Number(initialTemplate?.height) || 1800);
+  const [width, setWidth] = useState(
+    Number(initialTemplate?.width) || (isInitialReceipt ? (initialSizeKey === '58mm' ? 384 : 576) : (initialSizeKey === '4R' ? 1800 : 1200))
+  );
+  const [height, setHeight] = useState(
+    Number(initialTemplate?.height) || (isInitialReceipt ? (initialSizeKey === '58mm' ? 1200 : 1600) : (initialSizeKey === '4R' ? 1200 : 1800))
+  );
   const [rotation, setRotation] = useState(Number(initialTemplate?.rotation) || 0);
-  const [paperSize, setPaperSize] = useState(initialTemplate?.paperSize || '2r');
+  const [paperSize, setPaperSize] = useState(
+    initialTemplate?.paperSize || (isInitialReceipt ? (initialSizeKey === '58mm' ? 'thermal_58mm' : 'thermal_80mm') : (initialSizeKey === '4R' ? '4r' : '2r'))
+  );
 
   // Slots
   const [slots, setSlots] = useState(
@@ -142,49 +179,16 @@ export default function TemplateEditorStudio({
     }
   }, [toastError]);
 
-  // Switch category - Automatically syncs width, height, aspect ratio, sizePreset, and paperSize
-  const handleCategoryChange = (newCat) => {
-    setCategory(newCat);
-
-    const catObj = KIOSK_CATEGORIES.find((c) => c.id === newCat);
-    if (catObj && catObj.width && catObj.height) {
-      const oldW = width;
-      const oldH = height;
-      const newW = catObj.width;
-      const newH = catObj.height;
-
-      setWidth(newW);
-      setHeight(newH);
-      setSizePreset(catObj.size || 'Custom');
-      if (catObj.paperSize) setPaperSize(catObj.paperSize);
-
-      // Proportional slot scaling so slots stay inside the new canvas
-      if (slots.length > 0 && oldW && oldH) {
-        const scaleX = newW / oldW;
-        const scaleY = newH / oldH;
-        setSlots((prev) =>
-          prev.map((slot) => {
-            const slotW = Math.max(60, Math.min(newW, Math.round(slot.width * scaleX)));
-            const slotH = Math.max(60, Math.min(newH, Math.round(slot.height * scaleY)));
-            const slotX = Math.max(0, Math.min(newW - slotW, Math.round(slot.x * scaleX)));
-            const slotY = Math.max(0, Math.min(newH - slotH, Math.round(slot.y * scaleY)));
-            return {
-              ...slot,
-              x: slotX,
-              y: slotY,
-              width: slotW,
-              height: slotH,
-            };
-          })
-        );
-      }
-
-      setToastSuccess(`Ukuran kanvas otomatis disesuaikan ke ${newW} × ${newH} px (${newCat})`);
-    }
+  // Switch template category (Photobooth Reguler vs Receipt Photobooth)
+  const handleTemplateTypeChange = (newType) => {
+    if (newType === templateType) return;
+    setTemplateType(newType);
+    const defaultPresetKey = newType === 'receipt' ? '80mm' : '2R';
+    handleSizePresetChange(defaultPresetKey, newType);
   };
 
   // Switch size preset - Synchronizes width, height, category, and paperSize
-  const handleSizePresetChange = (presetKey) => {
+  const handleSizePresetChange = (presetKey, forcedType = null) => {
     setSizePreset(presetKey);
     const preset = SIZE_PRESETS[presetKey];
     if (preset) {
@@ -192,19 +196,23 @@ export default function TemplateEditorStudio({
       const oldH = height;
       const newW = preset.width;
       const newH = preset.height;
+      const effectiveType = forcedType || preset.categoryType;
 
       setWidth(newW);
       setHeight(newH);
       setCategory(preset.category);
       setPaperSize(preset.paperSize);
+      if (effectiveType) {
+        setTemplateType(effectiveType);
+      }
 
       if (slots.length > 0 && oldW && oldH) {
         const scaleX = newW / oldW;
         const scaleY = newH / oldH;
         setSlots((prev) =>
           prev.map((slot) => {
-            const slotW = Math.max(60, Math.min(newW, Math.round(slot.width * scaleX)));
-            const slotH = Math.max(60, Math.min(newH, Math.round(slot.height * scaleY)));
+            const slotW = Math.max(40, Math.min(newW, Math.round(slot.width * scaleX)));
+            const slotH = Math.max(40, Math.min(newH, Math.round(slot.height * scaleY)));
             const slotX = Math.max(0, Math.min(newW - slotW, Math.round(slot.x * scaleX)));
             const slotY = Math.max(0, Math.min(newH - slotH, Math.round(slot.y * scaleY)));
             return {
@@ -221,7 +229,7 @@ export default function TemplateEditorStudio({
         setActiveSlotId(preset.defaultSlots[0]?.id || 1);
       }
 
-      setToastSuccess(`Ukuran kanvas otomatis disesuaikan ke ${newW} × ${newH} px (${presetKey})`);
+      setToastSuccess(`Ukuran kanvas disesuaikan ke ${newW} × ${newH} px (${presetKey})`);
     }
   };
 
@@ -458,13 +466,17 @@ export default function TemplateEditorStudio({
 
   // Generate XML
   const generatedXml = useMemo(() => {
+    const finalCat = templateType === 'receipt' ? 'Receipt' : category;
+    const finalPaper = paperSize || (templateType === 'receipt' ? (sizePreset === '58mm' ? 'thermal_58mm' : 'thermal_80mm') : '2r');
     return `<frame>
   <name>${name.trim()}</name>
-  <category>${category}</category>
+  <templateType>${templateType}</templateType>
+  <category>${finalCat}</category>
+  <size>${sizePreset}</size>
   <width>${width}</width>
   <height>${height}</height>
   <rotation>${rotation}</rotation>
-  <paperSize>${paperSize || (category === 'Receipt' ? 'thermal_80mm' : 'standard')}</paperSize>
+  <paperSize>${finalPaper}</paperSize>
   <photos>
 ${slots
   .map(
@@ -480,7 +492,7 @@ ${slots
   .join('\n')}
   </photos>
 </frame>`;
-  }, [name, category, width, height, rotation, paperSize, slots]);
+  }, [name, templateType, category, sizePreset, width, height, rotation, paperSize, slots]);
 
   // Save template
   const handleSave = async () => {
@@ -505,9 +517,11 @@ ${slots
         frame: {
           id: frameId,
           name: name.trim(),
+          templateType,
+          categoryType: templateType,
           size: sizePreset,
-          category,
-          paperSize,
+          category: templateType === 'receipt' ? 'Receipt' : category,
+          paperSize: paperSize || (templateType === 'receipt' ? (sizePreset === '58mm' ? 'thermal_58mm' : 'thermal_80mm') : '2r'),
           width,
           height,
           rotation,
@@ -926,48 +940,76 @@ ${slots
             />
           </div>
 
-          {/* 2. Template Size Dropdown */}
+          {/* 2. Kategori Template Utama (Photobooth Reguler vs Receipt Photobooth) */}
+          <div className="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
+                Kategori Template
+              </label>
+              <span className="px-2 py-0.5 bg-[#E5FD5F] text-[#111111] rounded text-[10px] font-black uppercase">
+                {templateType === 'regular' ? '📸 Reguler' : '🧾 Receipt'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleTemplateTypeChange('regular')}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all cursor-pointer text-center ${
+                  templateType === 'regular'
+                    ? 'border-[#120CD6] bg-blue-50/90 text-[#120CD6] shadow-sm font-black ring-1 ring-[#120CD6]/20'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 font-bold'
+                }`}
+              >
+                <span className="text-base mb-0.5">📸</span>
+                <span className="text-[11px] leading-tight">Photobooth Reguler</span>
+                <span className="text-[9px] text-slate-400 mt-0.5 font-semibold">2R &amp; 4R Saja</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleTemplateTypeChange('receipt')}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all cursor-pointer text-center ${
+                  templateType === 'receipt'
+                    ? 'border-[#120CD6] bg-amber-50 text-[#111111] shadow-sm font-black ring-1 ring-[#120CD6]/20'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 font-bold'
+                }`}
+              >
+                <span className="text-base mb-0.5">🧾</span>
+                <span className="text-[11px] leading-tight">Receipt Photobooth</span>
+                <span className="text-[9px] text-slate-400 mt-0.5 font-semibold">58mm &amp; 80mm Saja</span>
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+              {templateType === 'regular'
+                ? 'Kategori Reguler hanya mendukung format cetak 2R dan 4R. Format receipt tidak valid.'
+                : 'Kategori Receipt hanya mendukung format kertas thermal 58mm dan 80mm. Format 2R/4R tidak valid.'}
+            </p>
+          </div>
+
+          {/* 3. Template Size Dropdown (Strictly filtered by Category) */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
-              Template Size
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
+                Ukuran Frame
+              </label>
+              <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-black">
+                {templateType === 'regular' ? 'Format 2R & 4R' : 'Thermal 58mm & 80mm'}
+              </span>
+            </div>
             <select
               value={sizePreset}
               onChange={(e) => handleSizePresetChange(e.target.value)}
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#120CD6] cursor-pointer"
             >
-              {Object.entries(SIZE_PRESETS).map(([key, p]) => (
-                <option key={key} value={key}>
-                  {p.label}
-                </option>
-              ))}
+              {Object.entries(SIZE_PRESETS)
+                .filter(([_, p]) => p.categoryType === templateType)
+                .map(([key, p]) => (
+                  <option key={key} value={key}>
+                    {p.label}
+                  </option>
+                ))}
             </select>
-          </div>
-
-          {/* 3. Kategori Kiosk (Direct Connection to Kiosk App & Auto-Size) */}
-          <div className="space-y-1.5 bg-blue-50/70 p-3 rounded-2xl border border-blue-200">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] font-black uppercase tracking-wider text-[#120CD6] block">
-                Kategori Kiosk
-              </label>
-              <span className="px-2 py-0.5 bg-[#E5FD5F] text-[#111111] rounded text-[10px] font-black uppercase">
-                Tersambung Kiosk
-              </span>
-            </div>
-            <select
-              value={category}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="w-full p-2 bg-white border border-blue-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#120CD6] cursor-pointer"
-            >
-              {KIOSK_CATEGORIES.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
-              Memilih kategori akan <b>otomatis menyesuaikan ukuran kanvas</b> ke spesifikasi {category} ({width} × {height} px) dan masuk ke tab Kiosk yang sesuai.
-            </p>
           </div>
 
           {/* 3b. Dimensi Kanvas Aktif & Penyesuaian Manual */}

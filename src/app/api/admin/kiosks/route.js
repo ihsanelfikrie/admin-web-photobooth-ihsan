@@ -44,11 +44,16 @@ export async function POST(req) {
         finalLicenseKey = generateRandomKey();
       }
 
+      const kioskMode = data.kiosk_mode || (data.is_event_mode ? "event" : "regular");
+      const isEvent = kioskMode === "event" || Boolean(data.is_event_mode);
+
       const newKiosk = {
         id: newId,
         uuid: crypto.randomUUID ? crypto.randomUUID() : "kiosk-" + Date.now(),
         license_key: finalLicenseKey,
         name: (data.name || "").trim() || ("Nadhisan Booth " + String(newId).padStart(2, "0")),
+        kiosk_mode: kioskMode,
+        is_event_mode: isEvent,
         pin: data.pin || "1111",
         is_active: data.is_active ?? true,
         is_testing_mode: data.is_testing_mode ?? false,
@@ -99,9 +104,14 @@ export async function POST(req) {
         return NextResponse.json({ success: false, error: "Kiosk tidak ditemukan" }, { status: 404 });
       }
 
+      const updatedMode = data.kiosk_mode || kiosks[index].kiosk_mode || (data.is_event_mode || kiosks[index].is_event_mode ? "event" : "regular");
+      const updatedIsEvent = updatedMode === "event" ? true : (data.is_event_mode !== undefined ? Boolean(data.is_event_mode) : Boolean(kiosks[index].is_event_mode));
+
       kiosks[index] = {
         ...kiosks[index],
         ...data,
+        kiosk_mode: updatedMode,
+        is_event_mode: updatedIsEvent,
         updated_at: new Date().toISOString()
       };
 

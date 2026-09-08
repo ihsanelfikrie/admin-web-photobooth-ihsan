@@ -471,17 +471,23 @@ export default function OnlineAdminPage() {
       const res = await fetch(`/api/admin/kiosks?t=${Date.now()}`, { cache: "no-store" });
       const data = await res.json();
       if (data.success && Array.isArray(data.kiosks)) {
-        const formatted = data.kiosks.map(k => ({
-          ...k,
-          id: k.id,
-          name: k.name,
-          licenseKey: k.license_key || k.licenseKey || "NDHS-001",
-          deviceType: k.os_platform ? `PC/Laptop (${k.os_platform})` : "Kiosk Photobooth",
-          gateway: "Midtrans QRIS",
-          price: Number(k.price_per_photo || k.price || 30000),
-          status: k.is_active !== false ? "Active" : "Inactive",
-          created: k.created_at ? k.created_at.substring(0, 10) : "2026-09-08"
-        }));
+        const formatted = data.kiosks.map(k => {
+          const mode = k.kiosk_mode || (k.is_event_mode ? "event" : "regular");
+          const isEvent = mode === "event" || Boolean(k.is_event_mode);
+          return {
+            ...k,
+            id: k.id,
+            name: k.name,
+            licenseKey: k.license_key || k.licenseKey || "NDHS-001",
+            deviceType: k.os_platform ? `PC/Laptop (${k.os_platform})` : "Kiosk Photobooth",
+            kiosk_mode: mode,
+            is_event_mode: isEvent,
+            gateway: isEvent ? "Free Pass (Event)" : "Midtrans QRIS",
+            price: isEvent ? 0 : Number(k.price_per_photo || k.price || 30000),
+            status: k.is_active !== false ? "Active" : "Inactive",
+            created: k.created_at ? k.created_at.substring(0, 10) : "2026-09-08"
+          };
+        });
         setKiosks(formatted);
         if (typeof window !== "undefined") {
           try {
@@ -514,6 +520,8 @@ export default function OnlineAdminPage() {
   const [voucherDesc, setVoucherDesc]         = useState('');
   const [voucherMsg, setVoucherMsg]           = useState(null);
   const [voucherFilterTab, setVoucherFilterTab] = useState('all'); // 'all' | 'cash' | 'promo'
+  const [kioskModeFilter, setKioskModeFilter] = useState('all'); // 'all' | 'regular' | 'receipt' | 'event'
+  const [templateCategoryFilter, setTemplateCategoryFilter] = useState('all'); // 'all' | 'regular' | 'receipt'
   const [voucherSearchQuery, setVoucherSearchQuery] = useState('');
   const [showBulkModal, setShowBulkModal]     = useState(false);
   const [bulkCount, setBulkCount]             = useState(100);
@@ -1405,6 +1413,7 @@ export default function OnlineAdminPage() {
         id: 'img_0834',
         name: 'Classic Studio 4R Grid',
         size: '4R',
+        templateType: 'regular',
         totalCapturedPhoto: 6,
         totalPhotos: 6,
         userCaptured: 142,
@@ -1417,7 +1426,8 @@ export default function OnlineAdminPage() {
         no: 2,
         id: 'receipt_vintage_3',
         name: 'Receipt Vintage Strip 3-Pose',
-        size: 'Receipt',
+        size: '80mm',
+        templateType: 'receipt',
         totalCapturedPhoto: 3,
         totalPhotos: 3,
         userCaptured: 320,
@@ -1431,6 +1441,7 @@ export default function OnlineAdminPage() {
         id: 'strip_2r_mono',
         name: 'Photostrip 2x6 Classic B&W',
         size: '2R',
+        templateType: 'regular',
         totalCapturedPhoto: 3,
         totalPhotos: 3,
         userCaptured: 98,
@@ -1444,6 +1455,7 @@ export default function OnlineAdminPage() {
         id: 'polaroid_retro',
         name: 'Retro Polaroid 4R Frame',
         size: '4R',
+        templateType: 'regular',
         totalCapturedPhoto: 4,
         totalPhotos: 4,
         userCaptured: 76,
@@ -1457,7 +1469,14 @@ export default function OnlineAdminPage() {
     if (!frames || frames.length === 0) return defaults;
 
     return frames.map((f, idx) => {
-      const size = f.size || (f.name?.toLowerCase().includes('receipt') ? 'Receipt' : f.photoCount <= 3 ? '2R' : '4R');
+      const rawSize = f.size || (f.name?.toLowerCase().includes('receipt') ? '80mm' : f.photoCount <= 3 ? '2R' : '4R');
+      const isReceipt = ['58mm', '80mm', 'Receipt'].includes(rawSize) ||
+        (f.paperSize && String(f.paperSize).startsWith('thermal')) ||
+        (f.category && f.category.toLowerCase().includes('receipt')) ||
+        (f.name && f.name.toLowerCase().includes('receipt')) ||
+        f.templateType === 'receipt';
+      const templateType = f.templateType || (isReceipt ? 'receipt' : 'regular');
+      const size = isReceipt ? (rawSize === '58mm' ? '58mm' : '80mm') : (rawSize === '2R' ? '2R' : '4R');
       const photoCount = f.photoCount || 3;
       const xml = f.xml || generateXmlTemplate(f.name, size, photoCount);
       return {
@@ -1465,6 +1484,7 @@ export default function OnlineAdminPage() {
         id: f.id,
         name: f.name || `Template ${idx + 1}`,
         size,
+        templateType,
         totalCapturedPhoto: photoCount,
         totalPhotos: photoCount,
         userCaptured: f.userCaptured || Math.floor(Math.random() * 80) + 15,
@@ -2594,8 +2614,60 @@ export default function OnlineAdminPage() {
 
               {/* Table Card */}
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100">
-                  <div className="relative w-full sm:w-72">
+                <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+                    <button
+                      onClick={() => setKioskModeFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        kioskModeFilter === 'all'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Semua ({kiosks.length})
+                    </button>
+                    <button
+                      onClick={() => setKioskModeFilter('regular')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        kioskModeFilter === 'regular'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>📸 Reguler (2R/4R)</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${kioskModeFilter === 'regular' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                        {kiosks.filter(k => (k.kiosk_mode || 'regular') === 'regular' && !k.is_event_mode).length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setKioskModeFilter('receipt')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        kioskModeFilter === 'receipt'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>🧾 Receipt (58/80mm)</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${kioskModeFilter === 'receipt' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                        {kiosks.filter(k => k.kiosk_mode === 'receipt').length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setKioskModeFilter('event')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        kioskModeFilter === 'event'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>🎉 Mode Event (Free)</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${kioskModeFilter === 'event' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                        {kiosks.filter(k => k.kiosk_mode === 'event' || k.is_event_mode).length}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="relative w-full md:w-72">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
@@ -2612,6 +2684,7 @@ export default function OnlineAdminPage() {
                     <thead className="bg-[#F5F5F5] text-[#111111] font-black border-b border-slate-200 uppercase tracking-wider">
                       <tr>
                         <th className="py-3.5 px-4">Name</th>
+                        <th className="py-3.5 px-4">Mode Kiosk</th>
                         <th className="py-3.5 px-4">Payment Gateway</th>
                         <th className="py-3.5 px-4">Price/Session</th>
                         <th className="py-3.5 px-4">License Key</th>
@@ -2621,9 +2694,18 @@ export default function OnlineAdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
-                      {kiosks.filter(k => searchQuery === '' || (k.name || "").toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                      {kiosks
+                        .filter(k => {
+                          const mode = k.kiosk_mode || (k.is_event_mode ? 'event' : 'regular');
+                          if (kioskModeFilter === 'all') return true;
+                          if (kioskModeFilter === 'event') return mode === 'event' || k.is_event_mode;
+                          if (kioskModeFilter === 'receipt') return mode === 'receipt';
+                          if (kioskModeFilter === 'regular') return mode === 'regular' && !k.is_event_mode;
+                          return true;
+                        })
+                        .filter(k => searchQuery === '' || (k.name || "").toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">
+                          <td colSpan={8} className="py-12 text-center text-slate-400 font-medium">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Monitor className="w-8 h-8 text-slate-300" />
                               <p className="text-xs font-bold text-slate-700">Belum ada unit kiosk terdaftar</p>
@@ -2639,6 +2721,14 @@ export default function OnlineAdminPage() {
                         </tr>
                       ) : (
                         kiosks
+                          .filter(k => {
+                            const mode = k.kiosk_mode || (k.is_event_mode ? 'event' : 'regular');
+                            if (kioskModeFilter === 'all') return true;
+                            if (kioskModeFilter === 'event') return mode === 'event' || k.is_event_mode;
+                            if (kioskModeFilter === 'receipt') return mode === 'receipt';
+                            if (kioskModeFilter === 'regular') return mode === 'regular' && !k.is_event_mode;
+                            return true;
+                          })
                           .filter(k => searchQuery === '' || (k.name || "").toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((k) => (
                           <tr key={k.id} className="hover:bg-slate-50 transition-colors">
@@ -2647,12 +2737,35 @@ export default function OnlineAdminPage() {
                               <div className="text-[11px] text-slate-400">{k.deviceType}</div>
                             </td>
                             <td className="py-3.5 px-4">
-                              <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-bold">
+                              {k.kiosk_mode === 'receipt' ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                  🧾 RECEIPT (58/80MM)
+                                </span>
+                              ) : k.kiosk_mode === 'event' || k.is_event_mode ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  🎉 EVENT (FREE PASS)
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-100 text-[#120CD6] border border-blue-300">
+                                  📸 REGULER (2R/4R)
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className={`px-2.5 py-1 rounded-lg font-bold ${
+                                k.is_event_mode || k.kiosk_mode === 'event'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-slate-100 text-slate-800'
+                              }`}>
                                 {k.gateway}
                               </span>
                             </td>
                             <td className="py-3.5 px-4 font-black text-[#111111]">
-                              Rp {k.price.toLocaleString('id-ID')}
+                              {k.is_event_mode || k.kiosk_mode === 'event' ? (
+                                <span className="text-emerald-600 font-black">GRATIS</span>
+                              ) : (
+                                `Rp ${k.price.toLocaleString('id-ID')}`
+                              )}
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-700 bg-slate-50 px-2 py-1 rounded-md border border-slate-200 w-fit font-bold">
@@ -3891,8 +4004,47 @@ export default function OnlineAdminPage() {
 
               {/* Table Card */}
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100">
-                  <div className="relative w-full sm:w-72">
+                <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+                    <button
+                      onClick={() => setTemplateCategoryFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        templateCategoryFilter === 'all'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Semua Template ({allTemplates.length})
+                    </button>
+                    <button
+                      onClick={() => setTemplateCategoryFilter('regular')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        templateCategoryFilter === 'regular'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>📸 Photobooth Reguler (2R & 4R)</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${templateCategoryFilter === 'regular' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                        {allTemplates.filter(t => t.templateType === 'regular').length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setTemplateCategoryFilter('receipt')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                        templateCategoryFilter === 'receipt'
+                          ? 'bg-[#120CD6] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>🧾 Receipt Photobooth (58mm & 80mm)</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${templateCategoryFilter === 'receipt' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                        {allTemplates.filter(t => t.templateType === 'receipt').length}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="relative w-full md:w-72">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
@@ -3910,6 +4062,7 @@ export default function OnlineAdminPage() {
                       <tr>
                         <th className="py-3.5 px-4">No</th>
                         <th className="py-3.5 px-4">Template Name</th>
+                        <th className="py-3.5 px-4">Kategori</th>
                         <th className="py-3.5 px-4">Size</th>
                         <th className="py-3.5 px-4">Total Captured Photo</th>
                         <th className="py-3.5 px-4">Total Photos</th>
@@ -3921,14 +4074,29 @@ export default function OnlineAdminPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
                       {allTemplates
+                        .filter(t => {
+                          if (templateCategoryFilter === 'all') return true;
+                          return t.templateType === templateCategoryFilter;
+                        })
                         .filter(t => searchQuery === '' || t.name.toLowerCase().includes(searchQuery.toLowerCase()))
                         .map((tmpl, idx) => (
                           <tr key={tmpl.id || idx} className="hover:bg-slate-50 transition-colors">
                             <td className="py-3.5 px-4 font-black text-slate-500">{tmpl.no || idx + 1}</td>
                             <td className="py-3.5 px-4 font-black text-slate-900">{tmpl.name}</td>
                             <td className="py-3.5 px-4">
+                              {tmpl.templateType === 'receipt' ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                  🧾 Receipt
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-[#120CD6] border border-blue-300">
+                                  📸 Reguler
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
                               <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-black ${
-                                tmpl.size === 'Receipt'
+                                tmpl.size === '58mm' || tmpl.size === '80mm' || tmpl.size === 'Receipt'
                                   ? 'bg-[#E5FD5F] text-[#111111] border border-[#120CD6]'
                                   : tmpl.size === '2R'
                                   ? 'bg-blue-100 text-[#120CD6] border border-blue-300'

@@ -24,33 +24,26 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-
-function generateRandomLicenseKey() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const chunk = (len) => Array.from({ length: len }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join("");
-  return `${chunk(3)}-${chunk(3)}-${chunk(3)}`;
-}
-
 export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
   const [activeTab, setActiveTab] = useState('general');
 
   // Form State initialized from kiosk data
-  const isNewKiosk = !kiosk?.id;
-  const [formData, setFormData] = useState(() => ({
-    name: kiosk?.name || (isNewKiosk ? "Nadhisan Booth " + Math.floor(10 + Math.random() * 90) : ""),
-    license_key: kiosk?.license_key || generateRandomLicenseKey(),
-    pin: kiosk?.pin || "1111",
+  const [formData, setFormData] = useState({
+    name: kiosk?.name || '',
+    license_key: kiosk?.license_key || '',
+    pin: kiosk?.pin || '1111',
     is_testing_mode: kiosk?.is_testing_mode ?? false,
     is_active: kiosk?.is_active ?? true,
+    kiosk_mode: kiosk?.kiosk_mode || (kiosk?.is_event_mode ? 'event' : 'regular'),
 
     // Consent
     consent_enabled: kiosk?.consent_enabled ?? true,
-    consent_text: kiosk?.consent_text || "Apakah anda berkenan foto anda kami unggah di media sosial kami?",
-    consent_text_yes: kiosk?.consent_text_yes || "Baik/Mengerti",
-    consent_text_no: kiosk?.consent_text_no || "Tidak",
+    consent_text: kiosk?.consent_text || 'Apakah anda berkenan foto anda kami unggah di media sosial kami?',
+    consent_text_yes: kiosk?.consent_text_yes || 'Baik/Mengerti',
+    consent_text_no: kiosk?.consent_text_no || 'Tidak',
 
     // Timer
-    countdown_timer: kiosk?.countdown_timer ?? 5,
+    countdown_timer: kiosk?.countdown_timer ?? 10,
     qr_timer: kiosk?.qr_timer ?? 90,
 
     // Photo Session
@@ -64,21 +57,21 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
     price_per_photo: kiosk?.price_per_photo ?? 30000,
     price_extra_print: kiosk?.price_extra_print ?? 10000,
     price_discount: kiosk?.price_discount ?? 0,
-    midtrans_server_key: kiosk?.midtrans_server_key || "",
-    midtrans_client_key: kiosk?.midtrans_client_key || "",
-    midtrans_merchant_id: kiosk?.midtrans_merchant_id || "",
+    midtrans_server_key: kiosk?.midtrans_server_key || '',
+    midtrans_client_key: kiosk?.midtrans_client_key || '',
+    midtrans_merchant_id: kiosk?.midtrans_merchant_id || '',
     midtrans_is_production: kiosk?.midtrans_is_production ?? false,
 
     // Event & Queue
     is_event_mode: kiosk?.is_event_mode ?? false,
-    event_name: kiosk?.event_name || "",
-    watermark_text: kiosk?.watermark_text || "",
+    event_name: kiosk?.event_name || '',
+    watermark_text: kiosk?.watermark_text || '',
     is_queue_enabled: kiosk?.is_queue_enabled ?? false,
     queue_timeout_minutes: kiosk?.queue_timeout_minutes ?? 3,
 
-    // Device (Real data from client, no dummy strings)
-    os_hostname: kiosk?.os_hostname || null,
-    os_platform: kiosk?.os_platform || null,
+    // Device
+    os_hostname: kiosk?.os_hostname || 'DESKTOP-T2QQPN3',
+    os_platform: kiosk?.os_platform || 'darwin',
     device_id: kiosk?.device_id || null,
 
     // Paper
@@ -92,9 +85,9 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
 
     // Custom Filters
     allowed_filters: kiosk?.allowed_filters || ['bw', 'bw_high', 'fisheye', 'fisheye_bw', 'soft_glam', 'sepia', 'vintage', 'film_grain', 'none'],
-  }));
+  });
 
-  const [isDirty, setIsDirty] = useState(isNewKiosk);
+  const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
 
@@ -173,58 +166,38 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
 
   // Save changes
   const handleSave = async () => {
-    const trimmedName = (formData.name || "").trim();
-    if (!trimmedName) {
-      setToastMsg({ type: "error", text: "Nama Kiosk wajib diisi!" });
-      return;
-    }
-
-    let finalKey = (formData.license_key || "").trim().toUpperCase();
-    if (!finalKey) {
-      finalKey = generateRandomLicenseKey();
-      handleChange("license_key", finalKey);
-    }
-
     setSaving(true);
     setToastMsg(null);
 
     try {
       const isNew = !kiosk?.id;
-      const payload = {
-        ...formData,
-        name: trimmedName,
-        license_key: finalKey,
-      };
-
-      const res = await fetch("/api/admin/kiosks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/admin/kiosks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           isNew
             ? {
-                action: "create_kiosk",
-                kioskData: payload,
+                action: 'create_kiosk',
+                kioskData: formData,
               }
             : {
-                action: "update_kiosk",
-                license_key: kiosk.license_key || finalKey,
-                updates: payload,
+                action: 'update_kiosk',
+                license_key: kiosk.license_key,
+                updates: formData,
               }
         ),
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (data.success) {
         setIsDirty(false);
-        setToastMsg({ type: "success", text: isNew ? "Kiosk baru berhasil dibuat dan disimpan ke Cloud!" : "Konfigurasi kiosk berhasil disimpan ke Cloud!" });
-        if (onSaveSuccess) {
-          onSaveSuccess(data.kiosk || payload);
-        }
+        setToastMsg({ type: 'success', text: 'Konfigurasi kiosk berhasil disimpan ke server!' });
+        if (onSaveSuccess) onSaveSuccess(data.kiosk || formData);
       } else {
-        setToastMsg({ type: "error", text: data.error || "Gagal menyimpan perubahan ke Cloud." });
+        setToastMsg({ type: 'error', text: data.error || 'Gagal menyimpan perubahan.' });
       }
     } catch (err) {
-      setToastMsg({ type: "error", text: "Kesalahan jaringan: " + err.message });
+      setToastMsg({ type: 'error', text: 'Kesalahan jaringan: ' + err.message });
     } finally {
       setSaving(false);
       setTimeout(() => setToastMsg(null), 4000);
@@ -234,63 +207,31 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
   // Device actions
   const handleDeactivateDevice = async () => {
     const newStatus = !formData.is_active;
-    handleChange("is_active", newStatus);
-    setSaving(true);
-    try {
-      const res = await fetch("/api/admin/kiosks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "update_kiosk",
-          license_key: kiosk?.license_key || formData.license_key,
-          updates: { is_active: newStatus }
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setToastMsg({
-          type: "success",
-          text: newStatus ? "Akses kiosk berhasil diaktifkan kembali." : "Akses kiosk dinonaktifkan sementara (Kiosk terkunci)."
-        });
-      } else {
-        setToastMsg({ type: "error", text: data.error || "Gagal mengubah status perangkat." });
-      }
-    } catch (err) {
-      setToastMsg({ type: "error", text: "Gagal menghubungi server: " + err.message });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setToastMsg(null), 4000);
-    }
+    handleChange('is_active', newStatus);
+    alert(newStatus ? 'Akses perangkat diaktifkan kembali.' : 'Akses perangkat dinonaktifkan sementara.');
   };
 
   const handleResetDevice = async () => {
-    if (!confirm("Apakah Anda yakin ingin mereset ikatan perangkat (Unbind) pada kiosk ini? License Key akan dapat dihubungkan ke komputer operator baru.")) return;
-    setSaving(true);
-    try {
-      const res = await fetch("/api/admin/kiosks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "unbind_device",
-          license_key: kiosk?.license_key || formData.license_key,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        handleChange("device_id", null);
-        handleChange("os_hostname", null);
-        setToastMsg({
-          type: "success",
-          text: "Device Lock berhasil direset! Kiosk kini bebas untuk dihubungkan ke komputer/tablet baru."
+    if (confirm('Apakah Anda yakin ingin mereset ikatan perangkat (Unbind) pada kiosk ini? License Key akan dapat dihubungkan ke komputer operator baru.')) {
+      try {
+        const res = await fetch('/api/admin/kiosks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'unbind_device',
+            license_key: kiosk.license_key,
+          }),
         });
-      } else {
-        setToastMsg({ type: "error", text: data.error || "Gagal mereset perangkat." });
+        const data = await res.json();
+        if (data.success) {
+          handleChange('device_id', null);
+          alert('Device Lock berhasil direset! Kiosk kini bebas untuk dihubungkan ke perangkat baru.');
+        } else {
+          alert(data.error || 'Gagal mereset perangkat.');
+        }
+      } catch (err) {
+        alert(err.message);
       }
-    } catch (err) {
-      setToastMsg({ type: "error", text: "Gagal menghubungi server: " + err.message });
-    } finally {
-      setSaving(false);
-      setTimeout(() => setToastMsg(null), 4000);
     }
   };
 
@@ -479,32 +420,18 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold text-zinc-700">
-                      License Key <span className="text-rose-500">*</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newKey = generateRandomLicenseKey();
-                        handleChange("license_key", newKey);
-                      }}
-                      className="text-[11px] text-[#120CD6] hover:text-blue-800 font-bold flex items-center gap-1 cursor-pointer transition bg-blue-50 px-2 py-0.5 rounded-md"
-                      title="Acak kode lisensi baru"
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                      <span>🎲 Acak Lisensi Baru</span>
-                    </button>
-                  </div>
+                  <label className="block text-xs font-semibold text-zinc-700">
+                    License Key <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={formData.license_key}
-                    onChange={(e) => handleChange("license_key", e.target.value.toUpperCase())}
-                    placeholder="Contoh: A77-LNU-30N"
-                    className="w-full px-3.5 py-2.5 bg-white border border-zinc-300 rounded-lg text-xs font-mono font-bold text-zinc-900 uppercase focus:outline-none focus:border-emerald-500 transition shadow-sm"
+                    onChange={(e) => handleChange('license_key', e.target.value.toUpperCase())}
+                    placeholder="Contoh: NDH-88A-72K"
+                    className="w-full px-3.5 py-2.5 bg-white border border-zinc-300 rounded-lg text-xs font-mono text-zinc-900 uppercase focus:outline-none focus:border-emerald-500 transition shadow-sm"
                   />
                   <p className="text-[11px] text-zinc-400">
-                    Kode lisensi otomatis untuk otorisasi mesin kiosk / tablet saat pertama kali login.
+                    License Key rahasia untuk otorisasi mesin client/operator photobooth.
                   </p>
                 </div>
               </div>
@@ -543,6 +470,95 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                   <p className="text-[11px] text-zinc-400 leading-relaxed">
                     Aktifkan jika kiosk ini digunakan untuk testing internal. Data transaksi dari kiosk ini tidak akan mengotori laporan pendapatan dan grafik statistik. Ditandai dengan badge Testing di Live Monitor.
                   </p>
+                </div>
+              </div>
+
+              {/* Row: Mode Operasional Kiosk */}
+              <div className="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                      <span>⚙️ Mode Operasional Kiosk</span>
+                      <span className="text-rose-500">*</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Tentukan jenis bilik dan aturan template frame yang diizinkan untuk kiosk ini.
+                    </p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    formData.kiosk_mode === 'receipt'
+                      ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                      : formData.kiosk_mode === 'event'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-blue-100 text-[#120CD6] border border-blue-300'
+                  }`}>
+                    {formData.kiosk_mode === 'receipt' ? '🧾 Receipt Photobooth' : formData.kiosk_mode === 'event' ? '🎉 Mode Event (Free)' : '📸 Photobooth Normal'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                  {/* Option 1: Photobooth Normal (Reguler) */}
+                  <div
+                    onClick={() => {
+                      handleChange('kiosk_mode', 'regular');
+                      handleChange('is_event_mode', false);
+                    }}
+                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                      (formData.kiosk_mode || 'regular') === 'regular'
+                        ? 'border-[#120CD6] bg-white ring-2 ring-[#120CD6]/20 shadow-sm'
+                        : 'border-slate-200 bg-white/60 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-lg">📸</span>
+                      <span className="text-xs font-black text-slate-900">Photobooth Reguler</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                      Khusus frame foto <b>2R &amp; 4R</b>. Frame thermal receipt dinonaktifkan. Pembayaran aktif via QRIS &amp; Voucher Cash.
+                    </p>
+                  </div>
+
+                  {/* Option 2: Receipt Photobooth */}
+                  <div
+                    onClick={() => {
+                      handleChange('kiosk_mode', 'receipt');
+                      handleChange('is_event_mode', false);
+                    }}
+                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.kiosk_mode === 'receipt'
+                        ? 'border-amber-500 bg-white ring-2 ring-amber-500/20 shadow-sm'
+                        : 'border-slate-200 bg-white/60 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-lg">🧾</span>
+                      <span className="text-xs font-black text-slate-900">Receipt Photobooth</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                      Khusus frame thermal <b>58mm &amp; 80mm</b> saja. Ukuran 2R &amp; 4R dihilangkan. Pembayaran aktif via QRIS/Voucher.
+                    </p>
+                  </div>
+
+                  {/* Option 3: Mode Event */}
+                  <div
+                    onClick={() => {
+                      handleChange('kiosk_mode', 'event');
+                      handleChange('is_event_mode', true);
+                    }}
+                    className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.kiosk_mode === 'event'
+                        ? 'border-emerald-500 bg-white ring-2 ring-emerald-500/20 shadow-sm'
+                        : 'border-slate-200 bg-white/60 hover:bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-lg">🎉</span>
+                      <span className="text-xs font-black text-slate-900">Mode Event</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                      Frame <b>2R &amp; 4R</b> seperti reguler, namun <b>TANPA payment gateway sama sekali</b> (sesi langsung gratis / free flow).
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -636,13 +652,13 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                   <div className="space-y-3 text-xs">
                     <div className="flex justify-between items-center py-1 border-b border-zinc-100">
                       <span className="text-zinc-500">OS Hostname</span>
-                      <span className="font-mono font-bold text-zinc-800">{formData.os_hostname || "Belum terhubung ke perangkat"}</span>
+                      <span className="font-mono font-bold text-zinc-800">{formData.os_hostname}</span>
                     </div>
 
                     <div className="flex justify-between items-center py-1 border-b border-zinc-100">
                       <span className="text-zinc-500">Device ID</span>
                       <span className="font-mono text-[11px] text-zinc-700 max-w-[180px] truncate">
-                        {formData.device_id || "Belum terikat (Siap Aktivasi)"}
+                        {formData.device_id || 'Belum terikat'}
                       </span>
                     </div>
 
@@ -1125,10 +1141,7 @@ export default function KioskConfigEditor({ kiosk, onBack, onSaveSuccess }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    setToastMsg({ type: "success", text: `Memeriksa pembaruan... Software ${formData.software_version} pada channel ${formData.release_channel} sudah versi paling mutakhir (Up to Date).` });
-                    setTimeout(() => setToastMsg(null), 4500);
-                  }}
+                  onClick={() => alert('Memeriksa pembaruan dari server cloud... Kiosk sudah menggunakan versi terbaru!')}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer self-start"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />

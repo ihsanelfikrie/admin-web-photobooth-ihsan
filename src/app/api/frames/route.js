@@ -45,15 +45,19 @@ export async function POST(req) {
         cdnPreviewUrl = uploadRes.previewUrl;
       }
 
+      const isReceipt = ['58mm', '80mm', 'Receipt'].includes(frame.size) || (frame.paperSize && String(frame.paperSize).startsWith('thermal')) || frame.category === 'Receipt' || frame.templateType === 'receipt';
+      const templateType = frame.templateType || (isReceipt ? 'receipt' : 'regular');
+
       const newFrame = {
         id,
         name: frame.name || 'Custom Frame',
-        size: frame.size || 'Receipt',
-        category: frame.category || (frame.size === 'Receipt' ? 'Receipt' : 'Umum'),
-        paperSize: frame.paperSize || (frame.category === 'Receipt' || frame.size === 'Receipt' ? 'thermal_80mm' : null),
+        size: frame.size || (isReceipt ? '80mm' : '4R'),
+        category: frame.category || (isReceipt ? 'Receipt' : 'Umum'),
+        templateType,
+        paperSize: frame.paperSize || (isReceipt ? 'thermal_80mm' : '4r'),
         photoCount: Number(frame.photoCount) || (frame.slots ? frame.slots.length : 3),
-        width: Number(frame.width) || (frame.size === 'Receipt' ? 576 : 1200),
-        height: Number(frame.height) || (frame.size === 'Receipt' ? 1600 : 1800),
+        width: Number(frame.width) || (isReceipt ? 576 : 1200),
+        height: Number(frame.height) || (isReceipt ? 1600 : 1800),
         rotation: Number(frame.rotation) || 0,
         active: true,
         source: 'Custom Studio',
