@@ -394,6 +394,22 @@ export default function OnlineAdminPage() {
   // 'templates' | 'template_categories'
   const [activeTab, setActiveTab]             = useState('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen]   = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('nadhisan_sidebar_collapsed');
+      if (saved !== null) setSidebarCollapsed(saved === 'true');
+    } catch (_) {}
+  }, []);
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('nadhisan_sidebar_collapsed', String(next)); } catch (_) {}
+      return next;
+    });
+  };
 
   // Data States
   const [loading, setLoading]                 = useState(false);
@@ -2164,7 +2180,7 @@ export default function OnlineAdminPage() {
 
   // ── Main Authenticated Layout (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F, White #FFFFFF) ───────────────────
   return (
-    <div className="min-h-[100dvh] bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row antialiased selection:bg-[#E5FD5F] selection:text-[#111111] overflow-x-hidden">
+    <div className="h-[100dvh] max-h-[100dvh] bg-[#F5F5F5] text-[#111111] font-sans flex flex-col md:flex-row antialiased selection:bg-[#E5FD5F] selection:text-[#111111] overflow-hidden">
       
       {/* Toast Alert */}
       {toastMessage && (
@@ -2187,46 +2203,68 @@ export default function OnlineAdminPage() {
       )}
 
       {/* ── Left Sidebar (SANS Palette: Electric Blue #120CD6, Lime #E5FD5F) ── */}
-      <aside className={`fixed md:sticky top-0 left-0 h-[100dvh] w-72 max-w-[85vw] bg-[#120CD6] text-white flex flex-col z-50 transition-transform duration-300 ease-in-out shrink-0 shadow-2xl md:shadow-none pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] pl-[env(safe-area-inset-left,0px)] ${
+      <aside className={`fixed md:relative top-0 left-0 h-full ${
+        sidebarCollapsed ? 'w-20 md:w-20' : 'w-72 max-w-[85vw]'
+      } bg-[#120CD6] text-white flex flex-col z-50 transition-all duration-300 ease-in-out shrink-0 shadow-2xl md:shadow-none pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] pl-[env(safe-area-inset-left,0px)] ${
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         
         {/* Brand Header */}
-        <div className="p-5 border-b border-white/15 flex items-center justify-between shrink-0 bg-[#0E09A8]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center font-black shadow-sm shrink-0">
-              <Camera className="w-5 h-5 text-[#111111]" />
-            </div>
-            <div>
-              <h2 className="text-base font-black text-white tracking-tight uppercase leading-tight">
-                Nadhisan Studio
-              </h2>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E5FD5F] animate-ping" />
-                <p className="text-[10px] text-[#E5FD5F] font-black uppercase tracking-wider">
-                  Cloud Photobooth
-                </p>
+        <div className={`p-4 border-b border-white/15 flex items-center ${
+          sidebarCollapsed ? 'justify-center' : 'justify-between'
+        } shrink-0 bg-[#0E09A8] transition-all`}>
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="w-9 h-9 rounded-xl bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center font-black shadow-sm shrink-0">
+                <Camera className="w-5 h-5 text-[#111111]" />
+              </div>
+              <div className="overflow-hidden">
+                <h2 className="text-sm font-black text-white tracking-tight uppercase leading-tight truncate">
+                  Nadhisan Studio
+                </h2>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E5FD5F] animate-ping" />
+                  <p className="text-[9px] text-[#E5FD5F] font-black uppercase tracking-wider truncate">
+                    Cloud Photobooth
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           
-          <button 
-            onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden text-white/90 hover:text-white p-2 min-w-[44px] min-h-[44px] rounded-xl hover:bg-white/10 active:bg-white/20 flex items-center justify-center cursor-pointer transition-colors"
-            title="Tutup Menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Hamburger / Minimize Toggle Button (Matching User Reference) */}
+            <button 
+              type="button"
+              onClick={toggleSidebarCollapsed}
+              className="hidden md:flex p-2 rounded-xl border border-white/20 hover:bg-white/10 active:bg-white/20 text-white items-center justify-center transition-all cursor-pointer shadow-xs"
+              title={sidebarCollapsed ? "Perluas Sidebar" : "Kecilkan / Minimize Sidebar"}
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+            <button 
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden text-white/90 hover:text-white p-2 min-w-[40px] min-h-[40px] rounded-xl hover:bg-white/10 active:bg-white/20 flex items-center justify-center cursor-pointer transition-colors"
+              title="Tutup Menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Nav Items */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-          {accessibleMenuGroups.map((group) => (
+        <div className={`flex-1 overflow-y-auto ${sidebarCollapsed ? 'px-2 py-3' : 'px-3 py-4'} space-y-4`}>
+          {accessibleMenuGroups.map((group, gIdx) => (
             <div key={group.groupTitle} className="space-y-1">
-              <div className="px-3 pb-1 text-[10px] font-black tracking-widest text-[#E5FD5F] uppercase select-none flex items-center gap-1">
-                <span>✳</span>
-                <span>{group.groupTitle}</span>
-              </div>
+              {!sidebarCollapsed ? (
+                <div className="px-3 pb-1 text-[10px] font-black tracking-widest text-[#E5FD5F] uppercase select-none flex items-center gap-1">
+                  <span>✳</span>
+                  <span>{group.groupTitle}</span>
+                </div>
+              ) : (
+                gIdx > 0 && <div className="my-2 border-t border-white/10" />
+              )}
               
               {group.items.map((item) => {
                 const Icon = item.icon;
@@ -2244,14 +2282,17 @@ export default function OnlineAdminPage() {
                       if (item.id === 'gallery') loadSessions();
                       if (item.id === 'staff') loadStaff();
                     }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-3 min-h-[44px] md:min-h-[38px] rounded-xl text-xs font-black uppercase tracking-wide transition-all text-left cursor-pointer active:scale-[0.98] ${
+                    title={sidebarCollapsed ? item.label : undefined}
+                    className={`w-full flex items-center ${
+                      sidebarCollapsed ? 'justify-center p-2.5 min-h-[42px]' : 'gap-3 px-3.5 py-3 min-h-[38px]'
+                    } rounded-xl text-xs font-black uppercase tracking-wide transition-all cursor-pointer active:scale-[0.98] ${
                       isActive
-                        ? 'bg-[#E5FD5F] text-[#111111] border-2 border-white shadow-md'
+                        ? 'bg-white text-[#120CD6] shadow-md border-2 border-white'
                         : 'text-white/85 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#111111]' : 'text-white/70'}`} />
-                    <span className="truncate">{item.label}</span>
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#120CD6]' : 'text-white/80'}`} />
+                    {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
                   </button>
                 );
               })}
@@ -2260,36 +2301,56 @@ export default function OnlineAdminPage() {
         </div>
 
         {/* Sidebar Footer User Info */}
-        <div className="p-3.5 border-t border-white/15 bg-[#0D099E] shrink-0">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-9 h-9 rounded-full bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center text-xs font-black shrink-0">
-              NS
-            </div>
-            <div className="overflow-hidden flex-1">
-              <p className="text-xs font-black text-white truncate" title={currentUser?.email || 'admin@nadhisanbooth.com'}>
-                {currentUser?.email || 'admin@nadhisanbooth.com'}
-              </p>
-              <span className="text-[10px] text-[#E5FD5F] font-bold block">
-                👑 Super Administrator
-              </span>
-            </div>
-          </div>
-          
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 min-h-[42px] rounded-xl text-xs font-black text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer uppercase shadow-xs"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Logout</span>
-          </button>
+        <div className={`p-3 border-t border-white/15 bg-[#0D099E] shrink-0 ${sidebarCollapsed ? 'flex flex-col items-center gap-2' : ''}`}>
+          {!sidebarCollapsed ? (
+            <>
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center text-xs font-black shrink-0">
+                  NS
+                </div>
+                <div className="overflow-hidden flex-1">
+                  <p className="text-xs font-black text-white truncate" title={currentUser?.email || 'admin@nadhisanbooth.com'}>
+                    {currentUser?.email || 'admin@nadhisanbooth.com'}
+                  </p>
+                  <span className="text-[10px] text-[#E5FD5F] font-bold block">
+                    👑 Super Administrator
+                  </span>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-black text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer uppercase shadow-xs"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Logout</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <div 
+                className="w-9 h-9 rounded-full bg-[#E5FD5F] text-[#111111] border-2 border-white flex items-center justify-center text-xs font-black shadow-sm"
+                title={currentUser?.email || 'admin@nadhisanbooth.com'}
+              >
+                NS
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-white bg-rose-600 hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer shadow-xs"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </aside>
 
       {/* ── Main Workspace Area ───────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full max-h-[100dvh] overflow-hidden">
         
         {/* Top Header Bar (SANS Studio Breadcrumb) */}
-        <header className="min-h-[4rem] bg-white/95 backdrop-blur-md border-b-2 border-slate-200 px-4 md:px-8 pt-[env(safe-area-inset-top,0px)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] flex items-center justify-between sticky top-0 z-30 transition-all">
+        <header className="shrink-0 min-h-[4rem] bg-white/95 backdrop-blur-md border-b-2 border-slate-200 px-4 md:px-8 pt-[env(safe-area-inset-top,0px)] pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] flex items-center justify-between z-30 transition-all">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}

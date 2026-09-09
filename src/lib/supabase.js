@@ -11,7 +11,7 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   },
 });
 
-export const RETENTION_HOURS = parseInt(process.env.RETENTION_HOURS || '24', 10);
+export const RETENTION_HOURS = parseInt(process.env.RETENTION_HOURS || '72', 10);
 
 export function resolvePublicCdnUrl(url) {
   if (!url || typeof url !== 'string') return null;
